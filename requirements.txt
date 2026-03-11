@@ -1,0 +1,6 @@
+anthropic
+assemblyai
+xhtml2pdf
+matplotlib
+click
+python-dotenv

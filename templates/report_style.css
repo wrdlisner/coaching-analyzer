@@ -1,0 +1,180 @@
+@page {
+    size: A4;
+    margin: 20mm;
+}
+
+body {
+    font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif;
+    font-size: 10pt;
+    line-height: 1.6;
+    color: #333;
+}
+
+.cover {
+    text-align: center;
+    padding: 80px 0 60px;
+    page-break-after: always;
+}
+
+.cover h1 {
+    font-size: 22pt;
+    color: #1a365d;
+    margin-bottom: 30px;
+}
+
+.cover .date, .cover .duration {
+    font-size: 12pt;
+    color: #666;
+    margin: 8px 0;
+}
+
+h2 {
+    font-size: 14pt;
+    color: #1a365d;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 5px;
+    margin-top: 30px;
+}
+
+h3 {
+    font-size: 12pt;
+    color: #2d3748;
+    margin-top: 20px;
+}
+
+h4 {
+    font-size: 10pt;
+    color: #4a5568;
+    margin: 10px 0 5px;
+}
+
+.overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+}
+
+.overview-table th, .overview-table td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    text-align: left;
+}
+
+.overview-table th {
+    background-color: #f7fafc;
+    width: 40%;
+    font-weight: bold;
+}
+
+.overall-summary {
+    background: #f0f7ff;
+    border-left: 4px solid #3b82f6;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.radar-chart {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.competency-section {
+    margin: 20px 0;
+    padding: 15px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    page-break-inside: avoid;
+}
+
+.score-display {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin: 10px 0;
+}
+
+.score-number {
+    font-size: 20pt;
+    font-weight: bold;
+    color: #3b82f6;
+}
+
+.score-max {
+    font-size: 12pt;
+    color: #999;
+}
+
+.score-bar {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 10px;
+}
+
+.score-dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #3b82f6;
+    background: white;
+}
+
+.score-dot.filled {
+    background: #3b82f6;
+}
+
+.comment {
+    margin: 10px 0;
+    line-height: 1.8;
+}
+
+.quotes {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    padding: 10px 15px;
+    margin: 10px 0;
+}
+
+.quotes li {
+    margin: 5px 0;
+    font-style: italic;
+}
+
+.improvements {
+    background: #f0fdf4;
+    border-left: 3px solid #22c55e;
+    padding: 10px 15px;
+    margin: 10px 0;
+}
+
+.improvements li {
+    margin: 5px 0;
+}
+
+.transcript {
+    font-size: 9pt;
+    line-height: 1.5;
+}
+
+.utterance {
+    margin: 4px 0;
+    padding: 4px 8px;
+}
+
+.utterance.coach {
+    background: #f0f7ff;
+}
+
+.utterance.client {
+    background: #fefce8;
+}
+
+.timestamp {
+    color: #999;
+    font-size: 8pt;
+    font-family: monospace;
+}
+
+.speaker-label {
+    font-weight: bold;
+}
