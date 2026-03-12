@@ -3,6 +3,7 @@
 import logging
 import os
 import tempfile
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, status
@@ -108,6 +109,7 @@ async def analyze_audio(
                 avg_score=avg_score,
                 scores=scores_json,
                 pdf_data=pdf_bytes,
+                expires_at=datetime.utcnow() + timedelta(days=180),
             )
             db.add(session)
             db.flush()

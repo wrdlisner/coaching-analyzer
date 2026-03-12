@@ -12,3 +12,4 @@ anthropic
 assemblyai
 matplotlib
 numpy
+apscheduler

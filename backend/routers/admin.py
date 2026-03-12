@@ -47,6 +47,33 @@ def update_user_credits(
     return {"user_id": str(user.id), "new_credits": user.credits}
 
 
+@router.get("/feedbacks", response_model=List[schemas.AdminFeedbackResponse])
+def list_feedbacks(
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(models.Feedback, models.User.name, models.User.email)
+        .join(models.Session, models.Feedback.session_id == models.Session.id)
+        .join(models.User, models.Session.user_id == models.User.id)
+        .order_by(models.Feedback.created_at.desc())
+        .all()
+    )
+    return [
+        schemas.AdminFeedbackResponse(
+            id=fb.id,
+            session_id=fb.session_id,
+            user_name=name,
+            user_email=email,
+            satisfaction=fb.satisfaction,
+            accuracy=fb.accuracy,
+            comment=fb.comment,
+            created_at=fb.created_at,
+        )
+        for fb, name, email in rows
+    ]
+
+
 @router.patch("/users/{user_id}/toggle-admin")
 def toggle_admin(
     user_id: str,

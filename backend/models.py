@@ -44,6 +44,7 @@ class Session(Base):
     scores = Column(JSON, nullable=True)
     pdf_data = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    expires_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="sessions")
     feedbacks = relationship("Feedback", back_populates="session")

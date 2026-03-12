@@ -170,6 +170,17 @@ export const feedback = {
 
 // ---- Admin ----
 
+export interface AdminFeedback {
+  id: string
+  session_id: string
+  user_name: string
+  user_email: string
+  satisfaction: number
+  accuracy: number
+  comment: string | null
+  created_at: string
+}
+
 export const admin = {
   async listUsers(): Promise<UserInfo[]> {
     return apiRequest('GET', '/api/admin/users')
@@ -181,6 +192,10 @@ export const admin = {
 
   async toggleAdmin(userId: string): Promise<{ user_id: string; is_admin: boolean }> {
     return apiRequest('PATCH', `/api/admin/users/${userId}/toggle-admin`)
+  },
+
+  async listFeedbacks(): Promise<AdminFeedback[]> {
+    return apiRequest('GET', '/api/admin/feedbacks')
   },
 }
 

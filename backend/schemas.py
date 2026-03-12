@@ -79,6 +79,17 @@ class FeedbackRequest(BaseModel):
     comment: Optional[str] = None
 
 
+class AdminFeedbackResponse(BaseModel):
+    id: UUID
+    session_id: UUID
+    user_name: str
+    user_email: str
+    satisfaction: int
+    accuracy: int
+    comment: Optional[str]
+    created_at: datetime
+
+
 class ShareRequest(BaseModel):
     post_url: str
 

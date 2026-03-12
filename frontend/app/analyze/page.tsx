@@ -148,7 +148,7 @@ export default function AnalyzePage() {
   const disclaimerItems = [
     '本ツールのセッション分析はAI（Claude）が自動的に行います',
     '分析結果はICF公式の評価ではなく、参考情報です',
-    '音声・テキストデータはサービス改善のために利用される場合があります（個人が特定されることはありません）',
+    '分析データはサービス改善のために利用される場合があります（データには個人が特定される情報は含まれません）',
     '分析に1クレジット消費することに同意します（現在: ' + credits + ' クレジット）',
   ]
 
@@ -186,7 +186,7 @@ export default function AnalyzePage() {
                   step === n ? 'text-blue-600 font-medium' : 'text-gray-400'
                 }`}
               >
-                {n === 1 ? '免責確認' : n === 2 ? 'ファイル選択' : '分析中'}
+                {n === 1 ? '確認事項' : n === 2 ? 'ファイル選択' : '分析中'}
               </span>
               {n < 3 && <div className="w-8 h-px bg-gray-300" />}
             </div>
@@ -196,7 +196,7 @@ export default function AnalyzePage() {
         {/* Step 1: Consent */}
         {step === 1 && (
           <div className="card">
-            <h1 className="text-xl font-bold text-gray-900 mb-2">免責・確認事項</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">確認事項</h1>
             <p className="text-sm text-gray-500 mb-6">
               以下の内容をご確認のうえ、すべてにチェックしてください
             </p>
