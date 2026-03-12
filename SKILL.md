@@ -226,3 +226,26 @@ python main.py --input session.mp3 --coach "Speaker A" --client "Speaker B"
 # 出力先を指定
 python main.py --input session.mp4 --output ./reports/
 ```
+
+---
+
+## Railwayデプロイ時の注意事項
+
+### よくあるエラーと原因
+
+| エラー | 原因 | 対策 |
+|--------|------|------|
+| ModuleNotFoundError: modules | backend/のみデプロイでmodules/が未同梱 | modules/をbackend/配下に配置する |
+| FileNotFoundError: ffmpeg | ffmpeg未インストール | Dockerfileにffmpegインストールを追加 |
+| ModuleNotFoundError: config | config.pyがbackend/に未同梱 | config.pyをbackend/配下に配置する |
+| TypeError: get_qualification_statuses() | 引数の不一致（シグネチャ更新漏れ） | 関数シグネチャ変更時は呼び出し元も必ず更新 |
+| FileNotFoundError: フォントファイル | ファイルが大きすぎてタイムアウト | システムフォントを使用するか軽量フォントに変更 |
+| KeyError: 'avg_score' | 返り値の辞書にキーが欠落 | 返り値のキーを統一して定義する |
+
+### 根本原因
+もともと1つのプロジェクトとして作られたコードをbackend/だけで動かそうとしたことが原因。
+ファイルを追加・修正する際はbackend/配下に置くこと。
+
+### デプロイ前の確認事項
+ファイルを追加・変更した後は必ず `git status` で未追跡ファイル（Untracked files）がないか確認すること。
+Railway は git に含まれるファイルしかデプロイしないため、未追跡ファイルは本番環境に反映されない。

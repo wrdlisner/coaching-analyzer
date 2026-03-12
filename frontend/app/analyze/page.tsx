@@ -139,7 +139,8 @@ export default function AnalyzePage() {
       setTimeout(() => router.push(`/report/${result.session_id}`), 400)
     } catch (err: unknown) {
       if (progressInterval.current) clearInterval(progressInterval.current)
-      setError(err instanceof Error ? err.message : '分析に失敗しました')
+      const message = err instanceof Error ? err.message : '分析に失敗しました'
+      setError(message)
       setStep(2)
       setProgress(0)
     }

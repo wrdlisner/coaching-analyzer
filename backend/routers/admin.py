@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 
 import models
@@ -26,7 +27,18 @@ def list_users(
     _admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return db.query(models.User).order_by(models.User.created_at.desc()).all()
+    counts = dict(
+        db.query(models.Session.user_id, func.count(models.Session.id))
+        .group_by(models.Session.user_id)
+        .all()
+    )
+    users = db.query(models.User).order_by(models.User.created_at.desc()).all()
+    result = []
+    for u in users:
+        d = schemas.AdminUserResponse.model_validate(u)
+        d.analysis_count = counts.get(u.id, 0)
+        result.append(d)
+    return result
 
 
 @router.patch("/users/{user_id}/credits")

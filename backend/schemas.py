@@ -47,6 +47,7 @@ class AdminUserResponse(BaseModel):
     credits: int
     is_admin: bool
     created_at: datetime
+    analysis_count: int = 0
 
     class Config:
         from_attributes = True

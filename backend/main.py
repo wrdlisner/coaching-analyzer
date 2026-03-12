@@ -31,7 +31,13 @@ ALLOWED_ORIGINS = [
 ]
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
-    ALLOWED_ORIGINS.append(frontend_url.rstrip("/"))
+    # カンマ区切りで複数のURLを指定可能（例: https://foo.railway.app,https://bar.com）
+    for url in frontend_url.split(","):
+        url = url.strip().rstrip("/")
+        if url:
+            ALLOWED_ORIGINS.append(url)
+
+logger.info(f"CORS allowed origins: {ALLOWED_ORIGINS}")
 
 app.add_middleware(
     CORSMiddleware,

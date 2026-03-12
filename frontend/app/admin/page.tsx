@@ -125,6 +125,7 @@ export default function AdminPage() {
                     <th className="px-4 py-3">名前</th>
                     <th className="px-4 py-3">メール</th>
                     <th className="px-4 py-3">ICF</th>
+                    <th className="px-4 py-3 text-center">分析回数</th>
                     <th className="px-4 py-3 text-center">クレジット</th>
                     <th className="px-4 py-3 text-center">管理者</th>
                     <th className="px-4 py-3">登録日</th>
@@ -138,6 +139,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 font-medium text-gray-900">{u.name}</td>
                       <td className="px-4 py-3 text-gray-600">{u.email}</td>
                       <td className="px-4 py-3 uppercase text-gray-600">{u.icf_level}</td>
+                      <td className="px-4 py-3 text-center text-gray-700">{u.analysis_count}</td>
                       <td className="px-4 py-3 text-center font-medium">{u.credits}</td>
                       <td className="px-4 py-3 text-center">
                         {u.is_admin ? (

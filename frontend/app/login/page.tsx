@@ -99,12 +99,26 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-4">
-            アカウントをお持ちでない方は{' '}
-            <Link href="/register" className="text-blue-600 hover:underline">
-              新規登録
-            </Link>
-          </p>
+          <div className="mt-4 space-y-2 text-center text-sm text-gray-500">
+            <p>
+              パスワードをお忘れの方は{' '}
+              <a
+                href="https://x.com/sodekooo"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                X（@sodekooo）のDM
+              </a>
+              {' '}よりお問い合わせください
+            </p>
+            <p>
+              アカウントをお持ちでない方は{' '}
+              <Link href="/register" className="text-blue-600 hover:underline">
+                新規登録
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

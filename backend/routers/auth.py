@@ -30,7 +30,7 @@ def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
         email=body.email,
         password_hash=auth_utils.hash_password(body.password),
         icf_level=icf_level,
-        credits=3,
+        credits=1,
     )
     db.add(user)
     db.flush()  # get user.id before commit
@@ -38,7 +38,7 @@ def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
     # Add bonus credit record
     credit = models.Credit(
         user_id=user.id,
-        amount=3,
+        amount=1,
         reason="bonus",
     )
     db.add(credit)

@@ -38,11 +38,16 @@ export async function apiRequest<T>(
     fetchBody = JSON.stringify(body)
   }
 
-  const res = await fetch(`${API_URL}${path}`, {
-    method,
-    headers,
-    body: fetchBody,
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${path}`, {
+      method,
+      headers,
+      body: fetchBody,
+    })
+  } catch {
+    throw new Error('サーバーに接続できませんでした。時間をおいて再度お試しください。')
+  }
 
   if (res.status === 401) {
     removeToken()
@@ -74,6 +79,7 @@ export interface UserInfo {
   credits: number
   is_admin: boolean
   created_at: string
+  analysis_count: number
 }
 
 export interface TokenResponse {
