@@ -41,7 +41,7 @@ export default function RegisterPage() {
 
   const consentItems = [
     '本ツールの評価はAIによる自動分析であり、ICF公式の評価ではありません',
-    '個人情報（音声・テキストデータ）はサービス改善のために使用される場合があります（個人が特定されることはありません）',
+    '分析データはサービス改善のために利用される場合があります（データには個人が特定される情報は含まれません）',
     '分析結果は参考情報であり、資格審査への保証はありません',
   ]
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
             <span className="font-bold text-gray-900">CoachingAnalyzer</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">アカウント登録</h1>
-          <p className="text-gray-600 text-sm mt-1">無料登録で3クレジット付与</p>
+          <p className="text-gray-600 text-sm mt-1">無料登録で1クレジット付与</p>
         </div>
 
         <div className="card">
@@ -164,7 +164,7 @@ export default function RegisterPage() {
               disabled={loading || !allConsentsChecked}
               className="btn-primary w-full py-3"
             >
-              {loading ? '登録中...' : '登録する（+3クレジット）'}
+              {loading ? '登録中...' : '登録する（+1クレジット）'}
             </button>
           </form>
 
