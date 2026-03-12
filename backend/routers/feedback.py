@@ -66,6 +66,14 @@ def confirm_share(
     if session.user_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="アクセス権限がありません")
 
+    # Check if user has already received sns_share credit
+    already_shared = db.query(models.Credit).filter(
+        models.Credit.user_id == current_user.id,
+        models.Credit.reason == "sns_share",
+    ).first()
+    if already_shared:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="シェアボーナスは1回のみ付与されます")
+
     # Give +1 credit for SNS share
     current_user.credits += 1
     credit_record = models.Credit(

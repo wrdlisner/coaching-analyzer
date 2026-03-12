@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { sessions, feedback, getToken, SessionSummary } from '@/lib/api'
+import { sessions, credits, feedback, getToken, SessionSummary } from '@/lib/api'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -54,7 +54,15 @@ export default function ReportPage() {
       router.push('/login')
       return
     }
-    sessions.get(id).then(setSession).catch(() => router.push('/dashboard')).finally(() => setLoading(false))
+    Promise.all([
+      sessions.get(id),
+      credits.getHistory(),
+    ]).then(([sessionData, creditHistory]) => {
+      setSession(sessionData)
+      if (creditHistory.some((c) => c.reason === 'sns_share')) {
+        setShareSuccess(true)
+      }
+    }).catch(() => router.push('/dashboard')).finally(() => setLoading(false))
   }, [id, router])
 
   const handleDownloadPdf = async () => {
