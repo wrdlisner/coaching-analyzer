@@ -183,8 +183,6 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(51, 51, 51)
             for qs in qualification_statuses:
                 line = f"{qs['icon']} {qs['name']}（{qs['threshold']}基準）：{qs['label']}"
-                if qs["status"] != "pass":
-                    line += f"  （現在 {qs['avg_score']:.1f} / 目標 {qs['threshold']}）"
                 self.set_x(self.l_margin + 4)
                 self.cell(0, 7, line, new_x="LMARGIN", new_y="NEXT")
 
@@ -248,7 +246,7 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(150, 150, 150)
             self.cell(15, 10, "/ 5")
             # 星
-            stars = "★" * comp["score"] + "☆" * (5 - comp["score"])
+            stars = "★" * round(comp["score"]) + "☆" * (5 - round(comp["score"]))
             self.set_text_color(59, 130, 246)
             self._set_font_regular(12)
             self.cell(0, 10, stars, new_x="LEFT", new_y="NEXT")
@@ -381,7 +379,11 @@ def generate_report(
 
     competencies = analysis["competencies"]
     avg_score = sum(c["score"] for c in competencies) / len(competencies)
-    qualification_statuses = get_qualification_statuses(avg_score)
+    qualification_statuses = get_qualification_statuses(
+        avg_score,
+        analysis.get("pcc_fulfillment_rate", 0.0),
+        analysis.get("mcc_avg_score"),
+    )
 
     chart_png = _generate_radar_chart_png(competencies)
 
