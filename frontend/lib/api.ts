@@ -187,6 +187,14 @@ export interface AdminFeedback {
   created_at: string
 }
 
+export interface AdminTrendDataPoint {
+  date: string
+  analysis_count: number
+  avg_score: number | null
+  avg_satisfaction: number | null
+  avg_accuracy: number | null
+}
+
 export const admin = {
   async listUsers(): Promise<UserInfo[]> {
     return apiRequest('GET', '/api/admin/users')
@@ -202,6 +210,10 @@ export const admin = {
 
   async listFeedbacks(): Promise<AdminFeedback[]> {
     return apiRequest('GET', '/api/admin/feedbacks')
+  },
+
+  async listTrends(): Promise<AdminTrendDataPoint[]> {
+    return apiRequest('GET', '/api/admin/trends')
   },
 }
 

@@ -114,6 +114,16 @@ class AnalyzeResponse(BaseModel):
     avg_score: float
 
 
+# ---- Trends ----
+
+class TrendDataPoint(BaseModel):
+    date: str
+    analysis_count: int
+    avg_score: Optional[float]
+    avg_satisfaction: Optional[float]
+    avg_accuracy: Optional[float]
+
+
 # ---- Generic ----
 
 class SuccessResponse(BaseModel):

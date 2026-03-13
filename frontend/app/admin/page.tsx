@@ -2,19 +2,134 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { admin, auth, UserInfo, AdminFeedback } from '@/lib/api'
+import { admin, auth, UserInfo, AdminFeedback, AdminTrendDataPoint } from '@/lib/api'
 
-type Tab = 'users' | 'feedbacks'
+type Tab = 'users' | 'feedbacks' | 'trends'
 
+// ---- SVG Trend Chart ----
+function TrendChart({ data }: { data: AdminTrendDataPoint[] }) {
+  if (data.length === 0) return null
+
+  const W = 760
+  const scoreTop = 16
+  const scoreH = 180
+  const scoreBot = scoreTop + scoreH      // 196
+  const countTop = scoreBot + 12          // 208
+  const countH = 40
+  const countBot = countTop + countH      // 248
+  const labelsY = countBot + 18          // 266
+  const H = labelsY + 14                 // 280
+  const pL = 48
+  const pR = 16
+  const innerW = W - pL - pR
+
+  const n = data.length
+  const xAt = (i: number) => pL + (n <= 1 ? innerW / 2 : (i / (n - 1)) * innerW)
+  const yScore = (v: number) => scoreBot - (v / 5) * scoreH
+
+  const maxCount = Math.max(...data.map((d) => d.analysis_count), 1)
+  const barW = Math.max(4, innerW / n - 3)
+
+  const makeLine = (values: (number | null)[]): string => {
+    let d = ''
+    let pen = false
+    values.forEach((v, i) => {
+      if (v != null) {
+        const x = xAt(i).toFixed(1)
+        const y = yScore(v).toFixed(1)
+        d += pen ? ` L ${x} ${y}` : `M ${x} ${y}`
+        pen = true
+      } else {
+        pen = false
+      }
+    })
+    return d
+  }
+
+  const scoreTicks = [0, 1, 2, 3, 4, 5]
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
+      {/* Score grid lines + Y labels */}
+      {scoreTicks.map((t) => (
+        <g key={t}>
+          <line x1={pL} x2={W - pR} y1={yScore(t)} y2={yScore(t)} stroke="#F3F4F6" strokeWidth="1" />
+          <text x={pL - 6} y={yScore(t) + 4} textAnchor="end" fontSize="10" fill="#9CA3AF">{t}</text>
+        </g>
+      ))}
+
+      {/* Analysis count bars */}
+      {data.map((pt, i) => {
+        if (pt.analysis_count === 0) return null
+        const bH = (pt.analysis_count / maxCount) * countH
+        return (
+          <rect
+            key={i}
+            x={xAt(i) - barW / 2}
+            y={countBot - bH}
+            width={barW}
+            height={bH}
+            fill="#DBEAFE"
+            rx="1"
+          />
+        )
+      })}
+
+      {/* Lines */}
+      <path d={makeLine(data.map((d) => d.avg_score))} fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={makeLine(data.map((d) => d.avg_satisfaction))} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={makeLine(data.map((d) => d.avg_accuracy))} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Dots on data points */}
+      {data.map((pt, i) => (
+        <g key={i}>
+          {pt.avg_score != null && (
+            <circle cx={xAt(i)} cy={yScore(pt.avg_score)} r="3" fill="#3B82F6" />
+          )}
+          {pt.avg_satisfaction != null && (
+            <circle cx={xAt(i)} cy={yScore(pt.avg_satisfaction)} r="3" fill="#10B981" />
+          )}
+          {pt.avg_accuracy != null && (
+            <circle cx={xAt(i)} cy={yScore(pt.avg_accuracy)} r="3" fill="#F59E0B" />
+          )}
+        </g>
+      ))}
+
+      {/* X axis labels */}
+      {data.map((pt, i) => {
+        if (n > 10 && i % 5 !== 0 && i !== n - 1) return null
+        return (
+          <text key={i} x={xAt(i)} y={labelsY} textAnchor="middle" fontSize="9" fill="#9CA3AF">
+            {pt.date.slice(5)}
+          </text>
+        )
+      })}
+
+      {/* Axes */}
+      <line x1={pL} x2={pL} y1={scoreTop} y2={countBot} stroke="#E5E7EB" strokeWidth="1" />
+      <line x1={pL} x2={W - pR} y1={scoreBot} y2={scoreBot} stroke="#E5E7EB" strokeWidth="1" />
+      <line x1={pL} x2={W - pR} y1={countBot} y2={countBot} stroke="#E5E7EB" strokeWidth="1" />
+
+      {/* Count axis label */}
+      <text x={pL - 6} y={countTop + 10} textAnchor="end" fontSize="9" fill="#93C5FD">{maxCount}</text>
+      <text x={pL - 6} y={countBot + 4} textAnchor="end" fontSize="9" fill="#93C5FD">0</text>
+    </svg>
+  )
+}
+
+// ---- Main page ----
 export default function AdminPage() {
   const router = useRouter()
   const [me, setMe] = useState<UserInfo | null>(null)
   const [tab, setTab] = useState<Tab>('users')
   const [users, setUsers] = useState<UserInfo[]>([])
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>([])
+  const [trends, setTrends] = useState<AdminTrendDataPoint[]>([])
+  const [trendsUpdatedAt, setTrendsUpdatedAt] = useState<Date | null>(null)
   const [loading, setLoading] = useState(true)
   const [creditInputs, setCreditInputs] = useState<Record<string, string>>({})
   const [actionMsg, setActionMsg] = useState('')
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     auth.getMe()
@@ -35,6 +150,21 @@ export default function AdminPage() {
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
   }, [router])
+
+  // Trend auto-refresh every 24 hours
+  useEffect(() => {
+    const fetchTrends = () => {
+      admin.listTrends()
+        .then((data) => {
+          setTrends(data)
+          setTrendsUpdatedAt(new Date())
+        })
+        .catch(() => {})
+    }
+    fetchTrends()
+    const timer = setInterval(fetchTrends, 24 * 60 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   const flash = (msg: string) => {
     setActionMsg(msg)
@@ -65,11 +195,27 @@ export default function AdminPage() {
     }
   }
 
+  const toggleComment = (id: string) => {
+    setExpandedComments((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
   const avgScore = (list: AdminFeedback[], key: 'satisfaction' | 'accuracy') => {
     if (!list.length) return '-'
     const avg = list.reduce((s, f) => s + f[key], 0) / list.length
     return avg.toFixed(1)
   }
+
+  const trendSummary = (key: 'avg_score' | 'avg_satisfaction' | 'avg_accuracy') => {
+    const vals = trends.map((d) => d[key]).filter((v): v is number => v != null)
+    if (!vals.length) return '-'
+    return (vals.reduce((s, v) => s + v, 0) / vals.length).toFixed(2)
+  }
+
+  const totalAnalyses = trends.reduce((s, d) => s + d.analysis_count, 0)
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>
 
@@ -112,6 +258,16 @@ export default function AdminPage() {
           >
             フィードバック
             <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{feedbacks.length}</span>
+          </button>
+          <button
+            onClick={() => setTab('trends')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              tab === 'trends'
+                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            トレンド
           </button>
         </div>
 
@@ -223,35 +379,49 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {feedbacks.map((fb) => (
-                    <tr key={fb.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
-                        {new Date(fb.created_at).toLocaleDateString('ja-JP', {
-                          year: 'numeric', month: '2-digit', day: '2-digit',
-                          hour: '2-digit', minute: '2-digit',
-                        })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-gray-900">{fb.user_name}</p>
-                        <p className="text-xs text-gray-400">{fb.user_email}</p>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="font-semibold text-gray-900">{fb.satisfaction}</span>
-                        <span className="text-gray-400 text-xs"> / 5</span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className="font-semibold text-gray-900">{fb.accuracy}</span>
-                        <span className="text-gray-400 text-xs"> / 5</span>
-                      </td>
-                      <td className="px-4 py-3 text-gray-600 max-w-xs">
-                        {fb.comment ? (
-                          <p className="line-clamp-3">{fb.comment}</p>
-                        ) : (
-                          <span className="text-gray-300 text-xs">なし</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {feedbacks.map((fb) => {
+                    const isExpanded = expandedComments.has(fb.id)
+                    const isLong = fb.comment != null && fb.comment.length > 100
+                    return (
+                      <tr key={fb.id} className="border-b hover:bg-gray-50">
+                        <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                          {new Date(fb.created_at).toLocaleDateString('ja-JP', {
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-900">{fb.user_name}</p>
+                          <p className="text-xs text-gray-400">{fb.user_email}</p>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="font-semibold text-gray-900">{fb.satisfaction}</span>
+                          <span className="text-gray-400 text-xs"> / 5</span>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="font-semibold text-gray-900">{fb.accuracy}</span>
+                          <span className="text-gray-400 text-xs"> / 5</span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600 max-w-xs">
+                          {fb.comment ? (
+                            <div>
+                              <p className={isExpanded ? undefined : 'line-clamp-3'}>{fb.comment}</p>
+                              {isLong && (
+                                <button
+                                  onClick={() => toggleComment(fb.id)}
+                                  className="mt-1 text-xs text-blue-500 hover:text-blue-700"
+                                >
+                                  {isExpanded ? '閉じる' : '全文を表示'}
+                                </button>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-300 text-xs">なし</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
               {feedbacks.length === 0 && (
@@ -259,6 +429,91 @@ export default function AdminPage() {
               )}
             </div>
             <p className="mt-4 text-xs text-gray-400">合計 {feedbacks.length} 件</p>
+          </>
+        )}
+
+        {/* Trends tab */}
+        {tab === 'trends' && (
+          <>
+            {/* Summary cards */}
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              <div className="bg-white rounded-xl shadow px-5 py-4">
+                <p className="text-xs text-gray-500 mb-1">分析件数（30日）</p>
+                <p className="text-2xl font-bold text-gray-900">{totalAnalyses}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow px-5 py-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
+                  <p className="text-xs text-gray-500">ICFスコア（平均）</p>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {trendSummary('avg_score')}
+                  <span className="text-sm font-normal text-gray-400"> / 5</span>
+                </p>
+              </div>
+              <div className="bg-white rounded-xl shadow px-5 py-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <p className="text-xs text-gray-500">満足度（平均）</p>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {trendSummary('avg_satisfaction')}
+                  <span className="text-sm font-normal text-gray-400"> / 5</span>
+                </p>
+              </div>
+              <div className="bg-white rounded-xl shadow px-5 py-4">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
+                  <p className="text-xs text-gray-500">分析精度（平均）</p>
+                </div>
+                <p className="text-2xl font-bold text-gray-900">
+                  {trendSummary('avg_accuracy')}
+                  <span className="text-sm font-normal text-gray-400"> / 5</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Chart */}
+            <div className="bg-white rounded-xl shadow p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-sm font-semibold text-gray-700">過去30日間のトレンド</h2>
+                <div className="flex items-center gap-4">
+                  {/* Legend */}
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-6 h-0.5 bg-blue-500" />ICFスコア
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-6 h-0.5 bg-emerald-500" />満足度
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-6 h-0.5 bg-amber-500" />分析精度
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-4 h-3 bg-blue-100 rounded-sm" />分析件数
+                    </span>
+                  </div>
+                  {trendsUpdatedAt && (
+                    <p className="text-xs text-gray-400">
+                      更新: {trendsUpdatedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => {
+                      admin.listTrends().then((data) => { setTrends(data); setTrendsUpdatedAt(new Date()) }).catch(() => {})
+                    }}
+                    className="text-xs text-blue-500 hover:text-blue-700 border border-blue-200 px-2 py-1 rounded"
+                  >
+                    今すぐ更新
+                  </button>
+                </div>
+              </div>
+              <TrendChart data={trends} />
+              {trends.every((d) => d.analysis_count === 0 && d.avg_score == null) && (
+                <p className="text-center text-gray-400 py-8">データがまだありません</p>
+              )}
+            </div>
+            <p className="mt-3 text-xs text-gray-400">トレンドは24時間ごとに自動更新されます</p>
           </>
         )}
       </div>

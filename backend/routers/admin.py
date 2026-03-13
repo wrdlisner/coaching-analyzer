@@ -2,8 +2,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, cast, Date
 from typing import List
+from datetime import date, timedelta
 
 import models
 import schemas
@@ -84,6 +85,67 @@ def list_feedbacks(
         )
         for fb, name, email in rows
     ]
+
+
+@router.get("/trends", response_model=List[schemas.TrendDataPoint])
+def get_trends(
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    today = date.today()
+    start = today - timedelta(days=29)
+
+    session_rows = (
+        db.query(
+            cast(models.Session.created_at, Date).label("day"),
+            func.count(models.Session.id).label("cnt"),
+            func.avg(models.Session.avg_score).label("avg_score"),
+        )
+        .filter(models.Session.created_at >= start)
+        .group_by(cast(models.Session.created_at, Date))
+        .all()
+    )
+    session_map = {
+        str(r.day): {
+            "count": r.cnt,
+            "avg_score": float(r.avg_score) if r.avg_score is not None else None,
+        }
+        for r in session_rows
+    }
+
+    feedback_rows = (
+        db.query(
+            cast(models.Feedback.created_at, Date).label("day"),
+            func.avg(models.Feedback.satisfaction).label("avg_sat"),
+            func.avg(models.Feedback.accuracy).label("avg_acc"),
+        )
+        .filter(models.Feedback.created_at >= start)
+        .group_by(cast(models.Feedback.created_at, Date))
+        .all()
+    )
+    feedback_map = {
+        str(r.day): {
+            "avg_satisfaction": float(r.avg_sat) if r.avg_sat is not None else None,
+            "avg_accuracy": float(r.avg_acc) if r.avg_acc is not None else None,
+        }
+        for r in feedback_rows
+    }
+
+    result = []
+    for i in range(30):
+        d = str(start + timedelta(days=i))
+        s = session_map.get(d, {})
+        f = feedback_map.get(d, {})
+        result.append(
+            schemas.TrendDataPoint(
+                date=d,
+                analysis_count=s.get("count", 0),
+                avg_score=s.get("avg_score"),
+                avg_satisfaction=f.get("avg_satisfaction"),
+                avg_accuracy=f.get("avg_accuracy"),
+            )
+        )
+    return result
 
 
 @router.patch("/users/{user_id}/toggle-admin")
