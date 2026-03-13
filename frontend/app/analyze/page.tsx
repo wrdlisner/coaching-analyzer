@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { auth, analyze, getToken } from '@/lib/api'
 
 type Step = 1 | 2 | 3
@@ -218,10 +219,16 @@ export default function AnalyzePage() {
                 </label>
               ))}
             </div>
+            <div className="mt-5 text-center">
+              <Link href="/data-policy" target="_blank" className="text-xs text-blue-500 hover:text-blue-700 underline">
+                データの取り扱いについて詳しく見る →
+              </Link>
+            </div>
+
             <button
               onClick={() => setStep(2)}
               disabled={!allConsentsChecked || credits < 1}
-              className="btn-primary w-full mt-6 py-3"
+              className="btn-primary w-full mt-4 py-3"
             >
               {credits < 1 ? 'クレジット不足' : '次へ：ファイル選択'}
             </button>
