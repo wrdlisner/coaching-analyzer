@@ -201,7 +201,7 @@ export default function DataPolicyPage() {
             無料で始める（1クレジット付）
           </Link>
           <p className="text-xs text-gray-400 mt-3">
-            ご不明な点は <a href="mailto:contact@example.com" className="underline hover:text-gray-600">お問い合わせ</a> ください
+            ご不明な点は <a href="https://x.com/sodekooo" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">X（@sodekooo）</a> までお気軽にどうぞ
           </p>
         </div>
       </div>
