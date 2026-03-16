@@ -1,10 +1,21 @@
 """Pydantic schemas"""
 
-from datetime import datetime
-from typing import Optional, List, Any
+from datetime import datetime, timezone
+from typing import Annotated, Optional, List, Any
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, BeforeValidator, EmailStr
+
+
+def _ensure_utc(v: datetime) -> datetime:
+    """naive datetime（DB から返る UTC 値）に UTC タイムゾーンを付与する。"""
+    if isinstance(v, datetime) and v.tzinfo is None:
+        return v.replace(tzinfo=timezone.utc)
+    return v
+
+
+# DB の naive datetime を UTC-aware に変換するアノテーション型
+UTCDatetime = Annotated[datetime, BeforeValidator(_ensure_utc)]
 
 
 # ---- Auth ----
@@ -33,7 +44,7 @@ class UserResponse(BaseModel):
     icf_level: str
     credits: int
     is_admin: bool
-    created_at: datetime
+    created_at: UTCDatetime
 
     class Config:
         from_attributes = True
@@ -46,7 +57,7 @@ class AdminUserResponse(BaseModel):
     icf_level: str
     credits: int
     is_admin: bool
-    created_at: datetime
+    created_at: UTCDatetime
     analysis_count: int = 0
 
     class Config:
@@ -66,7 +77,7 @@ class SessionResponse(BaseModel):
     coach_ratio: float
     avg_score: float
     scores: Optional[Any]
-    created_at: datetime
+    created_at: UTCDatetime
 
     class Config:
         from_attributes = True
@@ -88,7 +99,7 @@ class AdminFeedbackResponse(BaseModel):
     satisfaction: int
     accuracy: int
     comment: Optional[str]
-    created_at: datetime
+    created_at: UTCDatetime
 
 
 class ShareRequest(BaseModel):
@@ -101,7 +112,7 @@ class CreditResponse(BaseModel):
     id: UUID
     amount: int
     reason: str
-    created_at: datetime
+    created_at: UTCDatetime
 
     class Config:
         from_attributes = True

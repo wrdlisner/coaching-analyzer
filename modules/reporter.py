@@ -2,7 +2,7 @@
 
 import base64
 import io
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
@@ -131,7 +131,7 @@ class CoachingReportPDF(FPDF):
 
         self._set_font_regular(12)
         self.set_text_color(100, 100, 100)
-        self.cell(0, 8, f"分析日時: {analysis_date.strftime('%Y年%m月%d日 %H:%M')}", align="C", new_x="LEFT", new_y="NEXT")
+        self.cell(0, 8, f"分析日時: {analysis_date.strftime('%Y年%m月%d日 %H:%M')} (UTC)", align="C", new_x="LEFT", new_y="NEXT")
         self.cell(0, 8, f"セッション時間: {duration_min}分{duration_sec}秒", align="C", new_x="LEFT", new_y="NEXT")
 
         self.set_text_color(0, 0, 0)
@@ -361,7 +361,7 @@ def generate_report(
     output_dir: Path,
     css_path: Path | None = None,
 ) -> Path:
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     filename = f"coaching_report_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
     output_path = output_dir / filename
 

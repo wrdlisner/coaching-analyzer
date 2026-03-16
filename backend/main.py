@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add parent directory to sys.path so we can import from modules/
@@ -59,7 +59,7 @@ def delete_expired_sessions():
     """期限切れセッションを削除する（毎日深夜2時に実行）"""
     db = SessionLocal()
     try:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expired = db.query(models.Session).filter(
             models.Session.expires_at != None,
             models.Session.expires_at <= now,

@@ -1,7 +1,7 @@
 """SQLAlchemy models"""
 
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column, String, Integer, Float, Text, LargeBinary,
@@ -27,7 +27,7 @@ class User(Base):
     )
     credits = Column(Integer, nullable=False, default=0)
     is_admin = Column(Boolean, nullable=False, default=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     sessions = relationship("Session", back_populates="user")
     credit_records = relationship("Credit", back_populates="user")
@@ -43,7 +43,7 @@ class Session(Base):
     avg_score = Column(Float, nullable=False, default=0.0)
     scores = Column(JSON, nullable=True)
     pdf_data = Column(LargeBinary, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="sessions")
@@ -60,7 +60,7 @@ class Credit(Base):
         SAEnum("analysis", "feedback", "sns_share", "bonus", name="credit_reason_enum"),
         nullable=False
     )
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="credit_records")
 
@@ -73,6 +73,6 @@ class Feedback(Base):
     satisfaction = Column(Integer, nullable=False)
     accuracy = Column(Integer, nullable=False)
     comment = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     session = relationship("Session", back_populates="feedbacks")
