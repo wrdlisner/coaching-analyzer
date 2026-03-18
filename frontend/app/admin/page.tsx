@@ -200,12 +200,21 @@ export default function AdminPage() {
     }
   }
 
+  // datetime-local（ローカル時刻）→ UTC ISO文字列
+  const toUTCISO = (localDT: string) => localDT ? new Date(localDT).toISOString() : null
+  // UTC ISO文字列 → datetime-local 入力用ローカル時刻
+  const toLocalDT = (utcStr: string | null) => {
+    if (!utcStr) return ''
+    const d = new Date(utcStr)
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+  }
+
   const handleSaveNotice = async () => {
     try {
       const payload = {
         title: noticeForm.title,
         body: noticeForm.body,
-        published_at: noticeForm.published_at || null,
+        published_at: toUTCISO(noticeForm.published_at),
         is_published: noticeForm.is_published,
       }
       if (editingNotice) {
@@ -229,7 +238,7 @@ export default function AdminPage() {
     setNoticeForm({
       title: n.title,
       body: n.body,
-      published_at: n.published_at ? n.published_at.slice(0, 16) : '',
+      published_at: toLocalDT(n.published_at),
       is_published: n.is_published,
     })
   }
