@@ -281,7 +281,35 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(51, 51, 51)
             for imp in comp.get("improvements", []):
                 self.set_x(self.l_margin)
-                self.multi_cell(w, 5, "  " + imp)
+                if isinstance(imp, dict):
+                    # 3層構造（v4以降）
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【改善提案】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("proposal", ""))
+                    self.set_x(self.l_margin)
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【メンター視点からの具体的アドバイス】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("mentor_advice", ""))
+                    self.set_x(self.l_margin)
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【次のセッションで試せること】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("next_action", ""))
+                    self.ln(2)
+                else:
+                    # 旧形式（後方互換）
+                    self.multi_cell(w, 5, "  " + imp)
 
             self.ln(6)
 

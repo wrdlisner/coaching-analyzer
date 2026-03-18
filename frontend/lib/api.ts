@@ -231,3 +231,46 @@ export const credits = {
     return apiRequest('GET', '/api/credits')
   },
 }
+
+// ---- Notices ----
+
+export interface Notice {
+  id: string
+  title: string
+  body: string
+  published_at: string | null
+  is_published: boolean
+  created_at: string
+}
+
+export const notices = {
+  async getLatest(): Promise<Notice | null> {
+    return apiRequest('GET', '/api/notices/latest')
+  },
+
+  async get(id: string): Promise<Notice> {
+    return apiRequest('GET', `/api/notices/${id}`)
+  },
+
+  async markAsRead(id: string): Promise<{ success: boolean }> {
+    return apiRequest('POST', `/api/notices/${id}/read`)
+  },
+}
+
+export const adminNotices = {
+  async list(): Promise<Notice[]> {
+    return apiRequest('GET', '/api/admin/notices')
+  },
+
+  async create(data: { title: string; body: string; published_at: string | null; is_published: boolean }): Promise<Notice> {
+    return apiRequest('POST', '/api/admin/notices', data)
+  },
+
+  async update(id: string, data: Partial<{ title: string; body: string; published_at: string | null; is_published: boolean }>): Promise<Notice> {
+    return apiRequest('PUT', `/api/admin/notices/${id}`, data)
+  },
+
+  async delete(id: string): Promise<{ success: boolean }> {
+    return apiRequest('DELETE', `/api/admin/notices/${id}`)
+  },
+}

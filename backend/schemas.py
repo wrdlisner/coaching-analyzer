@@ -135,6 +135,34 @@ class TrendDataPoint(BaseModel):
     avg_accuracy: Optional[float]
 
 
+# ---- Notices ----
+
+class NoticeResponse(BaseModel):
+    id: UUID
+    title: str
+    body: str
+    published_at: Optional[UTCDatetime]
+    is_published: bool
+    created_at: UTCDatetime
+
+    class Config:
+        from_attributes = True
+
+
+class NoticeCreateRequest(BaseModel):
+    title: str
+    body: str
+    published_at: Optional[datetime] = None
+    is_published: bool = False
+
+
+class NoticeUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    body: Optional[str] = None
+    published_at: Optional[datetime] = None
+    is_published: Optional[bool] = None
+
+
 # ---- Generic ----
 
 class SuccessResponse(BaseModel):

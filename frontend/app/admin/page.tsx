@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { admin, auth, UserInfo, AdminFeedback, AdminTrendDataPoint } from '@/lib/api'
+import { admin, auth, adminNotices, UserInfo, AdminFeedback, AdminTrendDataPoint, Notice } from '@/lib/api'
 
-type Tab = 'users' | 'feedbacks' | 'trends'
+type Tab = 'users' | 'feedbacks' | 'trends' | 'notices'
 
 // ---- SVG Trend Chart ----
 function TrendChart({ data }: { data: AdminTrendDataPoint[] }) {
@@ -130,6 +130,9 @@ export default function AdminPage() {
   const [creditInputs, setCreditInputs] = useState<Record<string, string>>({})
   const [actionMsg, setActionMsg] = useState('')
   const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set())
+  const [noticeList, setNoticeList] = useState<Notice[]>([])
+  const [noticeForm, setNoticeForm] = useState({ title: '', body: '', published_at: '', is_published: false })
+  const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
 
   useEffect(() => {
     auth.getMe()
@@ -146,7 +149,9 @@ export default function AdminPage() {
           setUsers(results[0])
           setFeedbacks(results[1])
         }
+        return adminNotices.list()
       })
+      .then((nl) => { if (nl) setNoticeList(nl) })
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
   }, [router])
@@ -190,6 +195,51 @@ export default function AdminPage() {
       const res = await admin.toggleAdmin(userId)
       setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, is_admin: res.is_admin } : u))
       flash(`管理者権限を${res.is_admin ? '付与' : '剥奪'}しました`)
+    } catch (e: unknown) {
+      flash(e instanceof Error ? e.message : 'エラーが発生しました')
+    }
+  }
+
+  const handleSaveNotice = async () => {
+    try {
+      const payload = {
+        title: noticeForm.title,
+        body: noticeForm.body,
+        published_at: noticeForm.published_at || null,
+        is_published: noticeForm.is_published,
+      }
+      if (editingNotice) {
+        const updated = await adminNotices.update(editingNotice.id, payload)
+        setNoticeList((prev) => prev.map((n) => n.id === updated.id ? updated : n))
+        flash('お知らせを更新しました')
+      } else {
+        const created = await adminNotices.create(payload)
+        setNoticeList((prev) => [created, ...prev])
+        flash('お知らせを作成しました')
+      }
+      setNoticeForm({ title: '', body: '', published_at: '', is_published: false })
+      setEditingNotice(null)
+    } catch (e: unknown) {
+      flash(e instanceof Error ? e.message : 'エラーが発生しました')
+    }
+  }
+
+  const handleEditNotice = (n: Notice) => {
+    setEditingNotice(n)
+    setNoticeForm({
+      title: n.title,
+      body: n.body,
+      published_at: n.published_at ? n.published_at.slice(0, 16) : '',
+      is_published: n.is_published,
+    })
+  }
+
+  const handleDeleteNotice = async (id: string) => {
+    if (!confirm('このお知らせを削除しますか？')) return
+    try {
+      await adminNotices.delete(id)
+      setNoticeList((prev) => prev.filter((n) => n.id !== id))
+      flash('お知らせを削除しました')
     } catch (e: unknown) {
       flash(e instanceof Error ? e.message : 'エラーが発生しました')
     }
@@ -268,6 +318,17 @@ export default function AdminPage() {
             }`}
           >
             トレンド
+          </button>
+          <button
+            onClick={() => setTab('notices')}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+              tab === 'notices'
+                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            お知らせ管理
+            <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{noticeList.length}</span>
           </button>
         </div>
 
@@ -514,6 +575,132 @@ export default function AdminPage() {
               )}
             </div>
             <p className="mt-3 text-xs text-gray-400">トレンドは24時間ごとに自動更新されます</p>
+          </>
+        )}
+
+        {/* Notices tab */}
+        {tab === 'notices' && (
+          <>
+            {/* Form */}
+            <div className="bg-white rounded-xl shadow p-5 mb-4">
+              <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                {editingNotice ? 'お知らせを編集' : 'お知らせを新規作成'}
+              </h2>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">タイトル</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    placeholder="お知らせのタイトル"
+                    value={noticeForm.title}
+                    onChange={(e) => setNoticeForm((f) => ({ ...f, title: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">本文（Markdown対応）</label>
+                  <textarea
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-28 resize-y"
+                    placeholder="お知らせの詳細内容"
+                    value={noticeForm.body}
+                    onChange={(e) => setNoticeForm((f) => ({ ...f, body: e.target.value }))}
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <label className="block text-xs text-gray-500 mb-1">公開日時</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                      value={noticeForm.published_at}
+                      onChange={(e) => setNoticeForm((f) => ({ ...f, published_at: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex items-end pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={noticeForm.is_published}
+                        onChange={(e) => setNoticeForm((f) => ({ ...f, is_published: e.target.checked }))}
+                      />
+                      <span className="text-sm text-gray-700">公開する</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleSaveNotice}
+                    disabled={!noticeForm.title || !noticeForm.body}
+                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {editingNotice ? '更新する' : '作成する'}
+                  </button>
+                  {editingNotice && (
+                    <button
+                      onClick={() => { setEditingNotice(null); setNoticeForm({ title: '', body: '', published_at: '', is_published: false }) }}
+                      className="text-sm border border-gray-300 px-4 py-2 rounded hover:bg-gray-100"
+                    >
+                      キャンセル
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* List */}
+            <div className="bg-white rounded-xl shadow overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-gray-500 text-left">
+                    <th className="px-4 py-3">タイトル</th>
+                    <th className="px-4 py-3">公開日時</th>
+                    <th className="px-4 py-3 text-center">公開状態</th>
+                    <th className="px-4 py-3">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {noticeList.map((n) => (
+                    <tr key={n.id} className="border-b hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{n.title}</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                        {n.published_at
+                          ? new Date(n.published_at).toLocaleDateString('ja-JP', {
+                              year: 'numeric', month: '2-digit', day: '2-digit',
+                              hour: '2-digit', minute: '2-digit',
+                            })
+                          : '未設定'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {n.is_published ? (
+                          <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">公開中</span>
+                        ) : (
+                          <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">非公開</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditNotice(n)}
+                            className="text-xs border border-gray-300 px-2 py-1 rounded hover:bg-gray-100"
+                          >
+                            編集
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNotice(n.id)}
+                            className="text-xs border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
+                          >
+                            削除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {noticeList.length === 0 && (
+                <p className="text-center text-gray-400 py-8">お知らせはまだありません</p>
+              )}
+            </div>
           </>
         )}
       </div>

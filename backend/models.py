@@ -31,6 +31,7 @@ class User(Base):
 
     sessions = relationship("Session", back_populates="user")
     credit_records = relationship("Credit", back_populates="user")
+    notice_reads = relationship("NoticeRead", back_populates="user")
 
 
 class Session(Base):
@@ -76,3 +77,28 @@ class Feedback(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     session = relationship("Session", back_populates="feedbacks")
+
+
+class Notice(Base):
+    __tablename__ = "notices"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    title = Column(String(255), nullable=False)
+    body = Column(Text, nullable=False)
+    published_at = Column(DateTime, nullable=True)
+    is_published = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    reads = relationship("NoticeRead", back_populates="notice")
+
+
+class NoticeRead(Base):
+    __tablename__ = "notice_reads"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    notice_id = Column(UUID(as_uuid=True), ForeignKey("notices.id"), nullable=False)
+    read_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User", back_populates="notice_reads")
+    notice = relationship("Notice", back_populates="reads")

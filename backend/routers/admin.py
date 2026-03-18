@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
-from typing import List
+from typing import List, Optional
 from datetime import date, timedelta
 
 import models
@@ -160,3 +160,68 @@ def toggle_admin(
     user.is_admin = not user.is_admin
     db.commit()
     return {"user_id": str(user.id), "is_admin": user.is_admin}
+
+
+# ---- Notices CRUD ----
+
+@router.get("/notices", response_model=List[schemas.NoticeResponse])
+def list_notices(
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return db.query(models.Notice).order_by(models.Notice.created_at.desc()).all()
+
+
+@router.post("/notices", response_model=schemas.NoticeResponse)
+def create_notice(
+    body: schemas.NoticeCreateRequest,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    notice = models.Notice(
+        title=body.title,
+        body=body.body,
+        published_at=body.published_at,
+        is_published=body.is_published,
+    )
+    db.add(notice)
+    db.commit()
+    db.refresh(notice)
+    return notice
+
+
+@router.put("/notices/{notice_id}", response_model=schemas.NoticeResponse)
+def update_notice(
+    notice_id: str,
+    body: schemas.NoticeUpdateRequest,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    notice = db.query(models.Notice).filter(models.Notice.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=404, detail="お知らせが見つかりません")
+    if body.title is not None:
+        notice.title = body.title
+    if body.body is not None:
+        notice.body = body.body
+    if body.published_at is not None:
+        notice.published_at = body.published_at
+    if body.is_published is not None:
+        notice.is_published = body.is_published
+    db.commit()
+    db.refresh(notice)
+    return notice
+
+
+@router.delete("/notices/{notice_id}", response_model=schemas.SuccessResponse)
+def delete_notice(
+    notice_id: str,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    notice = db.query(models.Notice).filter(models.Notice.id == notice_id).first()
+    if not notice:
+        raise HTTPException(status_code=404, detail="お知らせが見つかりません")
+    db.delete(notice)
+    db.commit()
+    return {"success": True}

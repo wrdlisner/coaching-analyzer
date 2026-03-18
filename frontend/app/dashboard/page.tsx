@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { auth, sessions, credits, removeToken, UserInfo, SessionSummary, CreditRecord } from '@/lib/api'
+import { auth, sessions, credits, notices, removeToken, UserInfo, SessionSummary, CreditRecord, Notice } from '@/lib/api'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -35,6 +35,8 @@ export default function DashboardPage() {
   const [sessionList, setSessionList] = useState<SessionSummary[]>([])
   const [creditHistory, setCreditHistory] = useState<CreditRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [notice, setNotice] = useState<Notice | null>(null)
+  const [noticeDismissed, setNoticeDismissed] = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -54,7 +56,15 @@ export default function DashboardPage() {
       }
     }
     load()
+    notices.getLatest().then(setNotice).catch(() => {})
   }, [router])
+
+  const handleDismissNotice = async () => {
+    if (notice) {
+      await notices.markAsRead(notice.id).catch(() => {})
+      setNoticeDismissed(true)
+    }
+  }
 
   const handleLogout = () => {
     removeToken()
@@ -103,6 +113,40 @@ export default function DashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        {/* Notice banner */}
+        {notice && !noticeDismissed && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-5 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-semibold bg-blue-600 text-white px-2 py-0.5 rounded">
+                    NEW
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {notice.published_at
+                      ? new Date(notice.published_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
+                      : ''}
+                  </span>
+                </div>
+                <p className="font-semibold text-gray-900 text-sm mb-1">{notice.title}</p>
+                <Link
+                  href={`/notices/${notice.id}`}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  詳細を見る →
+                </Link>
+              </div>
+              <button
+                onClick={handleDismissNotice}
+                className="text-gray-400 hover:text-gray-600 text-lg leading-none shrink-0"
+                aria-label="閉じる"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* New analysis CTA */}
         <div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
           <div className="flex items-center justify-between">

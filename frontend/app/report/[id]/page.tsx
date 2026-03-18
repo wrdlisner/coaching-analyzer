@@ -246,6 +246,23 @@ export default function ReportPage() {
             {pdfLoading ? '生成中...' : 'PDFをダウンロード'}
           </button>
 
+          {/* Mentor coaching CTA */}
+          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+            <p className="font-semibold text-gray-900 mb-1">
+              📋 このレポートをメンターコーチングで活用しませんか？
+            </p>
+            <p className="text-sm text-gray-600 mb-3">
+              レポートをもとにメンターコーチと対話することで、
+              気づきをより深く実践に繋げることができます。
+            </p>
+            <Link
+              href="/mentor"
+              className="btn-secondary w-full py-2 text-center block text-sm"
+            >
+              メンターコーチを探す →
+            </Link>
+          </div>
+
           {/* Feedback */}
           <Link
             href={`/feedback/${id}`}

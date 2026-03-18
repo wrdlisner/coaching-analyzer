@@ -26,16 +26,20 @@ export default function LandingPage() {
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 py-24 text-center">
         <div className="inline-block bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
-          ICFコアコンピテンシー準拠
+          ICFコアコンピテンシー（2025年最新版）準拠
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
-          ICFコーチングセッション
+          AIがセッションを評価し、
           <br />
-          <span className="text-blue-600">分析ツール</span>
+          <span className="text-blue-600">メンターコーチが伴走する。</span>
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-          音声ファイルをアップロードするだけで、AIがICF 8つのコアコンピテンシーを詳細分析。
-          PDFレポートで資格取得への道筋が明確になります。
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
+          コーチとしての成長を、科学的に。
+        </p>
+        <p className="text-base text-gray-500 max-w-2xl mx-auto mb-10">
+          ICFコアコンピテンシー（2025年最新版）×<br />
+          ICFメンターコーチングコンピテンシーに基づく、<br />
+          世界唯一のコーチング分析ツール。
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link href="/register" className="btn-primary text-base px-8 py-3">
@@ -44,6 +48,27 @@ export default function LandingPage() {
           <Link href="/login" className="btn-secondary text-base px-8 py-3">
             ログインする
           </Link>
+        </div>
+      </section>
+
+      {/* Differentiators */}
+      <section className="bg-blue-50 py-12">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-xl font-bold text-center text-gray-900 mb-8">このツールの特徴</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <div className="text-blue-600 font-bold text-sm mb-2">ICFコアコンピテンシー 2025年最新版</div>
+              <p className="text-sm text-gray-600">2025年9月改訂版に基づく最新の評価基準で、あなたのセッションを正確に評価します。</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <div className="text-blue-600 font-bold text-sm mb-2">3層構造の改善提案</div>
+              <p className="text-sm text-gray-600">ICFメンターコーチングコンピテンシーを活用した「改善提案・具体的な言い換え例・次のアクション」の3層で提示。</p>
+            </div>
+            <div className="bg-white rounded-xl p-5 shadow-sm">
+              <div className="text-blue-600 font-bold text-sm mb-2">メンターコーチが伴走</div>
+              <p className="text-sm text-gray-600">AIの分析レポートをもとに、メンターコーチとの対話で気づきをより深く実践に繋げられます。</p>
+            </div>
+          </div>
         </div>
       </section>
 
