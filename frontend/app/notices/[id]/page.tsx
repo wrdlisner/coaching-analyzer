@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
+import ReactMarkdown from 'react-markdown'
 import { notices, Notice, getToken } from '@/lib/api'
 
 export default function NoticeDetailPage() {
@@ -58,8 +59,8 @@ export default function NoticeDetailPage() {
             </span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 mb-6">{notice.title}</h1>
-          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {notice.body}
+          <div className="prose prose-sm max-w-none text-gray-700">
+            <ReactMarkdown>{notice.body}</ReactMarkdown>
           </div>
         </div>
       </main>
