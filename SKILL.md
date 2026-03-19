@@ -246,6 +246,20 @@ python main.py --input session.mp4 --output ./reports/
 もともと1つのプロジェクトとして作られたコードをbackend/だけで動かそうとしたことが原因。
 ファイルを追加・修正する際はbackend/配下に置くこと。
 
+### ⚠️ 本番環境ファイルの参照ルール
+
+**コードを確認・修正する際は必ず `backend/` 配下のファイルを参照すること。**
+
+| 役割 | 参照すべきファイル | 参照してはいけないファイル |
+|------|-------------------|--------------------------|
+| 分析ロジック | `backend/modules/analyzer.py` | `modules/analyzer.py`（CLI用） |
+| PDF生成 | `backend/modules/reporter.py` | `modules/reporter.py`（CLI用） |
+| 文字起こし | `backend/modules/transcriber.py` | `modules/transcriber.py`（CLI用） |
+
+- `modules/`（ルート直下）はCLI版のファイルであり本番環境では使われない
+- CLI版を更新した場合は `backend/modules/` にも必ず同期すること
+- フィードバック対応・バグ修正・機能確認のいずれの場合も同様
+
 ### デプロイ前の確認事項
 ファイルを追加・変更した後は必ず `git status` で未追跡ファイル（Untracked files）がないか確認すること。
 Railway は git に含まれるファイルしかデプロイしないため、未追跡ファイルは本番環境に反映されない。
