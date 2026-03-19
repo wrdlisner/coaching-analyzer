@@ -120,9 +120,10 @@ def get_qualification_statuses(avg_score: float, pcc_fulfillment_rate: float, mc
             status, label, icon = "close", "もう一歩", "△"
         else:
             status, label, icon = "needs_work", "要強化", "×"
-        result.append({"name": name, "threshold": threshold, "status": status, "label": label, "icon": icon})
+        result.append({"name": name, "threshold": threshold, "status": status, "label": label, "icon": icon, "avg_score": avg_score})
 
     # MCC: PCCマーカー充足率 >= 80% かつ MCC質的評価平均 >= 4.5
+    mcc_display_score = mcc_avg_score if mcc_avg_score is not None else avg_score
     if pcc_fulfillment_rate >= 0.80 and mcc_avg_score is not None:
         diff = 4.5 - mcc_avg_score
         if diff <= 0:
@@ -133,7 +134,7 @@ def get_qualification_statuses(avg_score: float, pcc_fulfillment_rate: float, mc
             status, label, icon = "needs_work", "要強化", "×"
     else:
         status, label, icon = "needs_work", "要強化", "×"
-    result.append({"name": "MCC", "threshold": 4.5, "status": status, "label": label, "icon": icon})
+    result.append({"name": "MCC", "threshold": 4.5, "status": status, "label": label, "icon": icon, "avg_score": mcc_display_score})
 
     return result
 
