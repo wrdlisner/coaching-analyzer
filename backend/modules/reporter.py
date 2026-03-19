@@ -8,24 +8,16 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 import numpy as np
-
-# IPA フォントを matplotlib に登録
-_IPA_FONT_PATH = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
-try:
-    fm.fontManager.addfont(_IPA_FONT_PATH)
-    _MPL_FONT = fm.FontProperties(fname=_IPA_FONT_PATH).get_name()
-except Exception:
-    _MPL_FONT = "sans-serif"
 from fpdf import FPDF
 
 from modules.analyzer import get_qualification_statuses
 from modules.transcriber import format_timestamp
 
-# フォントファイルパス（apt install fonts-ipafont でインストール）
-_FONT_REGULAR = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
-_FONT_BOLD = "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf"
+# フォントファイルパス（プロジェクトルートに配置）
+_PROJECT_ROOT = Path(__file__).parent.parent
+_FONT_REGULAR = str(_PROJECT_ROOT / "meiryo_regular.ttf")
+_FONT_BOLD = str(_PROJECT_ROOT / "meiryo_bold.ttf")
 
 
 def _generate_radar_chart_png(competencies: list[dict]) -> bytes:
@@ -45,12 +37,12 @@ def _generate_radar_chart_png(competencies: list[dict]) -> bytes:
     ax.set_yticklabels(["1", "2", "3", "4", "5"], fontsize=8, color="#999")
 
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, fontsize=9, fontfamily=_MPL_FONT)
+    ax.set_xticklabels(labels, fontsize=9, fontfamily="Yu Gothic")
 
     ax.plot(angles, scores_plot, "o-", linewidth=2, color="#3b82f6")
     ax.fill(angles, scores_plot, alpha=0.25, color="#3b82f6")
 
-    ax.set_title("ICFコンピテンシー別スコア", fontsize=14, fontfamily=_MPL_FONT, pad=20)
+    ax.set_title("ICFコンピテンシー別スコア", fontsize=14, fontfamily="Yu Gothic", pad=20)
     plt.tight_layout()
 
     buf = io.BytesIO()
@@ -191,8 +183,6 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(51, 51, 51)
             for qs in qualification_statuses:
                 line = f"{qs['icon']} {qs['name']}（{qs['threshold']}基準）：{qs['label']}"
-                if qs["status"] != "pass":
-                    line += f"  （現在 {qs['avg_score']:.1f} / 目標 {qs['threshold']}）"
                 self.set_x(self.l_margin + 4)
                 self.cell(0, 7, line, new_x="LMARGIN", new_y="NEXT")
 
@@ -256,7 +246,7 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(150, 150, 150)
             self.cell(15, 10, "/ 5")
             # 星
-            stars = "★" * comp["score"] + "☆" * (5 - comp["score"])
+            stars = "★" * round(comp["score"]) + "☆" * (5 - round(comp["score"]))
             self.set_text_color(59, 130, 246)
             self._set_font_regular(12)
             self.cell(0, 10, stars, new_x="LEFT", new_y="NEXT")
@@ -291,7 +281,35 @@ class CoachingReportPDF(FPDF):
             self.set_text_color(51, 51, 51)
             for imp in comp.get("improvements", []):
                 self.set_x(self.l_margin)
-                self.multi_cell(w, 5, "  " + imp)
+                if isinstance(imp, dict):
+                    # 3層構造（v4以降）
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【改善提案】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("proposal", ""))
+                    self.set_x(self.l_margin)
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【メンター視点からの具体的アドバイス】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("mentor_advice", ""))
+                    self.set_x(self.l_margin)
+                    self._set_font_bold(9)
+                    self.set_text_color(45, 55, 72)
+                    self.multi_cell(w, 5, "  【次のセッションで試せること】")
+                    self._set_font_regular(9)
+                    self.set_text_color(51, 51, 51)
+                    self.set_x(self.l_margin)
+                    self.multi_cell(w, 5, "  " + imp.get("next_action", ""))
+                    self.ln(2)
+                else:
+                    # 旧形式（後方互換）
+                    self.multi_cell(w, 5, "  " + imp)
 
             self.ln(6)
 
@@ -389,9 +407,11 @@ def generate_report(
 
     competencies = analysis["competencies"]
     avg_score = sum(c["score"] for c in competencies) / len(competencies)
-    pcc_fulfillment_rate = analysis.get("pcc_fulfillment_rate", 0.0)
-    mcc_avg_score = analysis.get("mcc_evaluation", {}).get("avg_score")
-    qualification_statuses = get_qualification_statuses(avg_score, pcc_fulfillment_rate, mcc_avg_score)
+    qualification_statuses = get_qualification_statuses(
+        avg_score,
+        analysis.get("pcc_fulfillment_rate", 0.0),
+        analysis.get("mcc_avg_score"),
+    )
 
     chart_png = _generate_radar_chart_png(competencies)
 
