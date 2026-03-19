@@ -248,17 +248,19 @@ python main.py --input session.mp4 --output ./reports/
 
 ### ⚠️ 本番環境ファイルの参照ルール
 
-**コードを確認・修正する際は必ず `backend/` 配下のファイルを参照すること。**
+**⚠️ 重要：Railway は `modules/`（ルート直下）を参照する**
 
-| 役割 | 参照すべきファイル | 参照してはいけないファイル |
-|------|-------------------|--------------------------|
-| 分析ロジック | `backend/modules/analyzer.py` | `modules/analyzer.py`（CLI用） |
-| PDF生成 | `backend/modules/reporter.py` | `modules/reporter.py`（CLI用） |
-| 文字起こし | `backend/modules/transcriber.py` | `modules/transcriber.py`（CLI用） |
+`backend/main.py` が起動時に `sys.path.insert(0, Path(__file__).parent.parent)` でリポジトリルートをパスに追加するため、`from modules.xxx import` はルート直下の `modules/` が優先される。
 
-- `modules/`（ルート直下）はCLI版のファイルであり本番環境では使われない
-- CLI版を更新した場合は `backend/modules/` にも必ず同期すること
-- フィードバック対応・バグ修正・機能確認のいずれの場合も同様
+| 役割 | Railwayが実際に使うファイル | 使われないファイル |
+|------|----------------------------|--------------------|
+| 分析ロジック | `modules/analyzer.py` | `backend/modules/analyzer.py` |
+| PDF生成 | `modules/reporter.py` | `backend/modules/reporter.py` |
+| 文字起こし | `modules/transcriber.py` | `backend/modules/transcriber.py` |
+
+- バグ修正・機能追加は **`modules/`（ルート直下）** を編集すること
+- 変更後は `backend/modules/` にもコピーして同期すること（どちらが使われるか将来変わる可能性に備えて）
+- フィードバック対応・コード確認も `modules/`（ルート直下）を参照すること
 
 ### デプロイ前の確認事項
 ファイルを追加・変更した後は必ず `git status` で未追跡ファイル（Untracked files）がないか確認すること。
