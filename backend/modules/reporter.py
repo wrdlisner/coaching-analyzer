@@ -8,16 +8,33 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 import numpy as np
 from fpdf import FPDF
 
 from modules.analyzer import get_qualification_statuses
 from modules.transcriber import format_timestamp
 
-# フォントファイルパス（プロジェクトルートに配置）
+# フォントファイルパス（IPA フォントを優先、なければプロジェクトルートの Meiryo を使用）
+_IPA_REGULAR = "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf"
+_IPA_BOLD = "/usr/share/fonts/opentype/ipafont-gothic/ipagp.ttf"
 _PROJECT_ROOT = Path(__file__).parent.parent
-_FONT_REGULAR = str(_PROJECT_ROOT / "meiryo_regular.ttf")
-_FONT_BOLD = str(_PROJECT_ROOT / "meiryo_bold.ttf")
+_MEIRYO_REGULAR = str(_PROJECT_ROOT / "meiryo_regular.ttf")
+_MEIRYO_BOLD = str(_PROJECT_ROOT / "meiryo_bold.ttf")
+
+if Path(_IPA_REGULAR).exists():
+    _FONT_REGULAR = _IPA_REGULAR
+    _FONT_BOLD = _IPA_BOLD
+else:
+    _FONT_REGULAR = _MEIRYO_REGULAR
+    _FONT_BOLD = _MEIRYO_BOLD
+
+# matplotlib 用フォント登録
+try:
+    fm.fontManager.addfont(_FONT_REGULAR)
+    _MPL_FONT = fm.FontProperties(fname=_FONT_REGULAR).get_name()
+except Exception:
+    _MPL_FONT = "sans-serif"
 
 
 def _generate_radar_chart_png(competencies: list[dict]) -> bytes:
@@ -37,12 +54,12 @@ def _generate_radar_chart_png(competencies: list[dict]) -> bytes:
     ax.set_yticklabels(["1", "2", "3", "4", "5"], fontsize=8, color="#999")
 
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels(labels, fontsize=9, fontfamily="Yu Gothic")
+    ax.set_xticklabels(labels, fontsize=9, fontfamily=_MPL_FONT)
 
     ax.plot(angles, scores_plot, "o-", linewidth=2, color="#3b82f6")
     ax.fill(angles, scores_plot, alpha=0.25, color="#3b82f6")
 
-    ax.set_title("ICFコンピテンシー別スコア", fontsize=14, fontfamily="Yu Gothic", pad=20)
+    ax.set_title("ICFコンピテンシー別スコア", fontsize=14, fontfamily=_MPL_FONT, pad=20)
     plt.tight_layout()
 
     buf = io.BytesIO()
