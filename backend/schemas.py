@@ -125,6 +125,17 @@ class AnalyzeResponse(BaseModel):
     avg_score: float
 
 
+class JobAcceptedResponse(BaseModel):
+    job_id: UUID
+
+
+class JobStatusResponse(BaseModel):
+    job_id: UUID
+    status: str  # pending | processing | completed | failed
+    session_id: Optional[UUID] = None
+    error_message: Optional[str] = None
+
+
 # ---- Trends ----
 
 class TrendDataPoint(BaseModel):

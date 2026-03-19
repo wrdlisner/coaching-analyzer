@@ -142,17 +142,27 @@ export const sessions = {
 
 // ---- Analyze ----
 
-export interface AnalyzeResponse {
-  session_id: string
-  avg_score: number
+export interface JobAcceptedResponse {
+  job_id: string
+}
+
+export interface JobStatusResponse {
+  job_id: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  session_id: string | null
+  error_message: string | null
 }
 
 export const analyze = {
-  async submitAnalysis(file: File, sessionType: 'initial' | 'follow_up' = 'initial'): Promise<AnalyzeResponse> {
+  async submitAnalysis(file: File, sessionType: 'initial' | 'follow_up' = 'initial'): Promise<JobAcceptedResponse> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('session_type', sessionType)
     return apiRequest('POST', '/api/analyze', formData, true)
+  },
+
+  async getJobStatus(jobId: string): Promise<JobStatusResponse> {
+    return apiRequest('GET', `/api/analyze/status/${jobId}`)
   },
 }
 

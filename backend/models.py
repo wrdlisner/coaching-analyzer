@@ -92,6 +92,22 @@ class Notice(Base):
     reads = relationship("NoticeRead", back_populates="notice")
 
 
+class AnalysisJob(Base):
+    __tablename__ = "analysis_jobs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    status = Column(
+        SAEnum("pending", "processing", "completed", "failed", name="job_status_enum"),
+        nullable=False,
+        default="pending",
+    )
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class NoticeRead(Base):
     __tablename__ = "notice_reads"
 

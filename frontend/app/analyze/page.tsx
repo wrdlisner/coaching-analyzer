@@ -133,18 +133,39 @@ export default function AnalyzePage() {
     setError('')
     startProgressSimulation(file)
 
+    let jobId: string
     try {
-      const result = await analyze.submitAnalysis(file, sessionType)
-      if (progressInterval.current) clearInterval(progressInterval.current)
-      setProgress(100)
-      setTimeout(() => router.push(`/report/${result.session_id}`), 400)
+      const accepted = await analyze.submitAnalysis(file, sessionType)
+      jobId = accepted.job_id
     } catch (err: unknown) {
       if (progressInterval.current) clearInterval(progressInterval.current)
-      const message = err instanceof Error ? err.message : '分析に失敗しました'
+      const message = err instanceof Error ? err.message : '分析の開始に失敗しました'
       setError(message)
       setStep(2)
       setProgress(0)
+      return
     }
+
+    // ポーリングでジョブ完了を待つ
+    const pollInterval = setInterval(async () => {
+      try {
+        const status = await analyze.getJobStatus(jobId)
+        if (status.status === 'completed' && status.session_id) {
+          clearInterval(pollInterval)
+          if (progressInterval.current) clearInterval(progressInterval.current)
+          setProgress(100)
+          setTimeout(() => router.push(`/report/${status.session_id}`), 400)
+        } else if (status.status === 'failed') {
+          clearInterval(pollInterval)
+          if (progressInterval.current) clearInterval(progressInterval.current)
+          setError(status.error_message || '分析に失敗しました')
+          setStep(2)
+          setProgress(0)
+        }
+      } catch {
+        // ポーリング失敗は一時的なものとして無視し、次のポーリングで再試行
+      }
+    }, 5000)
   }
 
   const disclaimerItems = [
