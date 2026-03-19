@@ -6,7 +6,7 @@ load_dotenv()
 ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
+CLAUDE_MODEL = "claude-sonnet-4-5"
 
 ICF_COMPETENCIES = [
     {"id": 1, "name": "倫理に従った実践"},
