@@ -451,7 +451,7 @@ export default function AdminPage() {
                 <tbody>
                   {feedbacks.map((fb) => {
                     const isExpanded = expandedComments.has(fb.id)
-                    const isLong = fb.comment != null && fb.comment.length > 100
+                    const isLong = fb.comment != null && (fb.comment.length > 60 || fb.comment.split('\n').length > 3)
                     return (
                       <tr key={fb.id} className="border-b hover:bg-gray-50">
                         <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
