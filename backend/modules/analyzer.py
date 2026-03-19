@@ -359,10 +359,15 @@ def analyze_session(utterances: list[dict], is_follow_up: bool = False) -> dict:
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     message = client.messages.create(
         model=CLAUDE_MODEL,
-        max_tokens=10000,
+        max_tokens=16000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
+
+    logger.info(f"[analyzer] stop_reason={message.stop_reason}, output_tokens={message.usage.output_tokens}")
+
+    if message.stop_reason == "max_tokens":
+        raise RuntimeError("Claude のレスポンスがトークン上限に達し、JSONが不完全です。セッションを短くして再試行してください。")
 
     response_text = message.content[0].text
 
@@ -374,7 +379,13 @@ def analyze_session(utterances: list[dict], is_follow_up: bool = False) -> dict:
     else:
         json_str = response_text.strip()
 
-    result = json.loads(json_str)
+    # 文字列値内の生の改行をエスケープ（Claude が稀に出力する不正JSON対策）
+    try:
+        result = json.loads(json_str)
+    except json.JSONDecodeError:
+        import re
+        json_str_fixed = re.sub(r'(?<!\\)\n', '\\n', json_str)
+        result = json.loads(json_str_fixed)
 
     # -----------------------------------------------------------------------
     # PCCマーカー充足率 → スコア の後処理
