@@ -29,6 +29,13 @@ const REASON_LABELS: Record<string, string> = {
   bonus: '新規登録ボーナス',
 }
 
+const ICF_LEVEL_LABELS: Record<string, string> = {
+  none: '未取得',
+  acc: 'ACC',
+  pcc: 'PCC',
+  mcc: 'MCC',
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -37,6 +44,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [profileForm, setProfileForm] = useState({ icf_level: 'none' })
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileError, setProfileError] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -47,6 +58,7 @@ export default function DashboardPage() {
           credits.getHistory(),
         ])
         setUser(userData)
+        setProfileForm({ icf_level: userData.icf_level })
         setSessionList(sessionsData)
         setCreditHistory(creditsData)
       } catch {
@@ -69,6 +81,20 @@ export default function DashboardPage() {
   const handleLogout = () => {
     removeToken()
     router.push('/login')
+  }
+
+  const handleSaveProfile = async () => {
+    setProfileSaving(true)
+    setProfileError('')
+    try {
+      const updated = await auth.updateProfile({ icf_level: profileForm.icf_level })
+      setUser(updated)
+      setEditingProfile(false)
+    } catch (err: unknown) {
+      setProfileError(err instanceof Error ? err.message : '保存に失敗しました')
+    } finally {
+      setProfileSaving(false)
+    }
   }
 
   if (loading) {
@@ -163,6 +189,68 @@ export default function DashboardPage() {
               分析を開始
             </Link>
           </div>
+        </div>
+
+        {/* Profile settings */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">プロフィール設定</h2>
+            {!editingProfile && (
+              <button
+                onClick={() => {
+                  setProfileForm({ icf_level: user?.icf_level || 'none' })
+                  setProfileError('')
+                  setEditingProfile(true)
+                }}
+                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+              >
+                編集
+              </button>
+            )}
+          </div>
+
+          {editingProfile ? (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  ICF資格レベル
+                </label>
+                <select
+                  className="input-field"
+                  value={profileForm.icf_level}
+                  onChange={(e) => setProfileForm({ ...profileForm, icf_level: e.target.value })}
+                >
+                  <option value="none">未取得</option>
+                  <option value="acc">ACC</option>
+                  <option value="pcc">PCC</option>
+                  <option value="mcc">MCC</option>
+                </select>
+              </div>
+              {profileError && (
+                <p className="text-sm text-red-600">{profileError}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={profileSaving}
+                  className="btn-primary flex-1 py-2 text-sm"
+                >
+                  {profileSaving ? '保存中...' : '保存する'}
+                </button>
+                <button
+                  onClick={() => setEditingProfile(false)}
+                  className="btn-secondary flex-1 py-2 text-sm"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-700">
+              <span className="text-gray-500">ICF資格レベル：</span>
+              <span className="font-medium ml-1">{ICF_LEVEL_LABELS[user?.icf_level || 'none']}</span>
+            </div>
+          )}
         </div>
 
         {/* Sessions */}

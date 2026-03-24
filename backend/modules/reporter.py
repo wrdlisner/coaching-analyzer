@@ -190,18 +190,29 @@ class CoachingReportPDF(FPDF):
 
         self.ln(6)
 
-        # ICF資格別合格可能性
+        # ICF資格別参考スコア水準
         if qualification_statuses:
             self._set_font_bold(11)
             self.set_text_color(26, 54, 93)
-            self.cell(0, 8, "ICF資格別 合格可能性", new_x="LEFT", new_y="NEXT")
+            self.cell(0, 8, "ICF資格別 参考スコア水準（AI判定）", new_x="LEFT", new_y="NEXT")
 
             self._set_font_regular(10)
             self.set_text_color(51, 51, 51)
             for qs in qualification_statuses:
-                line = f"{qs['icon']} {qs['name']}（{qs['threshold']}基準）：{qs['label']}"
+                line = f"{qs['icon']} {qs['name']}（参考基準スコア {qs['threshold']}）：{qs['label']}"
                 self.set_x(self.l_margin + 4)
                 self.cell(0, 7, line, new_x="LMARGIN", new_y="NEXT")
+
+            # 免責注釈
+            self.ln(1)
+            self._set_font_regular(8)
+            self.set_text_color(120, 120, 120)
+            self.set_x(self.l_margin + 4)
+            self.multi_cell(
+                self.w - self.l_margin - self.r_margin - 4,
+                5,
+                "※ AIによる参考判定です。ICF公式審査の合否を保証するものではありません。",
+            )
 
             if qualification_comment:
                 self.ln(2)

@@ -104,6 +104,10 @@ export const auth = {
   async getMe(): Promise<UserInfo> {
     return apiRequest('GET', '/api/auth/me')
   },
+
+  async updateProfile(data: { name?: string; icf_level?: string }): Promise<UserInfo> {
+    return apiRequest('PATCH', '/api/auth/me', data)
+  },
 }
 
 // ---- Sessions ----

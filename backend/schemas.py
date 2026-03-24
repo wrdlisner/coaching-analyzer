@@ -64,6 +64,11 @@ class AdminUserResponse(BaseModel):
         from_attributes = True
 
 
+class UpdateProfileRequest(BaseModel):
+    name: Optional[str] = None
+    icf_level: Optional[str] = None
+
+
 class UpdateCreditsRequest(BaseModel):
     amount: int
     reason: str = "bonus"

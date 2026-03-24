@@ -65,3 +65,21 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserResponse)
 def get_me(current_user: models.User = Depends(auth_utils.get_current_user)):
     return current_user
+
+
+@router.patch("/me", response_model=schemas.UserResponse)
+def update_me(
+    body: schemas.UpdateProfileRequest,
+    current_user: models.User = Depends(auth_utils.get_current_user),
+    db: Session = Depends(get_db),
+):
+    if body.name is not None:
+        current_user.name = body.name.strip()
+    if body.icf_level is not None:
+        icf_level = body.icf_level.lower()
+        if icf_level not in ("acc", "pcc", "mcc", "none"):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="icf_level は acc / pcc / mcc / none のいずれかを指定してください")
+        current_user.icf_level = icf_level
+    db.commit()
+    db.refresh(current_user)
+    return current_user
