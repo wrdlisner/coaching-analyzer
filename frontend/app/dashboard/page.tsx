@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { auth, sessions, credits, notices, payments, removeToken, UserInfo, SessionSummary, CreditRecord, Notice } from '@/lib/api'
@@ -42,7 +42,7 @@ const PACK_OPTIONS: { pack: '1' | '3' | '10'; label: string; price: string; cred
   { pack: '10', label: '10回パック', price: '¥3,500', credits: 10 },
 ]
 
-export default function DashboardPage() {
+function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
@@ -390,5 +390,13 @@ export default function DashboardPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-500">読み込み中...</div></div>}>
+      <DashboardContent />
+    </Suspense>
   )
 }
