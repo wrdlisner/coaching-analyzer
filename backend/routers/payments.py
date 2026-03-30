@@ -1,5 +1,6 @@
 """Payments router: Stripe Checkout and Webhook"""
 
+import json
 import logging
 import os
 
@@ -105,8 +106,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     except stripe.error.SignatureVerificationError:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signature")
 
-    if event["type"] == "checkout.session.completed":
-        session_obj = event["data"]["object"]
+    # stripe-python v5以降はStripeObjectが.get()非対応のため、rawペイロードをdictで扱う
+    event_dict = json.loads(payload)
+
+    if event_dict.get("type") == "checkout.session.completed":
+        session_obj = event_dict["data"]["object"]
         metadata = session_obj.get("metadata", {})
         user_id = metadata.get("user_id")
         credits_to_add = metadata.get("credits_to_add")
