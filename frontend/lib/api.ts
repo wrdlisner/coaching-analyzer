@@ -264,6 +264,14 @@ export const notices = {
   },
 }
 
+// ---- Payments ----
+
+export const payments = {
+  async createCheckout(pack: '1' | '3' | '10'): Promise<{ url: string }> {
+    return apiRequest('POST', '/api/payments/checkout', { pack })
+  },
+}
+
 export const adminNotices = {
   async list(): Promise<Notice[]> {
     return apiRequest('GET', '/api/admin/notices')

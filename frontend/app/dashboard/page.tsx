@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { auth, sessions, credits, notices, removeToken, UserInfo, SessionSummary, CreditRecord, Notice } from '@/lib/api'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { auth, sessions, credits, notices, payments, removeToken, UserInfo, SessionSummary, CreditRecord, Notice } from '@/lib/api'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -36,8 +36,16 @@ const ICF_LEVEL_LABELS: Record<string, string> = {
   mcc: 'MCC',
 }
 
+const PACK_OPTIONS: { pack: '1' | '3' | '10'; label: string; price: string; credits: number }[] = [
+  { pack: '1', label: '1回', price: '¥500', credits: 1 },
+  { pack: '3', label: '3回パック', price: '¥1,200', credits: 3 },
+  { pack: '10', label: '10回パック', price: '¥3,500', credits: 10 },
+]
+
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const paymentStatus = searchParams.get('payment')
   const [user, setUser] = useState<UserInfo | null>(null)
   const [sessionList, setSessionList] = useState<SessionSummary[]>([])
   const [creditHistory, setCreditHistory] = useState<CreditRecord[]>([])
@@ -48,6 +56,8 @@ export default function DashboardPage() {
   const [profileForm, setProfileForm] = useState({ icf_level: 'none' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileError, setProfileError] = useState('')
+  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const [purchaseError, setPurchaseError] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -81,6 +91,18 @@ export default function DashboardPage() {
   const handleLogout = () => {
     removeToken()
     router.push('/login')
+  }
+
+  const handlePurchase = async (pack: '1' | '3' | '10') => {
+    setPurchaseLoading(pack)
+    setPurchaseError('')
+    try {
+      const { url } = await payments.createCheckout(pack)
+      window.location.href = url
+    } catch (err: unknown) {
+      setPurchaseError(err instanceof Error ? err.message : '決済の開始に失敗しました')
+      setPurchaseLoading(null)
+    }
   }
 
   const handleSaveProfile = async () => {
@@ -189,6 +211,43 @@ export default function DashboardPage() {
               分析を開始
             </Link>
           </div>
+        </div>
+
+        {/* Payment result messages */}
+        {paymentStatus === 'success' && (
+          <div className="bg-green-50 border border-green-200 rounded-lg px-5 py-4 text-green-800 font-medium">
+            購入完了！クレジットが追加されました。
+          </div>
+        )}
+        {paymentStatus === 'cancel' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-5 py-4 text-yellow-800 font-medium">
+            購入をキャンセルしました。
+          </div>
+        )}
+
+        {/* Credit purchase */}
+        <div className="card">
+          <h2 className="text-base font-bold text-gray-900 mb-4">クレジットを購入</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {PACK_OPTIONS.map((option) => (
+              <button
+                key={option.pack}
+                onClick={() => handlePurchase(option.pack)}
+                disabled={purchaseLoading !== null}
+                className="border border-blue-200 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <div className="text-sm font-semibold text-gray-700 mb-1">{option.label}</div>
+                <div className="text-xl font-bold text-blue-600 mb-1">{option.price}</div>
+                <div className="text-xs text-gray-500">{option.credits}クレジット</div>
+                {purchaseLoading === option.pack && (
+                  <div className="text-xs text-blue-500 mt-1">処理中...</div>
+                )}
+              </button>
+            ))}
+          </div>
+          {purchaseError && (
+            <p className="text-sm text-red-600 mt-3">{purchaseError}</p>
+          )}
         </div>
 
         {/* Profile settings */}

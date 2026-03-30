@@ -13,3 +13,4 @@ assemblyai
 matplotlib
 numpy
 apscheduler
+stripe

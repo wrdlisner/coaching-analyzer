@@ -16,7 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base, SessionLocal
 import models  # noqa: F401 - ensure models are registered
 
-from routers import auth, analyze, sessions, feedback, admin, notices
+from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +54,8 @@ app.include_router(sessions.router)
 app.include_router(feedback.router)
 app.include_router(admin.router)
 app.include_router(notices.router)
+app.include_router(manager.router)
+app.include_router(payments.router)
 
 
 def delete_expired_sessions():
