@@ -53,39 +53,6 @@ def submit_feedback(
     return schemas.SuccessResponse()
 
 
-@router.post("/sessions/{session_id}/share", response_model=schemas.SuccessResponse)
-def confirm_share(
-    session_id: UUID,
-    body: schemas.ShareRequest,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth_utils.get_current_user),
-):
-    session = db.query(models.Session).filter(models.Session.id == session_id).first()
-    if not session:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="セッションが見つかりません")
-    if session.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="アクセス権限がありません")
-
-    # Check if user has already received sns_share credit
-    already_shared = db.query(models.Credit).filter(
-        models.Credit.user_id == current_user.id,
-        models.Credit.reason == "sns_share",
-    ).first()
-    if already_shared:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="シェアボーナスは1回のみ付与されます")
-
-    # Give +1 credit for SNS share
-    current_user.credits += 1
-    credit_record = models.Credit(
-        user_id=current_user.id,
-        amount=1,
-        reason="sns_share",
-    )
-    db.add(credit_record)
-    db.commit()
-
-    return schemas.SuccessResponse()
-
 
 @router.get("/credits", response_model=List[schemas.CreditResponse])
 def get_credit_history(

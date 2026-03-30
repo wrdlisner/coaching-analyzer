@@ -107,10 +107,6 @@ class AdminFeedbackResponse(BaseModel):
     created_at: UTCDatetime
 
 
-class ShareRequest(BaseModel):
-    post_url: str
-
-
 # ---- Credits ----
 
 class CreditResponse(BaseModel):

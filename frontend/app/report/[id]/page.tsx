@@ -43,10 +43,6 @@ export default function ReportPage() {
 
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [loading, setLoading] = useState(true)
-  const [shareUrl, setShareUrl] = useState('')
-  const [showShareInput, setShowShareInput] = useState(false)
-  const [shareSuccess, setShareSuccess] = useState(false)
-  const [shareLoading, setShareLoading] = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
 
   useEffect(() => {
@@ -54,15 +50,10 @@ export default function ReportPage() {
       router.push('/login')
       return
     }
-    Promise.all([
-      sessions.get(id),
-      credits.getHistory(),
-    ]).then(([sessionData, creditHistory]) => {
-      setSession(sessionData)
-      if (creditHistory.some((c) => c.reason === 'sns_share')) {
-        setShareSuccess(true)
-      }
-    }).catch(() => router.push('/dashboard')).finally(() => setLoading(false))
+    sessions.get(id)
+      .then((sessionData) => setSession(sessionData))
+      .catch(() => router.push('/dashboard'))
+      .finally(() => setLoading(false))
   }, [id, router])
 
   const handleDownloadPdf = async () => {
@@ -88,30 +79,7 @@ export default function ReportPage() {
     }
   }
 
-  const handleShareX = () => {
-    const text = encodeURIComponent(
-      `ICFコーチングセッションをAI分析しました！平均スコア: ${session?.avg_score.toFixed(1)}/5.0\n#ICFコーチング #コーチング分析`
-    )
-    const url = encodeURIComponent('https://coaching-analyzer.example.com')
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank')
-    setShowShareInput(true)
-  }
-
-  const handleConfirmShare = async () => {
-    if (!shareUrl.trim()) return
-    setShareLoading(true)
-    try {
-      await feedback.confirmShare(id, shareUrl)
-      setShareSuccess(true)
-      setShowShareInput(false)
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : 'シェア確認に失敗しました')
-    } finally {
-      setShareLoading(false)
-    }
-  }
-
-  if (loading) {
+if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">読み込み中...</div>
@@ -271,42 +239,6 @@ export default function ReportPage() {
             フィードバックを送る (+1クレジット)
           </Link>
 
-          {/* X share */}
-          {!shareSuccess ? (
-            <div>
-              <button
-                onClick={handleShareX}
-                className="w-full py-3 bg-black hover:bg-gray-800 text-white font-semibold rounded-lg transition-colors flex items-center justify-center"
-              >
-                Xでシェアする (+1クレジット)
-              </button>
-              {showShareInput && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm text-gray-600">
-                    投稿したXのURLを入力してクレジットを獲得してください
-                  </p>
-                  <input
-                    type="url"
-                    className="input-field"
-                    placeholder="https://twitter.com/..."
-                    value={shareUrl}
-                    onChange={(e) => setShareUrl(e.target.value)}
-                  />
-                  <button
-                    onClick={handleConfirmShare}
-                    disabled={shareLoading || !shareUrl.trim()}
-                    className="btn-primary w-full"
-                  >
-                    {shareLoading ? '確認中...' : 'シェアを確認する'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3 text-center font-semibold">
-              +1クレジット獲得！ありがとうございます
-            </div>
-          )}
         </div>
       </main>
     </div>

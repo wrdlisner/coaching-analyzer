@@ -25,8 +25,8 @@ function formatDuration(seconds: number): string {
 const REASON_LABELS: Record<string, string> = {
   analysis: '分析実行',
   feedback: 'フィードバック',
-  sns_share: 'Xシェア',
   bonus: '新規登録ボーナス',
+  referral: '友達紹介ボーナス',
 }
 
 const ICF_LEVEL_LABELS: Record<string, string> = {

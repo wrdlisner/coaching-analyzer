@@ -179,13 +179,6 @@ export const feedback = {
   ): Promise<{ success: boolean }> {
     return apiRequest('POST', `/api/feedback/${sessionId}`, data)
   },
-
-  async confirmShare(
-    sessionId: string,
-    postUrl: string,
-  ): Promise<{ success: boolean }> {
-    return apiRequest('POST', `/api/sessions/${sessionId}/share`, { post_url: postUrl })
-  },
 }
 
 // ---- Admin ----
