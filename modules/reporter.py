@@ -255,18 +255,18 @@ class CoachingReportPDF(FPDF):
             self.cell(0, 8, f"{comp['id']}. {comp['name']}", new_x="LEFT", new_y="NEXT")
 
             # スコア
-            self._set_font_bold(18)
+            self._set_font_bold(14)
             self.set_text_color(59, 130, 246)
             score_text = f"{comp['score']}"
-            self.cell(15, 10, score_text)
+            self.cell(12, 8, score_text)
             self._set_font_regular(10)
             self.set_text_color(150, 150, 150)
-            self.cell(15, 10, "/ 5")
+            self.cell(12, 8, "/ 5")
             # 星
             stars = "★" * round(comp["score"]) + "☆" * (5 - round(comp["score"]))
             self.set_text_color(59, 130, 246)
-            self._set_font_regular(12)
-            self.cell(0, 10, stars, new_x="LEFT", new_y="NEXT")
+            self._set_font_regular(10)
+            self.cell(0, 8, stars, new_x="LEFT", new_y="NEXT")
 
             self.set_text_color(51, 51, 51)
 
@@ -278,55 +278,55 @@ class CoachingReportPDF(FPDF):
             self.ln(2)
 
             # 根拠となる発言
-            self._set_font_bold(9)
+            self._set_font_bold(10)
             self.set_text_color(74, 85, 104)
             self.set_x(self.l_margin)
             self.cell(w, 6, "根拠となる発言", new_x="LEFT", new_y="NEXT")
-            self._set_font_regular(9)
+            self._set_font_regular(10)
             self.set_text_color(51, 51, 51)
             for q in comp.get("quotes", []):
                 self.set_x(self.l_margin)
-                self.multi_cell(w, 5, "  " + q)
+                self.multi_cell(w, 6, "  " + q)
             self.ln(2)
 
             # 改善提案
-            self._set_font_bold(9)
+            self._set_font_bold(10)
             self.set_text_color(74, 85, 104)
             self.set_x(self.l_margin)
             self.cell(w, 6, "改善提案", new_x="LEFT", new_y="NEXT")
-            self._set_font_regular(9)
+            self._set_font_regular(10)
             self.set_text_color(51, 51, 51)
             for imp in comp.get("improvements", []):
                 self.set_x(self.l_margin)
                 if isinstance(imp, dict):
                     # 3層構造（v4以降）
-                    self._set_font_bold(9)
+                    self._set_font_bold(10)
                     self.set_text_color(45, 55, 72)
-                    self.multi_cell(w, 5, "  【改善提案】")
-                    self._set_font_regular(9)
+                    self.multi_cell(w, 6, "  【改善提案】")
+                    self._set_font_regular(10)
                     self.set_text_color(51, 51, 51)
                     self.set_x(self.l_margin)
-                    self.multi_cell(w, 5, "  " + imp.get("proposal", ""))
+                    self.multi_cell(w, 6, "  " + imp.get("proposal", ""))
                     self.set_x(self.l_margin)
-                    self._set_font_bold(9)
+                    self._set_font_bold(10)
                     self.set_text_color(45, 55, 72)
-                    self.multi_cell(w, 5, "  【メンター視点からの具体的アドバイス】")
-                    self._set_font_regular(9)
+                    self.multi_cell(w, 6, "  【メンター視点からの具体的アドバイス】")
+                    self._set_font_regular(10)
                     self.set_text_color(51, 51, 51)
                     self.set_x(self.l_margin)
-                    self.multi_cell(w, 5, "  " + imp.get("mentor_advice", ""))
+                    self.multi_cell(w, 6, "  " + imp.get("mentor_advice", ""))
                     self.set_x(self.l_margin)
-                    self._set_font_bold(9)
+                    self._set_font_bold(10)
                     self.set_text_color(45, 55, 72)
-                    self.multi_cell(w, 5, "  【次のセッションで試せること】")
-                    self._set_font_regular(9)
+                    self.multi_cell(w, 6, "  【次のセッションで試せること】")
+                    self._set_font_regular(10)
                     self.set_text_color(51, 51, 51)
                     self.set_x(self.l_margin)
-                    self.multi_cell(w, 5, "  " + imp.get("next_action", ""))
+                    self.multi_cell(w, 6, "  " + imp.get("next_action", ""))
                     self.ln(2)
                 else:
                     # 旧形式（後方互換）
-                    self.multi_cell(w, 5, "  " + imp)
+                    self.multi_cell(w, 6, "  " + imp)
 
             self.ln(6)
 
