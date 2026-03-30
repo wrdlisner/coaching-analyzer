@@ -58,7 +58,7 @@ class Credit(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     amount = Column(Integer, nullable=False)
     reason = Column(
-        SAEnum("analysis", "feedback", "bonus", "referral", name="credit_reason_enum"),
+        SAEnum("analysis", "feedback", "bonus", "referral", "purchase", name="credit_reason_enum"),
         nullable=False
     )
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

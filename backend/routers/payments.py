@@ -137,7 +137,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         credit_record = models.Credit(
             user_id=user.id,
             amount=credits_int,
-            reason="bonus",
+            reason="purchase",
         )
         db.add(credit_record)
         db.commit()

@@ -27,6 +27,7 @@ const REASON_LABELS: Record<string, string> = {
   feedback: 'フィードバック',
   bonus: '新規登録ボーナス',
   referral: '友達紹介ボーナス',
+  purchase: 'クレジット購入',
 }
 
 const ICF_LEVEL_LABELS: Record<string, string> = {
