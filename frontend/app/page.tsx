@@ -152,18 +152,19 @@ export default function LandingPage() {
           <h2 className="text-2xl font-bold mb-4">クレジット制で始めやすい</h2>
           <p className="text-blue-100 mb-8 max-w-xl mx-auto">
             無料登録で1クレジット付与。1回の分析に1クレジット消費。
-            フィードバック投稿やXシェアでクレジットを獲得できます。
+            クレジットの追加購入や、さまざまな方法で獲得できます。
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto text-sm">
             {[
               { label: '新規登録', amount: '+1', desc: 'ボーナスクレジット' },
-              { label: 'フィードバック投稿', amount: '+1', desc: 'クレジット獲得' },
-              { label: 'Xシェア', amount: '+1', desc: 'クレジット獲得' },
+              { label: 'フィードバック投稿', amount: 'クーポン', desc: '¥100〜¥300割引券' },
+              { label: '友達紹介', amount: '+1', desc: '初回分析完了時' },
+              { label: 'クレジット購入', amount: '¥500〜', desc: '1回分から購入可' },
             ].map((item) => (
-              <div key={item.label} className="bg-white/20 rounded-lg px-6 py-4">
-                <div className="text-2xl font-bold">{item.amount}</div>
-                <div className="font-semibold">{item.label}</div>
-                <div className="text-blue-200 text-xs">{item.desc}</div>
+              <div key={item.label} className="bg-white/20 rounded-lg px-4 py-4">
+                <div className="text-xl font-bold mb-1">{item.amount}</div>
+                <div className="font-semibold text-xs">{item.label}</div>
+                <div className="text-blue-200 text-xs mt-0.5">{item.desc}</div>
               </div>
             ))}
           </div>
@@ -174,9 +175,12 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
           <p>本ツールはAI（Claude）による自動評価です。ICF資格審査の代替ではありません。</p>
-          <p className="mt-3">
+          <p className="mt-3 flex items-center justify-center gap-4 flex-wrap">
             <Link href="/data-policy" className="underline hover:text-gray-700">
               データの取り扱いについて
+            </Link>
+            <Link href="/tokusho" className="underline hover:text-gray-700">
+              特定商取引法に基づく表記
             </Link>
           </p>
           <p className="mt-2">© 2025 CoachingAnalyzer</p>

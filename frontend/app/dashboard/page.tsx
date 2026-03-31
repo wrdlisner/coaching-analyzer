@@ -43,6 +43,58 @@ const PACK_OPTIONS: { pack: '1' | '3' | '10'; label: string; price: string; cred
   { pack: '10', label: '10回パック', price: '¥3,500', credits: 10 },
 ]
 
+function CreditGuideModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-900">クレジットの増やし方</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div className="flex items-start gap-4">
+            <span className="text-2xl">🎁</span>
+            <div>
+              <p className="font-semibold text-sm text-gray-900">新規登録ボーナス</p>
+              <p className="text-sm text-gray-500">登録時に +1クレジット 付与されます。</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <span className="text-2xl">🎟️</span>
+            <div>
+              <p className="font-semibold text-sm text-gray-900">フィードバック投稿でクーポン獲得</p>
+              <p className="text-sm text-gray-500">セッション分析後にフィードバックを送ると、クレジット購入時に使える割引クーポンがもらえます。</p>
+              <div className="mt-2 space-y-1 text-xs text-gray-500">
+                <p>・通常：¥100クーポン</p>
+                <p>・累計3回目：¥200クーポン</p>
+                <p>・累計5回目：¥300クーポン</p>
+                <p className="text-gray-400">（未使用5枚まで保有可能・有効期限30日）</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <span className="text-2xl">👥</span>
+            <div>
+              <p className="font-semibold text-sm text-gray-900">友達紹介ボーナス</p>
+              <p className="text-sm text-gray-500">紹介した友達が初回分析を完了すると +1クレジット 付与されます。紹介URLはこのページの「友達を紹介する」からコピーできます。</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <span className="text-2xl">💳</span>
+            <div>
+              <p className="font-semibold text-sm text-gray-900">クレジット購入</p>
+              <p className="text-sm text-gray-500">1回分（¥500）、3回分（¥1,200）、10回分（¥3,500）のパックから選べます。クーポンコードをお持ちの場合は購入時に入力してください。</p>
+            </div>
+          </div>
+        </div>
+        <div className="px-6 pb-5">
+          <button onClick={onClose} className="btn-primary w-full py-2.5 text-sm">閉じる</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function ReferralSection({ referralCode }: { referralCode: string }) {
   const [copied, setCopied] = useState(false)
   const referralUrl = typeof window !== 'undefined'
@@ -90,6 +142,7 @@ function DashboardContent() {
   const [profileError, setProfileError] = useState('')
   const [couponList, setCouponList] = useState<CouponInfo[]>([])
   const [couponCode, setCouponCode] = useState('')
+  const [showCreditGuide, setShowCreditGuide] = useState(false)
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
   const [purchaseError, setPurchaseError] = useState('')
 
@@ -165,6 +218,7 @@ function DashboardContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showCreditGuide && <CreditGuideModal onClose={() => setShowCreditGuide(false)} />}
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -175,11 +229,14 @@ function DashboardContent() {
             <span className="font-bold text-gray-900">CoachingAnalyzer</span>
           </div>
           <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 flex items-center gap-2">
               <span className="font-medium">{user?.name}</span>
-              <span className="ml-3 bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+              <button
+                onClick={() => setShowCreditGuide(true)}
+                className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold hover:bg-blue-200 transition-colors"
+              >
                 {user?.credits} クレジット
-              </span>
+              </button>
             </div>
             {user?.is_admin && (
               <a href="/admin" className="text-sm text-blue-600 hover:text-blue-800 font-medium">
@@ -467,6 +524,13 @@ function DashboardContent() {
           )}
         </div>
       </main>
+
+      <footer className="border-t border-gray-200 bg-white mt-8">
+        <div className="max-w-6xl mx-auto px-4 py-6 text-center text-xs text-gray-400 flex items-center justify-center gap-4 flex-wrap">
+          <Link href="/data-policy" className="underline hover:text-gray-600">データの取り扱い</Link>
+          <Link href="/tokusho" className="underline hover:text-gray-600">特定商取引法に基づく表記</Link>
+        </div>
+      </footer>
     </div>
   )
 }
