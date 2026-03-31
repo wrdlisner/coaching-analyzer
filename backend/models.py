@@ -32,6 +32,7 @@ class User(Base):
     sessions = relationship("Session", back_populates="user")
     credit_records = relationship("Credit", back_populates="user")
     notice_reads = relationship("NoticeRead", back_populates="user")
+    coupons = relationship("Coupon", back_populates="user")
 
 
 class Session(Base):
@@ -118,3 +119,17 @@ class NoticeRead(Base):
 
     user = relationship("User", back_populates="notice_reads")
     notice = relationship("Notice", back_populates="reads")
+
+
+class Coupon(Base):
+    __tablename__ = "coupons"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    code = Column(String(20), unique=True, nullable=False, index=True)
+    discount_amount = Column(Integer, nullable=False)  # ¥100 / 200 / 300
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User", back_populates="coupons")

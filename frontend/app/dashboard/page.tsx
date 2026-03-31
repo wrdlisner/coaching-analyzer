@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { auth, sessions, credits, notices, payments, removeToken, UserInfo, SessionSummary, CreditRecord, Notice } from '@/lib/api'
+import { auth, sessions, credits, coupons, notices, payments, removeToken, UserInfo, SessionSummary, CreditRecord, Notice, CouponInfo } from '@/lib/api'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -57,21 +57,25 @@ function DashboardContent() {
   const [profileForm, setProfileForm] = useState({ icf_level: 'none' })
   const [profileSaving, setProfileSaving] = useState(false)
   const [profileError, setProfileError] = useState('')
+  const [couponList, setCouponList] = useState<CouponInfo[]>([])
+  const [couponCode, setCouponCode] = useState('')
   const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
   const [purchaseError, setPurchaseError] = useState('')
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [userData, sessionsData, creditsData] = await Promise.all([
+        const [userData, sessionsData, creditsData, couponsData] = await Promise.all([
           auth.getMe(),
           sessions.list(),
           credits.getHistory(),
+          coupons.list(),
         ])
         setUser(userData)
         setProfileForm({ icf_level: userData.icf_level })
         setSessionList(sessionsData)
         setCreditHistory(creditsData)
+        setCouponList(couponsData)
       } catch {
         router.push('/login')
       } finally {
@@ -98,7 +102,7 @@ function DashboardContent() {
     setPurchaseLoading(pack)
     setPurchaseError('')
     try {
-      const { url } = await payments.createCheckout(pack)
+      const { url } = await payments.createCheckout(pack, couponCode.trim() || undefined)
       window.location.href = url
     } catch (err: unknown) {
       setPurchaseError(err instanceof Error ? err.message : '決済の開始に失敗しました')
@@ -226,6 +230,31 @@ function DashboardContent() {
           </div>
         )}
 
+        {/* Coupon list */}
+        {couponList.length > 0 && (
+          <div className="card">
+            <h2 className="text-base font-bold text-gray-900 mb-4">保有クーポン</h2>
+            <div className="space-y-2">
+              {couponList.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-3"
+                >
+                  <div>
+                    <span className="font-mono font-semibold tracking-widest text-gray-800 mr-3">
+                      {c.code}
+                    </span>
+                    <span className="text-sm font-bold text-blue-600">¥{c.discount_amount} OFF</span>
+                  </div>
+                  <div className="text-xs text-gray-400">
+                    {new Date(c.expires_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })}まで
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Credit purchase */}
         <div className="card">
           <h2 className="text-base font-bold text-gray-900 mb-4">クレジットを購入</h2>
@@ -245,6 +274,18 @@ function DashboardContent() {
                 )}
               </button>
             ))}
+          </div>
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              クーポンコード（任意）
+            </label>
+            <input
+              type="text"
+              className="input-field font-mono uppercase"
+              placeholder="例：FB-A1B2C3"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            />
           </div>
           {purchaseError && (
             <p className="text-sm text-red-600 mt-3">{purchaseError}</p>

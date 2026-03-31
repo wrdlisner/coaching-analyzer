@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
-import { feedback, getToken } from '@/lib/api'
+import { feedback, getToken, CouponInfo } from '@/lib/api'
 
 function StarRating({
   value,
@@ -46,6 +46,80 @@ function StarRating({
   )
 }
 
+function CouponSuccess({ coupon }: { coupon: CouponInfo }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(coupon.code)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const expiresAt = new Date(coupon.expires_at).toLocaleDateString('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+
+  return (
+    <div className="text-center space-y-6">
+      <div className="text-5xl">🎉</div>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">フィードバックありがとうございます！</h2>
+        <p className="text-sm text-gray-500">クーポンを獲得しました</p>
+      </div>
+
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+        <div className="text-3xl font-bold text-blue-600 mb-1">¥{coupon.discount_amount} OFF</div>
+        <div className="text-xs text-gray-500 mb-4">クレジット購入時に使えるクーポン</div>
+        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-3">
+          <span className="flex-1 font-mono text-lg font-semibold tracking-widest text-gray-800">
+            {coupon.code}
+          </span>
+          <button
+            onClick={handleCopy}
+            className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
+          >
+            {copied ? 'コピー済み' : 'コピー'}
+          </button>
+        </div>
+        <p className="text-xs text-gray-400 mt-3">有効期限：{expiresAt}まで</p>
+      </div>
+
+      <p className="text-xs text-gray-500">
+        コードはダッシュボードの「クーポン」からいつでも確認できます
+      </p>
+
+      <Link
+        href="/dashboard"
+        className="btn-primary block w-full py-3 text-center"
+      >
+        ダッシュボードへ
+      </Link>
+    </div>
+  )
+}
+
+function NoCoponSuccess() {
+  return (
+    <div className="text-center space-y-6">
+      <div className="text-5xl">✅</div>
+      <div>
+        <h2 className="text-xl font-bold text-gray-900 mb-1">フィードバックありがとうございます！</h2>
+        <p className="text-sm text-gray-500">
+          未使用クーポンが上限（5枚）に達しているため、今回はクーポンを発行できませんでした。
+        </p>
+      </div>
+      <Link
+        href="/dashboard"
+        className="btn-primary block w-full py-3 text-center"
+      >
+        ダッシュボードへ
+      </Link>
+    </div>
+  )
+}
+
 export default function FeedbackPage() {
   const router = useRouter()
   const params = useParams()
@@ -56,6 +130,7 @@ export default function FeedbackPage() {
   const [comment, setComment] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [submittedCoupon, setSubmittedCoupon] = useState<CouponInfo | null | undefined>(undefined)
 
   useEffect(() => {
     if (!getToken()) {
@@ -72,13 +147,30 @@ export default function FeedbackPage() {
     setError('')
     setLoading(true)
     try {
-      await feedback.submit(id, { satisfaction, accuracy, comment })
-      router.push('/dashboard')
+      const res = await feedback.submit(id, { satisfaction, accuracy, comment })
+      setSubmittedCoupon(res.coupon)
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'フィードバックの送信に失敗しました')
     } finally {
       setLoading(false)
     }
+  }
+
+  // 送信後の表示
+  if (submittedCoupon !== undefined) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-lg">
+          <div className="card">
+            {submittedCoupon ? (
+              <CouponSuccess coupon={submittedCoupon} />
+            ) : (
+              <NoCoponSuccess />
+            )}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -98,7 +190,7 @@ export default function FeedbackPage() {
           <div className="mb-6">
             <h1 className="text-xl font-bold text-gray-900">フィードバック</h1>
             <p className="text-sm text-gray-500 mt-1">
-              送信するとクレジットが +1 付与されます
+              送信すると¥100クーポンをプレゼント（累計3回目は¥200、5回目は¥300）
             </p>
           </div>
 
@@ -145,7 +237,7 @@ export default function FeedbackPage() {
                 disabled={loading || satisfaction === 0 || accuracy === 0}
                 className="btn-primary flex-1 py-3"
               >
-                {loading ? '送信中...' : 'フィードバックを送信 (+1クレジット)'}
+                {loading ? '送信中...' : 'フィードバックを送信'}
               </button>
             </div>
           </form>

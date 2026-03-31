@@ -172,12 +172,34 @@ export const analyze = {
 
 // ---- Feedback ----
 
+export interface CouponInfo {
+  id: string
+  code: string
+  discount_amount: number
+  expires_at: string
+  used_at: string | null
+  created_at: string
+}
+
+export interface FeedbackSubmitResponse {
+  success: boolean
+  coupon: CouponInfo | null
+}
+
 export const feedback = {
   async submit(
     sessionId: string,
     data: { satisfaction: number; accuracy: number; comment: string },
-  ): Promise<{ success: boolean }> {
+  ): Promise<FeedbackSubmitResponse> {
     return apiRequest('POST', `/api/feedback/${sessionId}`, data)
+  },
+}
+
+// ---- Coupons ----
+
+export const coupons = {
+  async list(): Promise<CouponInfo[]> {
+    return apiRequest('GET', '/api/coupons')
   },
 }
 
@@ -267,8 +289,8 @@ export const notices = {
 // ---- Payments ----
 
 export const payments = {
-  async createCheckout(pack: '1' | '3' | '10'): Promise<{ url: string }> {
-    return apiRequest('POST', '/api/payments/checkout', { pack })
+  async createCheckout(pack: '1' | '3' | '10', couponCode?: string): Promise<{ url: string }> {
+    return apiRequest('POST', '/api/payments/checkout', { pack, coupon_code: couponCode || null })
   },
 }
 

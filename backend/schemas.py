@@ -175,6 +175,25 @@ class NoticeUpdateRequest(BaseModel):
     is_published: Optional[bool] = None
 
 
+# ---- Coupons ----
+
+class CouponResponse(BaseModel):
+    id: UUID
+    code: str
+    discount_amount: int
+    expires_at: UTCDatetime
+    used_at: Optional[UTCDatetime]
+    created_at: UTCDatetime
+
+    class Config:
+        from_attributes = True
+
+
+class FeedbackSubmitResponse(BaseModel):
+    success: bool = True
+    coupon: Optional[CouponResponse] = None
+
+
 # ---- Generic ----
 
 class SuccessResponse(BaseModel):
