@@ -43,6 +43,37 @@ const PACK_OPTIONS: { pack: '1' | '3' | '10'; label: string; price: string; cred
   { pack: '10', label: '10回パック', price: '¥3,500', credits: 10 },
 ]
 
+function ReferralSection({ referralCode }: { referralCode: string }) {
+  const [copied, setCopied] = useState(false)
+  const referralUrl = typeof window !== 'undefined'
+    ? `${window.location.origin}/register?ref=${referralCode}`
+    : `/register?ref=${referralCode}`
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(referralUrl)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="card">
+      <h2 className="text-base font-bold text-gray-900 mb-1">友達を紹介する</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        紹介した友達が初回分析を完了すると、あなたに <span className="font-semibold text-blue-600">+1クレジット</span> が付与されます
+      </p>
+      <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3">
+        <span className="flex-1 text-sm text-gray-700 truncate">{referralUrl}</span>
+        <button
+          onClick={handleCopy}
+          className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
+        >
+          {copied ? 'コピー済み' : 'URLをコピー'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -291,6 +322,11 @@ function DashboardContent() {
             <p className="text-sm text-red-600 mt-3">{purchaseError}</p>
           )}
         </div>
+
+        {/* Referral */}
+        {user?.referral_code && (
+          <ReferralSection referralCode={user.referral_code} />
+        )}
 
         {/* Profile settings */}
         <div className="card">

@@ -105,6 +105,20 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         )
         db.add(credit_record)
 
+        # 初回分析完了時：紹介者に+1クレジット付与
+        session_count = db.query(models.Session).filter(
+            models.Session.user_id == user_id
+        ).count()
+        if session_count == 1 and user.referred_by:
+            referrer = db.query(models.User).filter(models.User.id == user.referred_by).first()
+            if referrer:
+                referrer.credits += 1
+                db.add(models.Credit(
+                    user_id=referrer.id,
+                    amount=1,
+                    reason="referral",
+                ))
+
         # ジョブを completed に更新
         job.status = "completed"
         job.session_id = session.id

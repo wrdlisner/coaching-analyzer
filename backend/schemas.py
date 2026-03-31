@@ -25,6 +25,7 @@ class RegisterRequest(BaseModel):
     email: str
     password: str
     icf_level: str = "none"
+    referral_code: Optional[str] = None
 
 
 class LoginRequest(BaseModel):
@@ -44,6 +45,7 @@ class UserResponse(BaseModel):
     icf_level: str
     credits: int
     is_admin: bool
+    referral_code: Optional[str]
     created_at: UTCDatetime
 
     class Config:

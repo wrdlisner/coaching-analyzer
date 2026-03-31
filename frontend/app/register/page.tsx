@@ -1,22 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { auth, setToken } from '@/lib/api'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     icf_level: 'none',
   })
+  const [referralCode, setReferralCode] = useState<string | null>(null)
   const [consents, setConsents] = useState([false, false, false])
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref) setReferralCode(ref)
+  }, [searchParams])
 
   const allConsentsChecked = consents.every(Boolean)
 
@@ -29,7 +36,7 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
     try {
-      const res = await auth.register(form)
+      const res = await auth.register({ ...form, referral_code: referralCode })
       setToken(res.access_token)
       router.push('/dashboard')
     } catch (err: unknown) {
@@ -63,6 +70,12 @@ export default function RegisterPage() {
           <h1 className="text-2xl font-bold text-gray-900">アカウント登録</h1>
           <p className="text-gray-600 text-sm mt-1">無料登録で1クレジット付与</p>
         </div>
+
+        {referralCode && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 text-sm text-blue-800">
+            友達の紹介リンクから登録しています
+          </div>
+        )}
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -177,5 +190,13 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-500">読み込み中...</div></div>}>
+      <RegisterForm />
+    </Suspense>
   )
 }

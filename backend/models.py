@@ -27,6 +27,8 @@ class User(Base):
     )
     credits = Column(Integer, nullable=False, default=0)
     is_admin = Column(Boolean, nullable=False, default=False)
+    referral_code = Column(String(20), unique=True, nullable=True, index=True)
+    referred_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     sessions = relationship("Session", back_populates="user")

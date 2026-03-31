@@ -1,5 +1,8 @@
 """Auth router: register, login, me"""
 
+import random
+import string
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -11,9 +14,17 @@ from database import get_db
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _generate_referral_code(db: Session) -> str:
+    chars = string.ascii_uppercase + string.digits
+    for _ in range(10):
+        code = "".join(random.choices(chars, k=8))
+        if not db.query(models.User).filter(models.User.referral_code == code).first():
+            return code
+    raise RuntimeError("紹介コードの生成に失敗しました")
+
+
 @router.post("/register", response_model=schemas.TokenResponse)
 def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
-    # Check if email already exists
     existing = db.query(models.User).filter(models.User.email == body.email).first()
     if existing:
         raise HTTPException(
@@ -25,17 +36,27 @@ def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
     if icf_level not in ("acc", "pcc", "mcc", "none"):
         icf_level = "none"
 
+    # 紹介者を検索
+    referrer = None
+    if body.referral_code:
+        referrer = db.query(models.User).filter(
+            models.User.referral_code == body.referral_code
+        ).first()
+
+    referral_code = _generate_referral_code(db)
+
     user = models.User(
         name=body.name,
         email=body.email,
         password_hash=auth_utils.hash_password(body.password),
         icf_level=icf_level,
         credits=1,
+        referral_code=referral_code,
+        referred_by=referrer.id if referrer else None,
     )
     db.add(user)
-    db.flush()  # get user.id before commit
+    db.flush()
 
-    # Add bonus credit record
     credit = models.Credit(
         user_id=user.id,
         amount=1,

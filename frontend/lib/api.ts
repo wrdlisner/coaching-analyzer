@@ -78,6 +78,7 @@ export interface UserInfo {
   icf_level: string
   credits: number
   is_admin: boolean
+  referral_code: string | null
   created_at: string
   analysis_count: number
 }
@@ -93,6 +94,7 @@ export const auth = {
     email: string
     password: string
     icf_level: string
+    referral_code?: string | null
   }): Promise<TokenResponse> {
     return apiRequest('POST', '/api/auth/register', data)
   },
