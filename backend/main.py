@@ -96,6 +96,28 @@ def _run_migrations():
             except Exception:
                 conn.rollback()  # 既にカラムが存在する場合はスキップ
 
+    # referral_codeが未設定の既存ユーザーにコードを付与
+    import random
+    import string
+    db = SessionLocal()
+    try:
+        users_without_code = db.query(models.User).filter(models.User.referral_code == None).all()
+        for user in users_without_code:
+            chars = string.ascii_uppercase + string.digits
+            for _ in range(20):
+                code = "".join(random.choices(chars, k=8))
+                if not db.query(models.User).filter(models.User.referral_code == code).first():
+                    user.referral_code = code
+                    break
+        if users_without_code:
+            db.commit()
+            logger.info(f"既存ユーザー {len(users_without_code)} 件に紹介コードを付与しました")
+    except Exception as e:
+        logger.error(f"紹介コード付与エラー: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
 
 @app.on_event("startup")
 def startup():
