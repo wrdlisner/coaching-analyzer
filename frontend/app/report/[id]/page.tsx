@@ -236,7 +236,7 @@ if (loading) {
             href={`/feedback/${id}`}
             className="btn-secondary w-full py-3 text-center block"
           >
-            フィードバックを送る (+1クレジット)
+            フィードバックを送る（クーポンがもらえる）
           </Link>
 
         </div>

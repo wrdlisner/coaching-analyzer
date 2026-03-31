@@ -296,6 +296,12 @@ function DashboardContent() {
               <p className="text-blue-100 text-sm">
                 1クレジット消費 / 現在 {user?.credits} クレジット保有
               </p>
+              <button
+                onClick={() => setShowCreditGuide(true)}
+                className="text-blue-200 hover:text-white text-xs mt-1 underline underline-offset-2 transition-colors"
+              >
+                クレジットを増やすには？→
+              </button>
             </div>
             <Link
               href="/analyze"
