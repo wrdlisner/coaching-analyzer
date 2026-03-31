@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from sqlalchemy import text
 from database import engine, Base, SessionLocal
 import models  # noqa: F401 - ensure models are registered
 
@@ -80,10 +81,27 @@ def delete_expired_sessions():
         db.close()
 
 
+def _run_migrations():
+    """既存テーブルへのカラム追加（create_allでは対応できないため手動で実行）"""
+    migrations = [
+        "ALTER TABLE users ADD COLUMN referral_code VARCHAR(20) UNIQUE",
+        "ALTER TABLE users ADD COLUMN referred_by UUID REFERENCES users(id)",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+                conn.commit()
+                logger.info(f"Migration applied: {sql}")
+            except Exception:
+                conn.rollback()  # 既にカラムが存在する場合はスキップ
+
+
 @app.on_event("startup")
 def startup():
     """Create all database tables on startup"""
     Base.metadata.create_all(bind=engine)
+    _run_migrations()
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(delete_expired_sessions, "cron", hour=2, minute=0)
