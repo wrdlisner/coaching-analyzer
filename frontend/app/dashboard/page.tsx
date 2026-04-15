@@ -37,11 +37,74 @@ const ICF_LEVEL_LABELS: Record<string, string> = {
   mcc: 'MCC',
 }
 
-const PACK_OPTIONS: { pack: '1' | '3' | '10'; label: string; price: string; credits: number }[] = [
+type PackOption = { pack: '1' | '3' | '10'; label: string; price: string; credits: number }
+
+const PACK_OPTIONS: PackOption[] = [
   { pack: '1', label: '1回', price: '¥500', credits: 1 },
   { pack: '3', label: '3回パック', price: '¥1,200', credits: 3 },
   { pack: '10', label: '10回パック', price: '¥3,500', credits: 10 },
 ]
+
+function PurchaseConfirmModal({
+  option,
+  couponCode,
+  onCouponChange,
+  onConfirm,
+  onClose,
+  loading,
+  error,
+}: {
+  option: PackOption
+  couponCode: string
+  onCouponChange: (v: string) => void
+  onConfirm: () => void
+  onClose: () => void
+  loading: boolean
+  error: string
+}) {
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+          <h2 className="text-base font-bold text-gray-900">購入内容の確認</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+        </div>
+        <div className="px-6 py-5 space-y-4">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-center">
+            <div className="text-sm font-semibold text-gray-700 mb-0.5">{option.label}</div>
+            <div className="text-2xl font-bold text-blue-600">{option.price}</div>
+            <div className="text-xs text-gray-500 mt-0.5">{option.credits}クレジット</div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              クーポンコード（任意）
+            </label>
+            <input
+              type="text"
+              className="input-field font-mono uppercase"
+              placeholder="例：FB-A1B2C3"
+              value={couponCode}
+              onChange={(e) => onCouponChange(e.target.value.toUpperCase())}
+            />
+          </div>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+        </div>
+        <div className="px-6 pb-5 space-y-2">
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="btn-primary w-full py-2.5 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? '処理中...' : '決済へ進む'}
+          </button>
+          <button onClick={onClose} className="btn-secondary w-full py-2.5 text-sm">
+            キャンセル
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function CreditGuideModal({ onClose }: { onClose: () => void }) {
   return (
@@ -143,7 +206,8 @@ function DashboardContent() {
   const [couponList, setCouponList] = useState<CouponInfo[]>([])
   const [couponCode, setCouponCode] = useState('')
   const [showCreditGuide, setShowCreditGuide] = useState(false)
-  const [purchaseLoading, setPurchaseLoading] = useState<string | null>(null)
+  const [selectedPack, setSelectedPack] = useState<'1' | '3' | '10' | null>(null)
+  const [purchaseLoading, setPurchaseLoading] = useState(false)
   const [purchaseError, setPurchaseError] = useState('')
 
   useEffect(() => {
@@ -182,16 +246,30 @@ function DashboardContent() {
     router.push('/login')
   }
 
-  const handlePurchase = async (pack: '1' | '3' | '10') => {
-    setPurchaseLoading(pack)
+  const handlePurchase = async () => {
+    if (!selectedPack) return
+    setPurchaseLoading(true)
     setPurchaseError('')
     try {
-      const { url } = await payments.createCheckout(pack, couponCode.trim() || undefined)
+      const { url } = await payments.createCheckout(selectedPack, couponCode.trim() || undefined)
       window.location.href = url
     } catch (err: unknown) {
       setPurchaseError(err instanceof Error ? err.message : '決済の開始に失敗しました')
-      setPurchaseLoading(null)
+      setPurchaseLoading(false)
     }
+  }
+
+  const handleOpenPurchaseModal = (pack: '1' | '3' | '10') => {
+    setSelectedPack(pack)
+    setCouponCode('')
+    setPurchaseError('')
+  }
+
+  const handleClosePurchaseModal = () => {
+    setSelectedPack(null)
+    setCouponCode('')
+    setPurchaseError('')
+    setPurchaseLoading(false)
   }
 
   const handleSaveProfile = async () => {
@@ -219,6 +297,17 @@ function DashboardContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       {showCreditGuide && <CreditGuideModal onClose={() => setShowCreditGuide(false)} />}
+      {selectedPack && (
+        <PurchaseConfirmModal
+          option={PACK_OPTIONS.find((o) => o.pack === selectedPack)!}
+          couponCode={couponCode}
+          onCouponChange={setCouponCode}
+          onConfirm={handlePurchase}
+          onClose={handleClosePurchaseModal}
+          loading={purchaseLoading}
+          error={purchaseError}
+        />
+      )}
       {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
@@ -356,34 +445,15 @@ function DashboardContent() {
             {PACK_OPTIONS.map((option) => (
               <button
                 key={option.pack}
-                onClick={() => handlePurchase(option.pack)}
-                disabled={purchaseLoading !== null}
-                className="border border-blue-200 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                onClick={() => handleOpenPurchaseModal(option.pack)}
+                className="border border-blue-200 rounded-lg p-4 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
               >
                 <div className="text-sm font-semibold text-gray-700 mb-1">{option.label}</div>
                 <div className="text-xl font-bold text-blue-600 mb-1">{option.price}</div>
                 <div className="text-xs text-gray-500">{option.credits}クレジット</div>
-                {purchaseLoading === option.pack && (
-                  <div className="text-xs text-blue-500 mt-1">処理中...</div>
-                )}
               </button>
             ))}
           </div>
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              クーポンコード（任意）
-            </label>
-            <input
-              type="text"
-              className="input-field font-mono uppercase"
-              placeholder="例：FB-A1B2C3"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-            />
-          </div>
-          {purchaseError && (
-            <p className="text-sm text-red-600 mt-3">{purchaseError}</p>
-          )}
         </div>
 
         {/* Referral */}
