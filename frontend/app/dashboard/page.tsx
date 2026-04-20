@@ -354,7 +354,7 @@ function DashboardContent() {
             {/* Notice banner */}
             {notice && !noticeDismissed && (
               <div className="notif">
-                <div className="notif-left">
+                <Link href={`/notices/${notice.id}`} className="notif-left" style={{ textDecoration: 'none' }}>
                   <span className="notif-tag">NEW</span>
                   <span className="notif-text">{notice.title}</span>
                   <span className="notif-date">
@@ -362,7 +362,8 @@ function DashboardContent() {
                       ? new Date(notice.published_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })
                       : ''}
                   </span>
-                </div>
+                  <span style={{ fontSize: 11, color: 'var(--purple)', flexShrink: 0, fontWeight: 500 }}>詳細を見る →</span>
+                </Link>
                 <button className="notif-close" onClick={handleDismissNotice} aria-label="閉じる">✕</button>
               </div>
             )}
