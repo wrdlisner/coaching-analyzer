@@ -6,9 +6,9 @@
   html {
     font-family: 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
   }
-
   body {
-    @apply bg-gray-50 text-gray-900;
+    background-color: var(--bg);
+    color: var(--txt);
   }
 }
 
@@ -18,15 +18,41 @@
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2 px-4 rounded-lg border border-gray-300 transition-colors;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border2);
+    background: var(--surface);
+    color: var(--txt2);
+    cursor: pointer;
+    transition: background 0.15s;
   }
+  .btn-secondary:hover { background: var(--surface2); }
 
   .input-field {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--txt);
+    outline: none;
+    font-size: inherit;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .input-field:focus {
+    border-color: #534AB7;
+    box-shadow: 0 0 0 2px rgba(83, 74, 183, 0.2);
   }
 
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    background: var(--surface);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 0.5px solid var(--border);
+    padding: 1.5rem;
   }
 }
 
@@ -51,8 +77,9 @@
   --rs:  8px;
 }
 
+/* ── Dark mode vars (system preference, unless .light forced) ── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --bg:       #1c1b18;
     --surface:  #252420;
     --surface2: #2e2c28;
@@ -70,6 +97,109 @@
     --green-l:  #173404;
   }
 }
+
+/* Manual dark override */
+html.dark {
+  --bg:       #1c1b18;
+  --surface:  #252420;
+  --surface2: #2e2c28;
+  --surface3: #38352f;
+  --border:   rgba(255,255,255,0.08);
+  --border2:  rgba(255,255,255,0.14);
+  --txt:  #f0ede5;
+  --txt2: #a09d94;
+  --txt3: #6b6864;
+  --purple-l: #26215C;
+  --teal-l:   #04342C;
+  --coral-l:  #4A1B0C;
+  --amber-l:  #412402;
+  --blue-l:   #042C53;
+  --green-l:  #173404;
+}
+
+/* Manual light override (wins over system dark) */
+html.light {
+  --bg:       #f7f6f3;
+  --surface:  #ffffff;
+  --surface2: #f0efe9;
+  --surface3: #e8e6df;
+  --border:   rgba(0,0,0,0.08);
+  --border2:  rgba(0,0,0,0.14);
+  --txt:  #1a1a18;
+  --txt2: #6b6a64;
+  --txt3: #9c9b94;
+  --purple-l: #EEEDFE;
+  --teal-l:   #E1F5EE;
+  --coral-l:  #FAECE7;
+  --amber-l:  #FAEEDA;
+  --blue-l:   #E6F1FB;
+  --green-l:  #EAF3DE;
+}
+
+/* ── Tailwind class overrides for dark mode ─────────────────── */
+/* Gray backgrounds */
+html.dark .bg-gray-50,
+html.dark .bg-gray-100  { background-color: var(--bg) !important; }
+html.dark .bg-white     { background-color: var(--surface) !important; }
+html.dark .bg-gray-200  { background-color: var(--surface2) !important; }
+
+/* Gray text */
+html.dark .text-gray-900,
+html.dark .text-gray-800 { color: var(--txt) !important; }
+html.dark .text-gray-700,
+html.dark .text-gray-600 { color: var(--txt2) !important; }
+html.dark .text-gray-500,
+html.dark .text-gray-400 { color: var(--txt3) !important; }
+
+/* Gray borders */
+html.dark .border-gray-100,
+html.dark .border-gray-200,
+html.dark .border-gray-300 { border-color: var(--border) !important; }
+html.dark .divide-gray-100 > * + * { border-color: var(--border) !important; }
+
+/* Colored light backgrounds (use dark-adapted CSS vars) */
+html.dark .bg-blue-50,
+html.dark .bg-blue-100   { background-color: var(--blue-l) !important; }
+html.dark .bg-indigo-50  { background-color: var(--purple-l) !important; }
+html.dark .bg-red-50,
+html.dark .bg-red-100    { background-color: var(--coral-l) !important; }
+html.dark .bg-green-50,
+html.dark .bg-green-100  { background-color: var(--green-l) !important; }
+html.dark .bg-amber-50,
+html.dark .bg-yellow-50  { background-color: var(--amber-l) !important; }
+
+/* Colored borders */
+html.dark .border-blue-100,
+html.dark .border-blue-200  { border-color: var(--blue-l) !important; }
+html.dark .border-red-200   { border-color: var(--coral-l) !important; }
+html.dark .border-green-200 { border-color: var(--green-l) !important; }
+html.dark .border-amber-200 { border-color: var(--amber-l) !important; }
+
+/* Colored text on light bg (keep readable in dark) */
+html.dark .text-blue-800,
+html.dark .text-blue-700  { color: #93B8E8 !important; }
+html.dark .text-red-700,
+html.dark .text-red-600   { color: #F0856A !important; }
+html.dark .text-green-700,
+html.dark .text-green-600 { color: #5DCAA5 !important; }
+html.dark .text-amber-700,
+html.dark .text-amber-600 { color: #D4A03A !important; }
+
+/* Native inputs */
+html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+html.dark textarea,
+html.dark select {
+  background-color: var(--surface2) !important;
+  border-color: var(--border2) !important;
+  color: var(--txt) !important;
+}
+
+/* Prose typography dark mode */
+html.dark .prose { color: var(--txt2); }
+html.dark .prose h1, html.dark .prose h2,
+html.dark .prose h3, html.dark .prose h4 { color: var(--txt); }
+html.dark .prose strong { color: var(--txt); }
+html.dark .prose a { color: var(--purple); }
 
 /* ── Topbar ─────────────────────────────────────────── */
 .topbar {
