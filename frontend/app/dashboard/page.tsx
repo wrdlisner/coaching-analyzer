@@ -197,6 +197,23 @@ function DashboardContent() {
   const [purchaseLoading, setPurchaseLoading] = useState(false)
   const [purchaseError, setPurchaseError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'dark') setIsDark(true)
+    else if (stored === 'light') setIsDark(false)
+    else setIsDark(window.matchMedia('(prefers-color-scheme: dark)').matches)
+  }, [])
+
+  const toggleTheme = () => {
+    const next = !isDark
+    setIsDark(next)
+    const cls = next ? 'dark' : 'light'
+    document.documentElement.classList.remove('dark', 'light')
+    document.documentElement.classList.add(cls)
+    localStorage.setItem('theme', cls)
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -306,6 +323,14 @@ function DashboardContent() {
             ⬡ {user?.credits} クレジット
           </button>
           {user?.is_admin && <a href="/admin" className="topbar-link">管理者ページ</a>}
+          <button
+            onClick={toggleTheme}
+            className="topbar-link"
+            aria-label={isDark ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+            style={{ fontSize: 16 }}
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
           <button className="topbar-link" onClick={handleLogout}>ログアウト</button>
         </div>
       </nav>
