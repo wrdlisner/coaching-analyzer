@@ -1,8 +1,10 @@
 import Link from 'next/link'
+import { LightModeGuard } from '@/app/components/LightModeGuard'
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <LightModeGuard />
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
