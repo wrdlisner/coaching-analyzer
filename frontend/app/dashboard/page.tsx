@@ -325,11 +325,10 @@ function DashboardContent() {
           {user?.is_admin && <a href="/admin" className="topbar-link">管理者ページ</a>}
           <button
             onClick={toggleTheme}
-            className="topbar-link"
+            className="theme-toggle"
             aria-label={isDark ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
-            style={{ fontSize: 16 }}
           >
-            {isDark ? '☀️' : '🌙'}
+            {isDark ? '☀️ ライト' : '🌙 ダーク'}
           </button>
           <button className="topbar-link" onClick={handleLogout}>ログアウト</button>
         </div>
