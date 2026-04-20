@@ -6,6 +6,16 @@ import { admin, auth, adminNotices, UserInfo, AdminFeedback, AdminTrendDataPoint
 
 type Tab = 'users' | 'feedbacks' | 'trends' | 'notices'
 
+function icfBadgeClass(level: string): string {
+  if (level === 'pcc' || level === 'mcc') return 'icf-badge icf-pcc'
+  if (level === 'acc') return 'icf-badge icf-acc'
+  return 'icf-badge icf-none'
+}
+
+function scorePillClass(score: number): string {
+  return score >= 5 ? 'score-pill score-hi' : 'score-pill score-lo'
+}
+
 // ---- SVG Trend Chart ----
 function TrendChart({ data }: { data: AdminTrendDataPoint[] }) {
   if (data.length === 0) return null
@@ -13,12 +23,12 @@ function TrendChart({ data }: { data: AdminTrendDataPoint[] }) {
   const W = 760
   const scoreTop = 16
   const scoreH = 180
-  const scoreBot = scoreTop + scoreH      // 196
-  const countTop = scoreBot + 12          // 208
+  const scoreBot = scoreTop + scoreH
+  const countTop = scoreBot + 12
   const countH = 40
-  const countBot = countTop + countH      // 248
-  const labelsY = countBot + 18          // 266
-  const H = labelsY + 14                 // 280
+  const countBot = countTop + countH
+  const labelsY = countBot + 18
+  const H = labelsY + 14
   const pL = 48
   const pR = 16
   const innerW = W - pL - pR
@@ -49,75 +59,47 @@ function TrendChart({ data }: { data: AdminTrendDataPoint[] }) {
   const scoreTicks = [0, 1, 2, 3, 4, 5]
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
-      {/* Score grid lines + Y labels */}
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} role="img" aria-label="トレンドグラフ">
       {scoreTicks.map((t) => (
         <g key={t}>
-          <line x1={pL} x2={W - pR} y1={yScore(t)} y2={yScore(t)} stroke="#F3F4F6" strokeWidth="1" />
-          <text x={pL - 6} y={yScore(t) + 4} textAnchor="end" fontSize="10" fill="#9CA3AF">{t}</text>
+          <line x1={pL} x2={W - pR} y1={yScore(t)} y2={yScore(t)} stroke="#f0efe9" strokeWidth="1" />
+          <text x={pL - 6} y={yScore(t) + 4} textAnchor="end" fontSize="10" fill="#9c9b94">{t}</text>
         </g>
       ))}
-
-      {/* Analysis count bars */}
       {data.map((pt, i) => {
         if (pt.analysis_count === 0) return null
         const bH = (pt.analysis_count / maxCount) * countH
         return (
-          <rect
-            key={i}
-            x={xAt(i) - barW / 2}
-            y={countBot - bH}
-            width={barW}
-            height={bH}
-            fill="#DBEAFE"
-            rx="1"
-          />
+          <rect key={i} x={xAt(i) - barW / 2} y={countBot - bH} width={barW} height={bH} fill="#EEEDFE" rx="1" />
         )
       })}
-
-      {/* Lines */}
-      <path d={makeLine(data.map((d) => d.avg_score))} fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={makeLine(data.map((d) => d.avg_satisfaction))} fill="none" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d={makeLine(data.map((d) => d.avg_accuracy))} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-
-      {/* Dots on data points */}
+      <path d={makeLine(data.map((d) => d.avg_score))} fill="none" stroke="#3266ad" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={makeLine(data.map((d) => d.avg_satisfaction))} fill="none" stroke="#1D9E75" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={makeLine(data.map((d) => d.avg_accuracy))} fill="none" stroke="#BA7517" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {data.map((pt, i) => (
         <g key={i}>
-          {pt.avg_score != null && (
-            <circle cx={xAt(i)} cy={yScore(pt.avg_score)} r="3" fill="#3B82F6" />
-          )}
-          {pt.avg_satisfaction != null && (
-            <circle cx={xAt(i)} cy={yScore(pt.avg_satisfaction)} r="3" fill="#10B981" />
-          )}
-          {pt.avg_accuracy != null && (
-            <circle cx={xAt(i)} cy={yScore(pt.avg_accuracy)} r="3" fill="#F59E0B" />
-          )}
+          {pt.avg_score != null && <circle cx={xAt(i)} cy={yScore(pt.avg_score)} r="3" fill="#3266ad" />}
+          {pt.avg_satisfaction != null && <circle cx={xAt(i)} cy={yScore(pt.avg_satisfaction)} r="3" fill="#1D9E75" />}
+          {pt.avg_accuracy != null && <circle cx={xAt(i)} cy={yScore(pt.avg_accuracy)} r="3" fill="#BA7517" />}
         </g>
       ))}
-
-      {/* X axis labels */}
       {data.map((pt, i) => {
         if (n > 10 && i % 5 !== 0 && i !== n - 1) return null
         return (
-          <text key={i} x={xAt(i)} y={labelsY} textAnchor="middle" fontSize="9" fill="#9CA3AF">
+          <text key={i} x={xAt(i)} y={labelsY} textAnchor="middle" fontSize="9" fill="#9c9b94">
             {pt.date.slice(5)}
           </text>
         )
       })}
-
-      {/* Axes */}
-      <line x1={pL} x2={pL} y1={scoreTop} y2={countBot} stroke="#E5E7EB" strokeWidth="1" />
-      <line x1={pL} x2={W - pR} y1={scoreBot} y2={scoreBot} stroke="#E5E7EB" strokeWidth="1" />
-      <line x1={pL} x2={W - pR} y1={countBot} y2={countBot} stroke="#E5E7EB" strokeWidth="1" />
-
-      {/* Count axis label */}
-      <text x={pL - 6} y={countTop + 10} textAnchor="end" fontSize="9" fill="#93C5FD">{maxCount}</text>
-      <text x={pL - 6} y={countBot + 4} textAnchor="end" fontSize="9" fill="#93C5FD">0</text>
+      <line x1={pL} x2={pL} y1={scoreTop} y2={countBot} stroke="#e8e6df" strokeWidth="1" />
+      <line x1={pL} x2={W - pR} y1={scoreBot} y2={scoreBot} stroke="#e8e6df" strokeWidth="1" />
+      <line x1={pL} x2={W - pR} y1={countBot} y2={countBot} stroke="#e8e6df" strokeWidth="1" />
+      <text x={pL - 6} y={countTop + 10} textAnchor="end" fontSize="9" fill="#EEEDFE">{maxCount}</text>
+      <text x={pL - 6} y={countBot + 4} textAnchor="end" fontSize="9" fill="#EEEDFE">0</text>
     </svg>
   )
 }
 
-// ---- Main page ----
 export default function AdminPage() {
   const router = useRouter()
   const [me, setMe] = useState<UserInfo | null>(null)
@@ -137,18 +119,12 @@ export default function AdminPage() {
   useEffect(() => {
     auth.getMe()
       .then((user) => {
-        if (!user.is_admin) {
-          router.replace('/dashboard')
-          return
-        }
+        if (!user.is_admin) { router.replace('/dashboard'); return }
         setMe(user)
         return Promise.all([admin.listUsers(), admin.listFeedbacks()])
       })
       .then((results) => {
-        if (results) {
-          setUsers(results[0])
-          setFeedbacks(results[1])
-        }
+        if (results) { setUsers(results[0]); setFeedbacks(results[1]) }
         return adminNotices.list()
       })
       .then((nl) => { if (nl) setNoticeList(nl) })
@@ -156,28 +132,21 @@ export default function AdminPage() {
       .finally(() => setLoading(false))
   }, [router])
 
-  // Trend auto-refresh every 24 hours
   useEffect(() => {
     const fetchTrends = () => {
-      admin.listTrends()
-        .then((data) => {
-          setTrends(data)
-          setTrendsUpdatedAt(new Date())
-        })
-        .catch(() => {})
+      admin.listTrends().then((data) => { setTrends(data); setTrendsUpdatedAt(new Date()) }).catch(() => {})
     }
     fetchTrends()
     const timer = setInterval(fetchTrends, 24 * 60 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
 
-  const flash = (msg: string) => {
-    setActionMsg(msg)
-    setTimeout(() => setActionMsg(''), 3000)
-  }
+  const flash = (msg: string) => { setActionMsg(msg); setTimeout(() => setActionMsg(''), 3000) }
 
   const handleAddCredits = async (userId: string) => {
-    const amount = parseInt(creditInputs[userId] || '0', 10)
+    const raw = creditInputs[userId] || ''
+    if (!/^-?\d+$/.test(raw.trim())) { flash('整数を入力してください'); return }
+    const amount = parseInt(raw, 10)
     if (!amount) return
     try {
       const res = await admin.updateCredits(userId, amount)
@@ -200,9 +169,7 @@ export default function AdminPage() {
     }
   }
 
-  // datetime-local（ローカル時刻）→ UTC ISO文字列
   const toUTCISO = (localDT: string) => localDT ? new Date(localDT).toISOString() : null
-  // UTC ISO文字列 → datetime-local 入力用ローカル時刻
   const toLocalDT = (utcStr: string | null) => {
     if (!utcStr) return ''
     const d = new Date(utcStr)
@@ -212,8 +179,7 @@ export default function AdminPage() {
   const handleSaveNotice = async () => {
     try {
       const payload = {
-        title: noticeForm.title,
-        body: noticeForm.body,
+        title: noticeForm.title, body: noticeForm.body,
         published_at: toUTCISO(noticeForm.published_at),
         is_published: noticeForm.is_published,
       }
@@ -235,12 +201,7 @@ export default function AdminPage() {
 
   const handleEditNotice = (n: Notice) => {
     setEditingNotice(n)
-    setNoticeForm({
-      title: n.title,
-      body: n.body,
-      published_at: toLocalDT(n.published_at),
-      is_published: n.is_published,
-    })
+    setNoticeForm({ title: n.title, body: n.body, published_at: toLocalDT(n.published_at), is_published: n.is_published })
   }
 
   const handleDeleteNotice = async (id: string) => {
@@ -264,8 +225,7 @@ export default function AdminPage() {
 
   const avgScore = (list: AdminFeedback[], key: 'satisfaction' | 'accuracy') => {
     if (!list.length) return '-'
-    const avg = list.reduce((s, f) => s + f[key], 0) / list.length
-    return avg.toFixed(1)
+    return (list.reduce((s, f) => s + f[key], 0) / list.length).toFixed(1)
   }
 
   const trendSummary = (key: 'avg_score' | 'avg_satisfaction' | 'avg_accuracy') => {
@@ -276,129 +236,111 @@ export default function AdminPage() {
 
   const totalAnalyses = trends.reduce((s, d) => s + d.analysis_count, 0)
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">読み込み中...</div>
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ color: 'var(--txt3)', fontSize: 14 }}>読み込み中...</span>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">管理者ダッシュボード</h1>
-          <button onClick={() => router.push('/dashboard')} className="text-sm text-blue-600 hover:underline">
-            マイページへ戻る
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', fontFamily: "'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif", fontSize: 14, color: 'var(--txt)' }}>
+
+      {/* Topbar */}
+      <nav className="topbar">
+        <div className="topbar-logo">
+          <div className="logo-icon">CA</div>
+          管理者ダッシュボード
+        </div>
+        <div className="topbar-right">
+          <button onClick={() => router.push('/dashboard')} className="topbar-link">
+            ← マイページへ戻る
           </button>
         </div>
+      </nav>
 
-        {actionMsg && (
-          <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-lg px-4 py-3">
-            {actionMsg}
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="flex gap-1 mb-4 border-b border-gray-200">
-          <button
-            onClick={() => setTab('users')}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              tab === 'users'
-                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            ユーザー管理
-            <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{users.length}</span>
-          </button>
-          <button
-            onClick={() => setTab('feedbacks')}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              tab === 'feedbacks'
-                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            フィードバック
-            <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{feedbacks.length}</span>
-          </button>
-          <button
-            onClick={() => setTab('trends')}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              tab === 'trends'
-                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            トレンド
-          </button>
-          <button
-            onClick={() => setTab('notices')}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-              tab === 'notices'
-                ? 'bg-white border border-b-white border-gray-200 text-blue-600 -mb-px'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            お知らせ管理
-            <span className="ml-1.5 bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full">{noticeList.length}</span>
-          </button>
+      {/* Flash message */}
+      {actionMsg && (
+        <div style={{ padding: '0 1.5rem', paddingTop: '1rem', maxWidth: 1100, margin: '0 auto' }}>
+          <div className="flash-msg">{actionMsg}</div>
         </div>
+      )}
 
-        {/* Users tab */}
+      {/* Tabs */}
+      <div className="tabs">
+        {([
+          { key: 'users', label: 'ユーザー管理', count: users.length },
+          { key: 'feedbacks', label: 'フィードバック', count: feedbacks.length },
+          { key: 'trends', label: 'トレンド', count: null },
+          { key: 'notices', label: 'お知らせ管理', count: noticeList.length },
+        ] as { key: Tab; label: string; count: number | null }[]).map(t => (
+          <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
+            {t.label}
+            {t.count !== null && <span className="tab-count">{t.count}</span>}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '1.25rem 1.5rem' }}>
+
+        {/* ── ユーザー管理タブ ── */}
         {tab === 'users' && (
           <>
-            <div className="bg-white rounded-xl shadow overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="table-wrap" style={{ overflowX: 'auto' }}>
+              <table className="tbl">
                 <thead>
-                  <tr className="border-b bg-gray-50 text-gray-500 text-left">
-                    <th className="px-4 py-3">名前</th>
-                    <th className="px-4 py-3">メール</th>
-                    <th className="px-4 py-3">ICF</th>
-                    <th className="px-4 py-3 text-center">分析回数</th>
-                    <th className="px-4 py-3 text-center">クレジット</th>
-                    <th className="px-4 py-3 text-center">管理者</th>
-                    <th className="px-4 py-3">登録日</th>
-                    <th className="px-4 py-3">クレジット付与</th>
-                    <th className="px-4 py-3">操作</th>
+                  <tr>
+                    <th>名前 / メール</th>
+                    <th>ICF</th>
+                    <th style={{ textAlign: 'center' }}>分析回数</th>
+                    <th style={{ textAlign: 'center' }}>クレジット</th>
+                    <th style={{ textAlign: 'center' }}>管理者</th>
+                    <th>登録日</th>
+                    <th>クレジット付与</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {users.map((u) => (
-                    <tr key={u.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900">{u.name}</td>
-                      <td className="px-4 py-3 text-gray-600">{u.email}</td>
-                      <td className="px-4 py-3 uppercase text-gray-600">{u.icf_level}</td>
-                      <td className="px-4 py-3 text-center text-gray-700">{u.analysis_count}</td>
-                      <td className="px-4 py-3 text-center font-medium">{u.credits}</td>
-                      <td className="px-4 py-3 text-center">
-                        {u.is_admin ? (
-                          <span className="inline-block bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded-full">管理者</span>
-                        ) : (
-                          <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">一般</span>
-                        )}
+                    <tr key={u.id}>
+                      <td>
+                        <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--txt)' }}>{u.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 2 }}>{u.email}</div>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">
-                        {new Date(u.created_at).toLocaleDateString('ja-JP')}
+                      <td>
+                        <span className={icfBadgeClass(u.icf_level)}>{u.icf_level.toUpperCase()}</span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
+                      <td style={{ textAlign: 'center' }}>{u.analysis_count}</td>
+                      <td style={{ textAlign: 'center', fontWeight: 500 }}>{u.credits}</td>
+                      <td style={{ textAlign: 'center' }}>
+                        {u.is_admin
+                          ? <span className="icf-badge icf-pcc">管理者</span>
+                          : <span className="icf-badge icf-none">一般</span>
+                        }
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--txt3)', whiteSpace: 'nowrap' }}>
+                        {new Date(u.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'numeric', day: 'numeric' })}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
                           <input
                             type="number"
-                            className="w-20 border border-gray-300 rounded px-2 py-1 text-sm"
+                            className="ds-input"
+                            style={{ width: 72, padding: '4px 8px' }}
                             placeholder="±数"
                             value={creditInputs[u.id] || ''}
                             onChange={(e) => setCreditInputs((prev) => ({ ...prev, [u.id]: e.target.value }))}
                           />
-                          <button
-                            onClick={() => handleAddCredits(u.id)}
-                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                          >
-                            適用
-                          </button>
+                          <button onClick={() => handleAddCredits(u.id)} className="btn-sm btn-apply">適用</button>
                         </div>
                       </td>
-                      <td className="px-4 py-3">
+                      <td>
                         <button
                           onClick={() => handleToggleAdmin(u.id)}
                           disabled={u.id === me?.id}
-                          className="text-xs border border-gray-300 px-2 py-1 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="btn-sm btn-admin"
+                          style={{ opacity: u.id === me?.id ? 0.4 : 1, cursor: u.id === me?.id ? 'not-allowed' : 'pointer' }}
                         >
                           {u.is_admin ? '権限剥奪' : '管理者化'}
                         </button>
@@ -408,44 +350,37 @@ export default function AdminPage() {
                 </tbody>
               </table>
               {users.length === 0 && (
-                <p className="text-center text-gray-400 py-8">ユーザーがいません</p>
+                <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>ユーザーがいません</p>
               )}
             </div>
-            <p className="mt-4 text-xs text-gray-400">合計 {users.length} ユーザー</p>
+            <p style={{ marginTop: '0.75rem', fontSize: 12, color: 'var(--txt3)' }}>合計 {users.length} ユーザー</p>
           </>
         )}
 
-        {/* Feedbacks tab */}
+        {/* ── フィードバックタブ ── */}
         {tab === 'feedbacks' && (
           <>
             {feedbacks.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-white rounded-xl shadow px-5 py-4">
-                  <p className="text-xs text-gray-500 mb-1">満足度（平均）</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {avgScore(feedbacks, 'satisfaction')}
-                    <span className="text-sm font-normal text-gray-400"> / 5</span>
-                  </p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <div className="kpi-card">
+                  <div className="kpi-label">満足度（平均）</div>
+                  <div className="kpi-val">{avgScore(feedbacks, 'satisfaction')}<span className="kpi-sub"> / 5</span></div>
                 </div>
-                <div className="bg-white rounded-xl shadow px-5 py-4">
-                  <p className="text-xs text-gray-500 mb-1">分析精度（平均）</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {avgScore(feedbacks, 'accuracy')}
-                    <span className="text-sm font-normal text-gray-400"> / 5</span>
-                  </p>
+                <div className="kpi-card">
+                  <div className="kpi-label">分析精度（平均）</div>
+                  <div className="kpi-val">{avgScore(feedbacks, 'accuracy')}<span className="kpi-sub"> / 5</span></div>
                 </div>
               </div>
             )}
-
-            <div className="bg-white rounded-xl shadow overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="table-wrap" style={{ overflowX: 'auto' }}>
+              <table className="tbl">
                 <thead>
-                  <tr className="border-b bg-gray-50 text-gray-500 text-left">
-                    <th className="px-4 py-3">日時</th>
-                    <th className="px-4 py-3">ユーザー</th>
-                    <th className="px-4 py-3 text-center">満足度</th>
-                    <th className="px-4 py-3 text-center">分析精度</th>
-                    <th className="px-4 py-3">コメント</th>
+                  <tr>
+                    <th>日時</th>
+                    <th>ユーザー</th>
+                    <th style={{ textAlign: 'center' }}>満足度</th>
+                    <th style={{ textAlign: 'center' }}>分析精度</th>
+                    <th>コメント</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -453,40 +388,37 @@ export default function AdminPage() {
                     const isExpanded = expandedComments.has(fb.id)
                     const isLong = fb.comment != null && (fb.comment.length > 60 || fb.comment.split('\n').length > 3)
                     return (
-                      <tr key={fb.id} className="border-b hover:bg-gray-50">
-                        <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                      <tr key={fb.id}>
+                        <td style={{ color: 'var(--txt3)', fontSize: 12, whiteSpace: 'nowrap' }}>
                           {new Date(fb.created_at).toLocaleDateString('ja-JP', {
                             year: 'numeric', month: '2-digit', day: '2-digit',
                             hour: '2-digit', minute: '2-digit',
                           })}
                         </td>
-                        <td className="px-4 py-3">
-                          <p className="font-medium text-gray-900">{fb.user_name}</p>
-                          <p className="text-xs text-gray-400">{fb.user_email}</p>
+                        <td>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>{fb.user_name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--txt3)' }}>{fb.user_email}</div>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="font-semibold text-gray-900">{fb.satisfaction}</span>
-                          <span className="text-gray-400 text-xs"> / 5</span>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={scorePillClass(fb.satisfaction)}>{fb.satisfaction}/5</span>
                         </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="font-semibold text-gray-900">{fb.accuracy}</span>
-                          <span className="text-gray-400 text-xs"> / 5</span>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={scorePillClass(fb.accuracy)}>{fb.accuracy}/5</span>
                         </td>
-                        <td className="px-4 py-3 text-gray-600 max-w-xs">
+                        <td style={{ maxWidth: 300, color: 'var(--txt2)' }}>
                           {fb.comment ? (
                             <div>
-                              <p className={isExpanded ? undefined : 'line-clamp-3'}>{fb.comment}</p>
+                              <p className={isExpanded ? '' : 'line-clamp-2'} style={{ margin: 0 }}>
+                                {fb.comment}
+                              </p>
                               {isLong && (
-                                <button
-                                  onClick={() => toggleComment(fb.id)}
-                                  className="mt-1 text-xs text-blue-500 hover:text-blue-700"
-                                >
+                                <button onClick={() => toggleComment(fb.id)} style={{ marginTop: 4, fontSize: 11, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                                   {isExpanded ? '閉じる' : '全文を表示'}
                                 </button>
                               )}
                             </div>
                           ) : (
-                            <span className="text-gray-300 text-xs">なし</span>
+                            <span style={{ fontSize: 12, color: 'var(--txt3)' }}>なし</span>
                           )}
                         </td>
                       </tr>
@@ -495,84 +427,72 @@ export default function AdminPage() {
                 </tbody>
               </table>
               {feedbacks.length === 0 && (
-                <p className="text-center text-gray-400 py-8">フィードバックはまだありません</p>
+                <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>フィードバックはまだありません</p>
               )}
             </div>
-            <p className="mt-4 text-xs text-gray-400">合計 {feedbacks.length} 件</p>
+            <p style={{ marginTop: '0.75rem', fontSize: 12, color: 'var(--txt3)' }}>合計 {feedbacks.length} 件</p>
           </>
         )}
 
-        {/* Trends tab */}
+        {/* ── トレンドタブ ── */}
         {tab === 'trends' && (
           <>
-            {/* Summary cards */}
-            <div className="grid grid-cols-4 gap-4 mb-4">
-              <div className="bg-white rounded-xl shadow px-5 py-4">
-                <p className="text-xs text-gray-500 mb-1">分析件数（30日）</p>
-                <p className="text-2xl font-bold text-gray-900">{totalAnalyses}</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div className="kpi-card">
+                <div className="kpi-label">分析件数（30日）</div>
+                <div className="kpi-val">{totalAnalyses}</div>
               </div>
-              <div className="bg-white rounded-xl shadow px-5 py-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500" />
-                  <p className="text-xs text-gray-500">ICFスコア（平均）</p>
+              <div className="kpi-card">
+                <div className="kpi-label">
+                  <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#3266ad', flexShrink: 0 }} />
+                  ICFスコア（平均）
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {trendSummary('avg_score')}
-                  <span className="text-sm font-normal text-gray-400"> / 5</span>
-                </p>
+                <div className="kpi-val">{trendSummary('avg_score')}<span className="kpi-sub"> / 5</span></div>
               </div>
-              <div className="bg-white rounded-xl shadow px-5 py-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                  <p className="text-xs text-gray-500">満足度（平均）</p>
+              <div className="kpi-card">
+                <div className="kpi-label">
+                  <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
+                  満足度（平均）
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {trendSummary('avg_satisfaction')}
-                  <span className="text-sm font-normal text-gray-400"> / 5</span>
-                </p>
+                <div className="kpi-val">{trendSummary('avg_satisfaction')}<span className="kpi-sub"> / 5</span></div>
               </div>
-              <div className="bg-white rounded-xl shadow px-5 py-4">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500" />
-                  <p className="text-xs text-gray-500">分析精度（平均）</p>
+              <div className="kpi-card">
+                <div className="kpi-label">
+                  <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#BA7517', flexShrink: 0 }} />
+                  分析精度（平均）
                 </div>
-                <p className="text-2xl font-bold text-gray-900">
-                  {trendSummary('avg_accuracy')}
-                  <span className="text-sm font-normal text-gray-400"> / 5</span>
-                </p>
+                <div className="kpi-val">{trendSummary('avg_accuracy')}<span className="kpi-sub"> / 5</span></div>
               </div>
             </div>
 
-            {/* Chart */}
-            <div className="bg-white rounded-xl shadow p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-semibold text-gray-700">過去30日間のトレンド</h2>
-                <div className="flex items-center gap-4">
-                  {/* Legend */}
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block w-6 h-0.5 bg-blue-500" />ICFスコア
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block w-6 h-0.5 bg-emerald-500" />満足度
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block w-6 h-0.5 bg-amber-500" />分析精度
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block w-4 h-3 bg-blue-100 rounded-sm" />分析件数
+            <div className="ds-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+                <h2 style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt)', margin: 0 }}>過去30日間のトレンド</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--txt3)' }}>
+                    {[
+                      { color: '#3266ad', label: 'ICFスコア' },
+                      { color: '#1D9E75', label: '満足度' },
+                      { color: '#BA7517', label: '分析精度' },
+                    ].map(l => (
+                      <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span style={{ display: 'inline-block', width: 20, height: 2, background: l.color }} />
+                        {l.label}
+                      </span>
+                    ))}
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <span style={{ display: 'inline-block', width: 14, height: 10, background: '#EEEDFE', borderRadius: 2 }} />
+                      分析件数
                     </span>
                   </div>
                   {trendsUpdatedAt && (
-                    <p className="text-xs text-gray-400">
+                    <span style={{ fontSize: 11, color: 'var(--txt3)' }}>
                       更新: {trendsUpdatedAt.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}
-                    </p>
+                    </span>
                   )}
                   <button
-                    onClick={() => {
-                      admin.listTrends().then((data) => { setTrends(data); setTrendsUpdatedAt(new Date()) }).catch(() => {})
-                    }}
-                    className="text-xs text-blue-500 hover:text-blue-700 border border-blue-200 px-2 py-1 rounded"
+                    className="btn-refresh"
+                    onClick={() => admin.listTrends().then(data => { setTrends(data); setTrendsUpdatedAt(new Date()) }).catch(() => {})}
                   >
                     今すぐ更新
                   </button>
@@ -580,74 +500,74 @@ export default function AdminPage() {
               </div>
               <TrendChart data={trends} />
               {trends.every((d) => d.analysis_count === 0 && d.avg_score == null) && (
-                <p className="text-center text-gray-400 py-8">データがまだありません</p>
+                <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>データがまだありません</p>
               )}
             </div>
-            <p className="mt-3 text-xs text-gray-400">トレンドは24時間ごとに自動更新されます</p>
+            <p style={{ marginTop: '0.75rem', fontSize: 12, color: 'var(--txt3)' }}>トレンドは24時間ごとに自動更新されます</p>
           </>
         )}
 
-        {/* Notices tab */}
+        {/* ── お知らせ管理タブ ── */}
         {tab === 'notices' && (
           <>
-            {/* Form */}
-            <div className="bg-white rounded-xl shadow p-5 mb-4">
-              <h2 className="text-sm font-semibold text-gray-700 mb-4">
+            <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 16, marginTop: 0 }}>
                 {editingNotice ? 'お知らせを編集' : 'お知らせを新規作成'}
               </h2>
-              <div className="space-y-3">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">タイトル</label>
+                  <label className="ds-label">タイトル <span style={{ color: 'var(--coral)' }}>*</span></label>
                   <input
                     type="text"
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                    className="ds-input"
                     placeholder="お知らせのタイトル"
                     value={noticeForm.title}
                     onChange={(e) => setNoticeForm((f) => ({ ...f, title: e.target.value }))}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">本文（Markdown対応）</label>
+                  <label className="ds-label">本文（Markdown対応）</label>
                   <textarea
-                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm h-28 resize-y"
+                    className="ds-input"
+                    style={{ height: 112, resize: 'vertical' }}
                     placeholder="お知らせの詳細内容"
                     value={noticeForm.body}
                     onChange={(e) => setNoticeForm((f) => ({ ...f, body: e.target.value }))}
                   />
                 </div>
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-xs text-gray-500 mb-1">公開日時</label>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="ds-label">公開日時</label>
                     <input
                       type="datetime-local"
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+                      className="ds-input"
                       value={noticeForm.published_at}
                       onChange={(e) => setNoticeForm((f) => ({ ...f, published_at: e.target.value }))}
                     />
                   </div>
-                  <div className="flex items-end pb-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: 2 }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: 'var(--txt)' }}>
                       <input
                         type="checkbox"
                         checked={noticeForm.is_published}
                         onChange={(e) => setNoticeForm((f) => ({ ...f, is_published: e.target.checked }))}
                       />
-                      <span className="text-sm text-gray-700">公開する</span>
+                      公開する
                     </label>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={handleSaveNotice}
-                    disabled={!noticeForm.title || !noticeForm.body}
-                    className="bg-blue-600 text-white text-sm px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
+                    disabled={!noticeForm.title}
+                    className="btn-create"
                   >
                     {editingNotice ? '更新する' : '作成する'}
                   </button>
                   {editingNotice && (
                     <button
                       onClick={() => { setEditingNotice(null); setNoticeForm({ title: '', body: '', published_at: '', is_published: false }) }}
-                      className="text-sm border border-gray-300 px-4 py-2 rounded hover:bg-gray-100"
+                      className="btn-cancel-sm"
                     >
                       キャンセル
                     </button>
@@ -656,22 +576,23 @@ export default function AdminPage() {
               </div>
             </div>
 
-            {/* List */}
-            <div className="bg-white rounded-xl shadow overflow-hidden">
-              <table className="w-full text-sm">
+            <div className="table-wrap">
+              <table className="tbl">
                 <thead>
-                  <tr className="border-b bg-gray-50 text-gray-500 text-left">
-                    <th className="px-4 py-3">タイトル</th>
-                    <th className="px-4 py-3">公開日時</th>
-                    <th className="px-4 py-3 text-center">公開状態</th>
-                    <th className="px-4 py-3">操作</th>
+                  <tr>
+                    <th>タイトル</th>
+                    <th>公開日時</th>
+                    <th style={{ textAlign: 'center' }}>状態</th>
+                    <th>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {noticeList.map((n) => (
-                    <tr key={n.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">{n.title}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                    <tr key={n.id}>
+                      <td style={{ maxWidth: 320 }}>
+                        <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{n.title}</span>
+                      </td>
+                      <td style={{ fontSize: 12, color: 'var(--txt3)', whiteSpace: 'nowrap' }}>
                         {n.published_at
                           ? new Date(n.published_at).toLocaleDateString('ja-JP', {
                               year: 'numeric', month: '2-digit', day: '2-digit',
@@ -679,27 +600,15 @@ export default function AdminPage() {
                             })
                           : '未設定'}
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {n.is_published ? (
-                          <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">公開中</span>
-                        ) : (
-                          <span className="inline-block bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">非公開</span>
-                        )}
+                      <td style={{ textAlign: 'center' }}>
+                        <span className={`publish-tag ${n.is_published ? 'pub-live' : 'pub-draft'}`}>
+                          {n.is_published ? '公開中' : '下書き'}
+                        </span>
                       </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditNotice(n)}
-                            className="text-xs border border-gray-300 px-2 py-1 rounded hover:bg-gray-100"
-                          >
-                            編集
-                          </button>
-                          <button
-                            onClick={() => handleDeleteNotice(n.id)}
-                            className="text-xs border border-red-300 text-red-600 px-2 py-1 rounded hover:bg-red-50"
-                          >
-                            削除
-                          </button>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button onClick={() => handleEditNotice(n)} className="btn-sm btn-edit">編集</button>
+                          <button onClick={() => handleDeleteNotice(n.id)} className="btn-sm btn-delete">削除</button>
                         </div>
                       </td>
                     </tr>
@@ -707,7 +616,7 @@ export default function AdminPage() {
                 </tbody>
               </table>
               {noticeList.length === 0 && (
-                <p className="text-center text-gray-400 py-8">お知らせはまだありません</p>
+                <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>お知らせはまだありません</p>
               )}
             </div>
           </>
