@@ -1,6 +1,6 @@
 """Admin router: user management (admin only)"""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
 from typing import List, Optional
@@ -10,6 +10,7 @@ import models
 import schemas
 import auth as auth_utils
 from database import get_db
+from email_utils import send_mentor_approved_email, send_mentor_rejected_email
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
@@ -265,6 +266,7 @@ def list_admin_mentors(
 @router.patch("/mentors/{user_id}/approve", response_model=schemas.SuccessResponse)
 def approve_mentor(
     user_id: str,
+    background_tasks: BackgroundTasks,
     _admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -279,12 +281,18 @@ def approve_mentor(
     user.mentor_status = "approved"
     mentor.is_active = True
     db.commit()
+
+    # バックグラウンドでメール送信（失敗しても承認自体には影響しない）
+    email, display_name = user.email, mentor.display_name
+    background_tasks.add_task(send_mentor_approved_email, email, display_name)
+
     return {"success": True}
 
 
 @router.patch("/mentors/{user_id}/reject", response_model=schemas.SuccessResponse)
 def reject_mentor(
     user_id: str,
+    background_tasks: BackgroundTasks,
     _admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
@@ -292,11 +300,16 @@ def reject_mentor(
     if not user:
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
 
+    email, name = user.email, user.name
     user.mentor_status = "rejected"
     mentor = db.query(models.Mentor).filter(models.Mentor.user_id == user_id).first()
+    display_name = mentor.display_name if mentor else name
     if mentor:
         db.delete(mentor)
     db.commit()
+
+    background_tasks.add_task(send_mentor_rejected_email, email, display_name)
+
     return {"success": True}
 
 
