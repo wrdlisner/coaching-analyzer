@@ -51,13 +51,13 @@ function MentorCard({ mentor, onClickContact }: { mentor: MentorInfo; onClickCon
         </div>
       </div>
 
-      <p style={{ fontSize: 13, color: 'var(--txt2)', lineHeight: 1.7, margin: 0 }}>
-        {mentor.bio.length > 150 ? mentor.bio.slice(0, 150) + '…' : mentor.bio}
+      <p style={{ fontSize: 13, color: 'var(--txt2)', lineHeight: 1.7, margin: 0, whiteSpace: 'pre-wrap' }}>
+        {mentor.bio}
       </p>
 
       {mentor.style_note && (
-        <p style={{ fontSize: 12, color: 'var(--txt3)', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
-          {mentor.style_note.length > 100 ? mentor.style_note.slice(0, 100) + '…' : mentor.style_note}
+        <p style={{ fontSize: 12, color: 'var(--txt3)', lineHeight: 1.6, margin: 0, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+          {mentor.style_note}
         </p>
       )}
 
