@@ -131,9 +131,36 @@ export default function MentorsPage() {
       </nav>
 
       <main style={{ maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' }}>
-        <div style={{ marginBottom: 24 }}>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--txt)', marginBottom: 8 }}>メンターコーチ一覧</h1>
-          <p style={{ fontSize: 13, color: 'var(--txt2)', margin: 0 }}>PCC・MCC取得者によるメンタリングを受けてみませんか</p>
+
+        {/* ヒーローセクション */}
+        <div style={{ marginBottom: 32 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--txt)', marginBottom: 16 }}>メンターコーチ一覧</h1>
+
+          <div style={{ background: 'var(--purple-l)', border: '0.5px solid var(--border)', borderRadius: 'var(--r)', padding: '20px 24px', marginBottom: 8 }}>
+            <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--txt)', margin: '0 0 8px' }}>💡 メンターコーチングとは？</p>
+            <p style={{ fontSize: 13, color: 'var(--txt2)', lineHeight: 1.8, margin: '0 0 16px' }}>
+              分析レポートで「スコアが低い」「改善が必要」と出ても、<strong style={{ color: 'var(--txt)' }}>「じゃあ具体的に何をすればいい？」</strong>と迷うことはありませんか？<br />
+              メンターコーチは、あなたのセッションを一緒に振り返り、ICFの視点から実践的なフィードバックをくれる存在です。
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+              {[
+                { icon: '🎯', title: 'スコアの意味を深掘りできる', desc: '数字の背景にある「なぜ」を一緒に考えてもらえる' },
+                { icon: '🗣️', title: '実際のセッションを振り返る', desc: '録音・文字起こしをもとにした具体的なフィードバック' },
+                { icon: '🏅', title: '資格取得を加速できる', desc: 'ACC→PCC→MCC の各ステップでの壁を越えるサポート' },
+              ].map(item => (
+                <div key={item.title} style={{ background: 'var(--surface)', borderRadius: 'var(--rs)', padding: '12px 14px', display: 'flex', gap: 10 }}>
+                  <span style={{ fontSize: 20, flexShrink: 0 }}>{item.icon}</span>
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: 12, color: 'var(--txt)', margin: '0 0 2px' }}>{item.title}</p>
+                    <p style={{ fontSize: 11, color: 'var(--txt3)', margin: 0, lineHeight: 1.5 }}>{item.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--txt3)', margin: 0, paddingLeft: 4 }}>
+            ※ メンタリングの申し込みは各メンターのページから直接行います。料金・条件はメンターによって異なります。
+          </p>
         </div>
 
         {/* フィルター */}

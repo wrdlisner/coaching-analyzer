@@ -200,7 +200,6 @@ function DashboardContent() {
   const [copied, setCopied] = useState(false)
   const [isDark, setIsDark] = useState(false)
   const [showMentorCongrats, setShowMentorCongrats] = useState(false)
-  const [showMentorGuide, setShowMentorGuide] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('theme')
@@ -236,9 +235,6 @@ function DashboardContent() {
           if (!localStorage.getItem(key)) setShowMentorCongrats(true)
         }
 
-        // メンターガイド：未dismiss なら全ユーザーに表示
-        const guideKey = `mentor_guide_dismissed_${userData.id}`
-        if (!localStorage.getItem(guideKey)) setShowMentorGuide(true)
       } catch {
         router.push('/login')
       } finally {
@@ -421,48 +417,6 @@ function DashboardContent() {
             {paymentStatus === 'cancel' && (
               <div style={{ background: 'var(--amber-l)', border: '0.5px solid var(--amber)', borderRadius: 'var(--rs)', padding: '12px 16px', fontSize: 13, color: 'var(--amber)', fontWeight: 500, marginBottom: '1.25rem' }}>
                 購入をキャンセルしました。
-              </div>
-            )}
-
-            {/* メンター活用ガイド（未申請ユーザー向け・初回のみ） */}
-            {showMentorGuide && (
-              <div className="ds-card" style={{ marginBottom: '0.75rem', border: '0.5px solid var(--purple)', background: 'var(--purple-l)' }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <p style={{ fontWeight: 700, fontSize: 14, color: 'var(--txt)', margin: '0 0 8px' }}>💡 メンターコーチって何？</p>
-                    <p style={{ fontSize: 13, color: 'var(--txt2)', lineHeight: 1.8, margin: '0 0 12px' }}>
-                      CoachingAnalyzer では、PCC・MCC 資格を持つ経験豊富なコーチが<strong>メンターコーチ</strong>として登録できます。<br />
-                      分析結果をもとに「どこを伸ばすべきか」を一緒に考えてもらえるパートナーです。
-                    </p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13, color: 'var(--txt2)', marginBottom: 12 }}>
-                      <span>✅ ICF認定コーチによる1on1サポート</span>
-                      <span>✅ 分析スコアに基づいた具体的なフィードバック</span>
-                      <span>✅ ACC/PCC/MCC取得に向けたコーチング実践の改善</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <a href="/mentors" className="btn-cancel-sm" style={{ fontSize: 12 }}>メンター一覧を見る</a>
-                      <button
-                        onClick={() => {
-                          if (user) localStorage.setItem(`mentor_guide_dismissed_${user.id}`, '1')
-                          setShowMentorGuide(false)
-                        }}
-                        style={{ fontSize: 12, color: 'var(--txt3)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px' }}
-                      >
-                        今は閉じる
-                      </button>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (user) localStorage.setItem(`mentor_guide_dismissed_${user.id}`, '1')
-                      setShowMentorGuide(false)
-                    }}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt3)', fontSize: 18, flexShrink: 0, lineHeight: 1 }}
-                    aria-label="閉じる"
-                  >
-                    ✕
-                  </button>
-                </div>
               </div>
             )}
 
