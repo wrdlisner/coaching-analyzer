@@ -236,11 +236,9 @@ function DashboardContent() {
           if (!localStorage.getItem(key)) setShowMentorCongrats(true)
         }
 
-        // メンターガイド：未申請・未非承認かつ未dismissなら表示
-        if (userData.mentor_status === 'none') {
-          const key = `mentor_guide_dismissed_${userData.id}`
-          if (!localStorage.getItem(key)) setShowMentorGuide(true)
-        }
+        // メンターガイド：未dismiss なら全ユーザーに表示
+        const guideKey = `mentor_guide_dismissed_${userData.id}`
+        if (!localStorage.getItem(guideKey)) setShowMentorGuide(true)
       } catch {
         router.push('/login')
       } finally {
@@ -385,10 +383,10 @@ function DashboardContent() {
 
             {/* おめでとう通知（承認時・初回のみ） */}
             {showMentorCongrats && (
-              <div style={{ background: 'linear-gradient(135deg, #f0faf6 0%, #e8f4ff 100%)', border: '1px solid var(--teal)', borderRadius: 'var(--r)', padding: '16px 20px', marginBottom: '1.25rem', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+              <div style={{ background: 'var(--teal-l)', border: '1px solid var(--teal)', borderRadius: 'var(--r)', padding: '16px 20px', marginBottom: '1.25rem', display: 'flex', alignItems: 'flex-start', gap: 14 }}>
                 <span style={{ fontSize: 28, flexShrink: 0 }}>🎉</span>
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--txt)', margin: '0 0 4px' }}>おめでとうございます！メンターコーチとして承認されました</p>
+                  <p style={{ fontWeight: 700, fontSize: 15, color: 'var(--teal)', margin: '0 0 4px' }}>おめでとうございます！メンターコーチとして承認されました</p>
                   <p style={{ fontSize: 13, color: 'var(--txt2)', margin: '0 0 10px', lineHeight: 1.6 }}>プロフィールがメンター一覧に公開されています。プロフィールの編集やMCQガイドはメンター向けメニューからご確認ください。</p>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <a href="/mentors/profile/edit" className="btn-create" style={{ fontSize: 12 }}>プロフィールを確認</a>
