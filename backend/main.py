@@ -12,7 +12,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 from pathlib import Path
 from sqlalchemy import text
@@ -129,10 +128,6 @@ def startup():
     """Create all database tables on startup"""
     Base.metadata.create_all(bind=engine)
     _run_migrations()
-
-    static_dir = Path(__file__).parent / "static" / "mentor-photos"
-    static_dir.mkdir(parents=True, exist_ok=True)
-    app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(delete_expired_sessions, "cron", hour=2, minute=0)
