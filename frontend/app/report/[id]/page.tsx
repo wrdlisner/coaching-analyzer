@@ -224,7 +224,7 @@ if (loading) {
               気づきをより深く実践に繋げることができます。
             </p>
             <Link
-              href="/mentor"
+              href="/mentors"
               className="btn-secondary w-full py-2 text-center block text-sm"
             >
               メンターコーチを探す →
