@@ -7,7 +7,7 @@ from sqlalchemy import (
     Column, String, Integer, Float, Text, LargeBinary,
     DateTime, ForeignKey, Enum as SAEnum, Boolean
 )
-from sqlalchemy.dialects.postgresql import UUID, JSON
+from sqlalchemy.dialects.postgresql import UUID, JSON, ARRAY
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -27,6 +27,8 @@ class User(Base):
     )
     credits = Column(Integer, nullable=False, default=0)
     is_admin = Column(Boolean, nullable=False, default=False)
+    role = Column(String(20), nullable=False, default="user")
+    mentor_status = Column(String(20), nullable=False, default="none")
     referral_code = Column(String(20), unique=True, nullable=True, index=True)
     referred_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -35,6 +37,7 @@ class User(Base):
     credit_records = relationship("Credit", back_populates="user")
     notice_reads = relationship("NoticeRead", back_populates="user")
     coupons = relationship("Coupon", back_populates="user")
+    mentor_profile = relationship("Mentor", back_populates="user", uselist=False)
 
 
 class Session(Base):
@@ -135,3 +138,32 @@ class Coupon(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="coupons")
+
+
+class Mentor(Base):
+    __tablename__ = "mentors"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, unique=True)
+
+    display_name = Column(String(255), nullable=False)
+    credential = Column(String(10), nullable=False)  # PCC / MCC
+    coaching_years = Column(Integer, nullable=False)
+    bio = Column(Text, nullable=False)
+    photo_url = Column(Text, nullable=True)
+
+    specialties = Column(ARRAY(String), nullable=False, default=[])
+    client_type = Column(String(20), nullable=False)  # individual / corporate / both
+    style_note = Column(Text, nullable=True)
+
+    contact_url = Column(Text, nullable=False)
+    sns_url = Column(Text, nullable=True)
+
+    is_active = Column(Boolean, nullable=False, default=True)
+    view_count = Column(Integer, nullable=False, default=0)
+    click_count = Column(Integer, nullable=False, default=0)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = relationship("User", back_populates="mentor_profile")

@@ -225,3 +225,90 @@ def delete_notice(
     db.delete(notice)
     db.commit()
     return {"success": True}
+
+
+# ---- Mentor management ----
+
+@router.get("/mentors", response_model=List[schemas.AdminMentorResponse])
+def list_admin_mentors(
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(models.Mentor, models.User)
+        .join(models.User, models.Mentor.user_id == models.User.id)
+        .order_by(models.Mentor.created_at.desc())
+        .all()
+    )
+    return [
+        schemas.AdminMentorResponse(
+            id=m.id,
+            user_id=m.user_id,
+            user_name=u.name,
+            user_email=u.email,
+            display_name=m.display_name,
+            credential=m.credential,
+            coaching_years=m.coaching_years,
+            bio=m.bio,
+            photo_url=m.photo_url,
+            specialties=m.specialties or [],
+            client_type=m.client_type,
+            contact_url=m.contact_url,
+            is_active=m.is_active,
+            mentor_status=u.mentor_status,
+            created_at=m.created_at,
+        )
+        for m, u in rows
+    ]
+
+
+@router.patch("/mentors/{user_id}/approve", response_model=schemas.SuccessResponse)
+def approve_mentor(
+    user_id: str,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
+    mentor = db.query(models.Mentor).filter(models.Mentor.user_id == user_id).first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="メンタープロフィールが見つかりません")
+
+    user.role = "mentor"
+    user.mentor_status = "approved"
+    mentor.is_active = True
+    db.commit()
+    return {"success": True}
+
+
+@router.patch("/mentors/{user_id}/reject", response_model=schemas.SuccessResponse)
+def reject_mentor(
+    user_id: str,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
+
+    user.mentor_status = "rejected"
+    mentor = db.query(models.Mentor).filter(models.Mentor.user_id == user_id).first()
+    if mentor:
+        db.delete(mentor)
+    db.commit()
+    return {"success": True}
+
+
+@router.patch("/mentors/{user_id}/toggle-active", response_model=schemas.SuccessResponse)
+def toggle_mentor_active(
+    user_id: str,
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    mentor = db.query(models.Mentor).filter(models.Mentor.user_id == user_id).first()
+    if not mentor:
+        raise HTTPException(status_code=404, detail="メンタープロフィールが見つかりません")
+    mentor.is_active = not mentor.is_active
+    db.commit()
+    return {"success": True}

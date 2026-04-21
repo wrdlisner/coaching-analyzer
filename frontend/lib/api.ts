@@ -78,6 +78,8 @@ export interface UserInfo {
   icf_level: string
   credits: number
   is_admin: boolean
+  role: string
+  mentor_status: string
   referral_code: string | null
   created_at: string
   analysis_count: number
@@ -293,6 +295,117 @@ export const notices = {
 export const payments = {
   async createCheckout(pack: '1' | '3' | '10', couponCode?: string): Promise<{ url: string }> {
     return apiRequest('POST', '/api/payments/checkout', { pack, coupon_code: couponCode || null })
+  },
+}
+
+// ---- Mentors ----
+
+export interface MentorInfo {
+  id: string
+  user_id: string
+  display_name: string
+  credential: string
+  coaching_years: number
+  bio: string
+  photo_url: string | null
+  specialties: string[]
+  client_type: string
+  style_note: string | null
+  contact_url: string
+  sns_url: string | null
+  is_active: boolean
+  view_count: number
+  click_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface AdminMentorInfo {
+  id: string
+  user_id: string
+  user_name: string
+  user_email: string
+  display_name: string
+  credential: string
+  coaching_years: number
+  bio: string
+  photo_url: string | null
+  specialties: string[]
+  client_type: string
+  contact_url: string
+  is_active: boolean
+  mentor_status: string
+  created_at: string
+}
+
+export interface MentorApplyData {
+  display_name: string
+  credential: string
+  coaching_years: number
+  bio: string
+  photo_url?: string | null
+  specialties: string[]
+  client_type: string
+  style_note?: string | null
+  contact_url: string
+  sns_url?: string | null
+}
+
+export const mentors = {
+  async apply(data: MentorApplyData): Promise<{ success: boolean }> {
+    return apiRequest('POST', '/api/mentors/apply', data)
+  },
+
+  async list(credential?: string, specialty?: string): Promise<MentorInfo[]> {
+    const params = new URLSearchParams()
+    if (credential) params.set('credential', credential)
+    if (specialty) params.set('specialty', specialty)
+    const qs = params.toString()
+    return apiRequest('GET', `/api/mentors${qs ? `?${qs}` : ''}`)
+  },
+
+  async get(id: string): Promise<MentorInfo> {
+    return apiRequest('GET', id === 'me' ? '/api/mentors/me' : `/api/mentors/${id}`)
+  },
+
+  async updateProfile(data: Partial<MentorApplyData>): Promise<MentorInfo> {
+    return apiRequest('PATCH', '/api/mentors/profile', data)
+  },
+
+  async trackView(): Promise<{ success: boolean }> {
+    return apiRequest('POST', '/api/mentors/track/view')
+  },
+
+  async trackClick(mentorId: string): Promise<{ success: boolean }> {
+    return apiRequest('POST', `/api/mentors/${mentorId}/track/click`)
+  },
+
+  async recommend(competencies: string[]): Promise<MentorInfo[]> {
+    return apiRequest('GET', `/api/mentors/recommend?competencies=${competencies.join(',')}`)
+  },
+
+  async uploadPhoto(file: File): Promise<{ url: string }> {
+    const formData = new FormData()
+    formData.append('file', file)
+    return apiRequest('POST', '/api/mentors/upload-photo', formData, true)
+  },
+}
+
+export const adminMentors = {
+  async list(): Promise<AdminMentorInfo[]> {
+    return apiRequest('GET', '/api/admin/mentors')
+  },
+
+  async approve(userId: string): Promise<{ success: boolean }> {
+    return apiRequest('PATCH', `/api/admin/mentors/${userId}/approve`)
+  },
+
+  async reject(userId: string): Promise<{ success: boolean }> {
+    return apiRequest('PATCH', `/api/admin/mentors/${userId}/reject`)
+  },
+
+  async toggleActive(userId: string): Promise<{ success: boolean }> {
+    return apiRequest('PATCH', `/api/admin/mentors/${userId}/toggle-active`)
   },
 }
 

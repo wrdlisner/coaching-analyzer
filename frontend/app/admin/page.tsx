@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { admin, auth, adminNotices, UserInfo, AdminFeedback, AdminTrendDataPoint, Notice } from '@/lib/api'
+import { admin, auth, adminNotices, adminMentors, UserInfo, AdminFeedback, AdminTrendDataPoint, Notice, AdminMentorInfo } from '@/lib/api'
 
-type Tab = 'users' | 'feedbacks' | 'trends' | 'notices'
+type Tab = 'users' | 'feedbacks' | 'trends' | 'notices' | 'mentors'
 
 function icfBadgeClass(level: string): string {
   if (level === 'pcc' || level === 'mcc') return 'icf-badge icf-pcc'
@@ -115,6 +115,7 @@ export default function AdminPage() {
   const [noticeList, setNoticeList] = useState<Notice[]>([])
   const [noticeForm, setNoticeForm] = useState({ title: '', body: '', published_at: '', is_published: false })
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
+  const [mentorList, setMentorList] = useState<AdminMentorInfo[]>([])
 
   useEffect(() => {
     auth.getMe()
@@ -128,6 +129,8 @@ export default function AdminPage() {
         return adminNotices.list()
       })
       .then((nl) => { if (nl) setNoticeList(nl) })
+      .then(() => adminMentors.list())
+      .then((ml) => { if (ml) setMentorList(ml) })
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
   }, [router])
@@ -274,6 +277,7 @@ export default function AdminPage() {
           { key: 'feedbacks', label: 'フィードバック', count: feedbacks.length },
           { key: 'trends', label: 'トレンド', count: null },
           { key: 'notices', label: 'お知らせ管理', count: noticeList.length },
+          { key: 'mentors', label: 'メンター管理', count: mentorList.filter(m => m.mentor_status === 'pending').length || null },
         ] as { key: Tab; label: string; count: number | null }[]).map(t => (
           <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
             {t.label}
@@ -504,6 +508,139 @@ export default function AdminPage() {
               )}
             </div>
             <p style={{ marginTop: '0.75rem', fontSize: 12, color: 'var(--txt3)' }}>トレンドは24時間ごとに自動更新されます</p>
+          </>
+        )}
+
+        {/* ── メンター管理タブ ── */}
+        {tab === 'mentors' && (
+          <>
+            {/* 承認待ち */}
+            <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 16, marginTop: 0 }}>
+                承認待ち（{mentorList.filter(m => m.mentor_status === 'pending').length}件）
+              </h2>
+              {mentorList.filter(m => m.mentor_status === 'pending').length === 0 ? (
+                <p style={{ color: 'var(--txt3)', fontSize: 13 }}>承認待ちはありません</p>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {mentorList.filter(m => m.mentor_status === 'pending').map(m => (
+                    <div key={m.id} style={{ border: '0.5px solid var(--border)', borderRadius: 'var(--rs)', padding: '14px 16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--txt)' }}>{m.display_name}</div>
+                          <div style={{ fontSize: 12, color: 'var(--txt3)', marginTop: 2 }}>{m.user_name}（{m.user_email}）</div>
+                          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                            <span className="icf-badge icf-pcc">{m.credential}</span>
+                            <span style={{ fontSize: 12, color: 'var(--txt2)' }}>コーチ歴 {m.coaching_years}年</span>
+                            <span style={{ fontSize: 12, color: 'var(--txt2)' }}>
+                              {m.client_type === 'individual' ? '個人' : m.client_type === 'corporate' ? '法人' : '両方'}
+                            </span>
+                          </div>
+                          {m.specialties.length > 0 && (
+                            <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
+                              {m.specialties.map(s => (
+                                <span key={s} style={{ fontSize: 11, background: 'var(--purple-l)', color: 'var(--purple)', borderRadius: 4, padding: '2px 8px' }}>{s}</span>
+                              ))}
+                            </div>
+                          )}
+                          <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 8, marginBottom: 0, lineHeight: 1.6 }}>
+                            {m.bio.length > 120 ? m.bio.slice(0, 120) + '…' : m.bio}
+                          </p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                          <button
+                            className="btn-sm btn-apply"
+                            onClick={async () => {
+                              try {
+                                await adminMentors.approve(m.user_id)
+                                setMentorList(prev => prev.map(x => x.id === m.id ? { ...x, mentor_status: 'approved', is_active: true } : x))
+                                flash('承認しました')
+                              } catch (e: unknown) { flash(e instanceof Error ? e.message : 'エラー') }
+                            }}
+                          >
+                            承認
+                          </button>
+                          <button
+                            className="btn-sm btn-delete"
+                            onClick={async () => {
+                              if (!confirm('非承認にしますか？')) return
+                              try {
+                                await adminMentors.reject(m.user_id)
+                                setMentorList(prev => prev.filter(x => x.id !== m.id))
+                                flash('非承認にしました')
+                              } catch (e: unknown) { flash(e instanceof Error ? e.message : 'エラー') }
+                            }}
+                          >
+                            非承認
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 承認済みメンター一覧 */}
+            <div className="ds-card">
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 16, marginTop: 0 }}>
+                承認済みメンター（{mentorList.filter(m => m.mentor_status === 'approved').length}件）
+              </h2>
+              <div className="table-wrap">
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>名前</th>
+                      <th>クレデンシャル</th>
+                      <th>コンピテンシー</th>
+                      <th style={{ textAlign: 'center' }}>表示状態</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mentorList.filter(m => m.mentor_status === 'approved').map(m => (
+                      <tr key={m.id}>
+                        <td>
+                          <div style={{ fontWeight: 500 }}>{m.display_name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--txt3)' }}>{m.user_email}</div>
+                        </td>
+                        <td><span className="icf-badge icf-pcc">{m.credential}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                            {m.specialties.slice(0, 2).map(s => (
+                              <span key={s} style={{ fontSize: 10, background: 'var(--purple-l)', color: 'var(--purple)', borderRadius: 4, padding: '1px 6px' }}>{s}</span>
+                            ))}
+                            {m.specialties.length > 2 && <span style={{ fontSize: 10, color: 'var(--txt3)' }}>+{m.specialties.length - 2}</span>}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span className={`publish-tag ${m.is_active ? 'pub-live' : 'pub-draft'}`}>
+                            {m.is_active ? '表示中' : '非表示'}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn-sm btn-admin"
+                            onClick={async () => {
+                              try {
+                                await adminMentors.toggleActive(m.user_id)
+                                setMentorList(prev => prev.map(x => x.id === m.id ? { ...x, is_active: !x.is_active } : x))
+                                flash('表示状態を切り替えました')
+                              } catch (e: unknown) { flash(e instanceof Error ? e.message : 'エラー') }
+                            }}
+                          >
+                            {m.is_active ? '非表示にする' : '表示する'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {mentorList.filter(m => m.mentor_status === 'approved').length === 0 && (
+                  <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>承認済みメンターはいません</p>
+                )}
+              </div>
+            </div>
           </>
         )}
 

@@ -178,6 +178,7 @@ function DashboardContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const paymentStatus = searchParams.get('payment')
+  const mentorApplied = searchParams.get('mentor_applied')
 
   const [activeTab, setActiveTab] = useState<DashTab>('home')
   const [user, setUser] = useState<UserInfo | null>(null)
@@ -323,6 +324,7 @@ function DashboardContent() {
             ⬡ {user?.credits} クレジット
           </button>
           {user?.is_admin && <a href="/admin" className="topbar-link">管理者ページ</a>}
+          {user?.role === 'mentor' && <a href="/mentors" className="topbar-link">メンター一覧</a>}
           <button
             onClick={toggleTheme}
             className="theme-toggle"
@@ -367,6 +369,13 @@ function DashboardContent() {
               </div>
             )}
 
+            {/* Mentor application result */}
+            {mentorApplied === '1' && (
+              <div style={{ background: 'var(--teal-l)', border: '0.5px solid var(--teal)', borderRadius: 'var(--rs)', padding: '12px 16px', fontSize: 13, color: 'var(--teal)', fontWeight: 500, marginBottom: '1.25rem' }}>
+                メンター申請を受け付けました。審査結果をお待ちください。
+              </div>
+            )}
+
             {/* Payment result messages */}
             {paymentStatus === 'success' && (
               <div style={{ background: 'var(--teal-l)', border: '0.5px solid var(--teal)', borderRadius: 'var(--rs)', padding: '12px 16px', fontSize: 13, color: 'var(--teal)', fontWeight: 500, marginBottom: '1.25rem' }}>
@@ -378,6 +387,40 @@ function DashboardContent() {
                 購入をキャンセルしました。
               </div>
             )}
+
+            {/* Mentor section */}
+            {user?.role === 'mentor' ? (
+              <div className="ds-card" style={{ marginBottom: '0.75rem', borderLeft: '3px solid var(--purple)' }}>
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 8, marginTop: 0 }}>── メンター向け ──</h2>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <a href="/mentors/profile/edit" className="btn-cancel-sm">プロフィール編集</a>
+                  <a href="/mentors/mcq-guide" className="btn-cancel-sm">MCQガイド</a>
+                  <a href="/mentors" className="btn-cancel-sm">一覧プレビュー</a>
+                </div>
+              </div>
+            ) : user?.mentor_status === 'pending' ? (
+              <div className="ds-card" style={{ marginBottom: '0.75rem', background: 'var(--amber-l)', border: '0.5px solid var(--amber)' }}>
+                <p style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 600, margin: 0 }}>⏳ メンター審査中です</p>
+                <p style={{ fontSize: 12, color: 'var(--txt2)', marginTop: 4, marginBottom: 0 }}>申請内容を確認中です。しばらくお待ちください。</p>
+              </div>
+            ) : user?.mentor_status === 'rejected' ? (
+              <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
+                <p style={{ fontSize: 13, color: 'var(--coral)', fontWeight: 600, margin: 0 }}>今回はご登録いただけませんでした</p>
+                <div style={{ marginTop: 8 }}>
+                  <a href="/mentors/apply" className="btn-cancel-sm">再度申請する</a>
+                </div>
+              </div>
+            ) : user?.mentor_status === 'none' ? (
+              <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                  <div>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt)', margin: 0 }}>メンターコーチとして登録する</p>
+                    <p style={{ fontSize: 12, color: 'var(--txt3)', marginTop: 2, marginBottom: 0 }}>PCC・MCC保有者向け。コーチングツールを使いながらメンタリング活動ができます。</p>
+                  </div>
+                  <a href="/mentors/apply" className="btn-cancel-sm" style={{ flexShrink: 0 }}>登録申請 →</a>
+                </div>
+              </div>
+            ) : null}
 
             {/* Hero banner */}
             <div className="hero">
