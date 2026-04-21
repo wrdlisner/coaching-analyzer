@@ -1,10 +1,7 @@
 """Mentors router: mentor application, listing, profile, tracking, recommend"""
 
-import os
-import shutil
-import uuid as uuid_module
+import base64
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
@@ -30,8 +27,6 @@ VALID_SPECIALTIES = {
     "クライアントの成長を促進する",
 }
 
-PHOTO_DIR = Path(__file__).parent.parent / "static" / "mentor-photos"
-
 
 def _validate_mentor_data(data: schemas.MentorApplyRequest | schemas.MentorUpdateRequest) -> None:
     if hasattr(data, "credential") and data.credential is not None:
@@ -51,27 +46,26 @@ def _validate_mentor_data(data: schemas.MentorApplyRequest | schemas.MentorUpdat
             raise HTTPException(status_code=400, detail="bioは200〜400字で入力してください")
 
 
+ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+
+
 @router.post("/upload-photo")
 async def upload_photo(
     file: UploadFile = File(...),
     current_user: models.User = Depends(auth_utils.get_current_user),
 ):
-    if file.content_type not in ("image/jpeg", "image/png", "image/webp"):
+    mime = file.content_type or ""
+    if mime not in ALLOWED_MIME:
         raise HTTPException(status_code=400, detail="jpg/png/webpのみアップロード可能です")
 
     content = await file.read()
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="ファイルサイズは5MB以下にしてください")
 
-    PHOTO_DIR.mkdir(parents=True, exist_ok=True)
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename and "." in file.filename else "jpg"
-    filename = f"{current_user.id}_{uuid_module.uuid4().hex[:8]}.{ext}"
-    file_path = PHOTO_DIR / filename
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    base_url = os.getenv("API_BASE_URL", "http://localhost:8000")
-    return {"url": f"{base_url}/static/mentor-photos/{filename}"}
+    # base64 データURLとして返す（サーバーファイル保存不要・デプロイ間で消えない）
+    b64 = base64.b64encode(content).decode("utf-8")
+    data_url = f"data:{mime};base64,{b64}"
+    return {"url": data_url}
 
 
 @router.post("/apply", response_model=schemas.SuccessResponse)
