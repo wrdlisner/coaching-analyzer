@@ -311,6 +311,8 @@ export interface MentorInfo {
   specialties: string[]
   client_type: string
   style_note: string | null
+  session_duration_minutes: number | null
+  session_price_jpy: number | null
   contact_url: string
   sns_url: string | null
   is_active: boolean
@@ -347,6 +349,8 @@ export interface MentorApplyData {
   specialties: string[]
   client_type: string
   style_note?: string | null
+  session_duration_minutes?: number | null
+  session_price_jpy?: number | null
   contact_url: string
   sns_url?: string | null
 }

@@ -90,6 +90,8 @@ def _run_migrations():
         "ALTER TABLE users ADD COLUMN referred_by UUID REFERENCES users(id)",
         "ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user'",
         "ALTER TABLE users ADD COLUMN mentor_status VARCHAR(20) NOT NULL DEFAULT 'none'",
+        "ALTER TABLE mentors ADD COLUMN session_duration_minutes INTEGER",
+        "ALTER TABLE mentors ADD COLUMN session_price_jpy INTEGER",
     ]
     with engine.connect() as conn:
         for sql in migrations:

@@ -40,6 +40,13 @@ function MentorCard({ mentor, onClickContact }: { mentor: MentorInfo; onClickCon
           </div>
           <div style={{ fontSize: 12, color: 'var(--txt3)', marginTop: 4 }}>
             コーチ歴 {mentor.coaching_years}年 ・ {CLIENT_TYPE_LABELS[mentor.client_type] || mentor.client_type}
+            {(mentor.session_duration_minutes || mentor.session_price_jpy) && (
+              <span style={{ marginLeft: 6 }}>
+                ・{mentor.session_duration_minutes ? `${mentor.session_duration_minutes}分` : ''}
+                {mentor.session_duration_minutes && mentor.session_price_jpy ? ' / ' : ''}
+                {mentor.session_price_jpy ? `¥${mentor.session_price_jpy.toLocaleString()}` : ''}
+              </span>
+            )}
           </div>
           {mentor.specialties.length > 0 && (
             <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap' }}>
