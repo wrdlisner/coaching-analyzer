@@ -209,6 +209,8 @@ class MentorApplyRequest(BaseModel):
     specialties: List[str]
     client_type: str  # individual / corporate / both
     style_note: Optional[str] = None
+    session_duration_minutes: Optional[int] = None
+    session_price_jpy: Optional[int] = None
     contact_url: str
     sns_url: Optional[str] = None
 
@@ -222,6 +224,8 @@ class MentorUpdateRequest(BaseModel):
     specialties: Optional[List[str]] = None
     client_type: Optional[str] = None
     style_note: Optional[str] = None
+    session_duration_minutes: Optional[int] = None
+    session_price_jpy: Optional[int] = None
     contact_url: Optional[str] = None
     sns_url: Optional[str] = None
 
@@ -237,6 +241,8 @@ class MentorResponse(BaseModel):
     specialties: List[str]
     client_type: str
     style_note: Optional[str]
+    session_duration_minutes: Optional[int]
+    session_price_jpy: Optional[int]
     contact_url: str
     sns_url: Optional[str]
     is_active: bool

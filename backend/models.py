@@ -156,6 +156,9 @@ class Mentor(Base):
     client_type = Column(String(20), nullable=False)  # individual / corporate / both
     style_note = Column(Text, nullable=True)
 
+    session_duration_minutes = Column(Integer, nullable=True)   # 例: 60
+    session_price_jpy = Column(Integer, nullable=True)          # 例: 10000
+
     contact_url = Column(Text, nullable=False)
     sns_url = Column(Text, nullable=True)
 

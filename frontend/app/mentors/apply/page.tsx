@@ -41,6 +41,8 @@ export default function MentorApplyPage() {
     specialties: [] as string[],
     client_type: 'individual',
     style_note: '',
+    session_duration_minutes: '',
+    session_price_jpy: '',
     contact_url: '',
     sns_url: '',
   })
@@ -98,6 +100,8 @@ export default function MentorApplyPage() {
         specialties: form.specialties,
         client_type: form.client_type,
         style_note: form.style_note || null,
+        session_duration_minutes: form.session_duration_minutes ? parseInt(form.session_duration_minutes, 10) : null,
+        session_price_jpy: form.session_price_jpy ? parseInt(form.session_price_jpy, 10) : null,
         contact_url: form.contact_url,
         sns_url: form.sns_url || null,
       })
@@ -305,6 +309,32 @@ export default function MentorApplyPage() {
               placeholder="あなたのメンタリングの特徴やスタイルを自由にご記入ください"
               style={{ resize: 'vertical' }}
             />
+          </div>
+
+          {/* セッション情報 */}
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <label className="ds-label">セッション時間（分）（任意）</label>
+              <input
+                type="number"
+                className="ds-input"
+                min={1}
+                value={form.session_duration_minutes}
+                onChange={e => setForm({ ...form, session_duration_minutes: e.target.value })}
+                placeholder="例：60"
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 140 }}>
+              <label className="ds-label">料金（円）（任意）</label>
+              <input
+                type="number"
+                className="ds-input"
+                min={0}
+                value={form.session_price_jpy}
+                onChange={e => setForm({ ...form, session_price_jpy: e.target.value })}
+                placeholder="例：10000"
+              />
+            </div>
           </div>
 
           {/* 申込みURL */}

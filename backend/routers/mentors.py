@@ -94,6 +94,8 @@ def apply_mentor(
         specialties=body.specialties,
         client_type=body.client_type,
         style_note=body.style_note,
+        session_duration_minutes=body.session_duration_minutes,
+        session_price_jpy=body.session_price_jpy,
         contact_url=body.contact_url,
         sns_url=body.sns_url,
         is_active=False,
@@ -195,6 +197,10 @@ def update_mentor_profile(
         mentor.client_type = body.client_type
     if body.style_note is not None:
         mentor.style_note = body.style_note
+    if body.session_duration_minutes is not None:
+        mentor.session_duration_minutes = body.session_duration_minutes
+    if body.session_price_jpy is not None:
+        mentor.session_price_jpy = body.session_price_jpy
     if body.contact_url is not None:
         mentor.contact_url = body.contact_url
     if body.sns_url is not None:
