@@ -45,6 +45,8 @@ class UserResponse(BaseModel):
     icf_level: str
     credits: int
     is_admin: bool
+    role: str = "user"
+    mentor_status: str = "none"
     referral_code: Optional[str]
     created_at: UTCDatetime
 
@@ -194,6 +196,75 @@ class CouponResponse(BaseModel):
 class FeedbackSubmitResponse(BaseModel):
     success: bool = True
     coupon: Optional[CouponResponse] = None
+
+
+# ---- Mentors ----
+
+class MentorApplyRequest(BaseModel):
+    display_name: str
+    credential: str  # PCC / MCC
+    coaching_years: int
+    bio: str
+    photo_url: Optional[str] = None
+    specialties: List[str]
+    client_type: str  # individual / corporate / both
+    style_note: Optional[str] = None
+    contact_url: str
+    sns_url: Optional[str] = None
+
+
+class MentorUpdateRequest(BaseModel):
+    display_name: Optional[str] = None
+    credential: Optional[str] = None
+    coaching_years: Optional[int] = None
+    bio: Optional[str] = None
+    photo_url: Optional[str] = None
+    specialties: Optional[List[str]] = None
+    client_type: Optional[str] = None
+    style_note: Optional[str] = None
+    contact_url: Optional[str] = None
+    sns_url: Optional[str] = None
+
+
+class MentorResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    display_name: str
+    credential: str
+    coaching_years: int
+    bio: str
+    photo_url: Optional[str]
+    specialties: List[str]
+    client_type: str
+    style_note: Optional[str]
+    contact_url: str
+    sns_url: Optional[str]
+    is_active: bool
+    view_count: int
+    click_count: int
+    created_at: UTCDatetime
+    updated_at: UTCDatetime
+
+    class Config:
+        from_attributes = True
+
+
+class AdminMentorResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    user_name: str
+    user_email: str
+    display_name: str
+    credential: str
+    coaching_years: int
+    bio: str
+    photo_url: Optional[str]
+    specialties: List[str]
+    client_type: str
+    contact_url: str
+    is_active: bool
+    mentor_status: str
+    created_at: UTCDatetime
 
 
 # ---- Generic ----

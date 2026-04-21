@@ -12,12 +12,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
+from pathlib import Path
 from sqlalchemy import text
 from database import engine, Base, SessionLocal
 import models  # noqa: F401 - ensure models are registered
 
-from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments
+from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments, mentors
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,7 @@ app.include_router(admin.router)
 app.include_router(notices.router)
 app.include_router(manager.router)
 app.include_router(payments.router)
+app.include_router(mentors.router)
 
 
 def delete_expired_sessions():
@@ -86,6 +89,8 @@ def _run_migrations():
     migrations = [
         "ALTER TABLE users ADD COLUMN referral_code VARCHAR(20) UNIQUE",
         "ALTER TABLE users ADD COLUMN referred_by UUID REFERENCES users(id)",
+        "ALTER TABLE users ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'user'",
+        "ALTER TABLE users ADD COLUMN mentor_status VARCHAR(20) NOT NULL DEFAULT 'none'",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -124,6 +129,10 @@ def startup():
     """Create all database tables on startup"""
     Base.metadata.create_all(bind=engine)
     _run_migrations()
+
+    static_dir = Path(__file__).parent / "static" / "mentor-photos"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")), name="static")
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(delete_expired_sessions, "cron", hour=2, minute=0)
