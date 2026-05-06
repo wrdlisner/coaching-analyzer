@@ -273,6 +273,16 @@ class AdminMentorResponse(BaseModel):
     created_at: UTCDatetime
 
 
+# ---- Purchases (admin) ----
+
+class AdminPurchaseResponse(BaseModel):
+    id: UUID
+    user_name: str
+    user_email: str
+    credits: int
+    created_at: UTCDatetime
+
+
 # ---- Generic ----
 
 class SuccessResponse(BaseModel):

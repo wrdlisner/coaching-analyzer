@@ -413,6 +413,20 @@ export const adminMentors = {
   },
 }
 
+export interface AdminPurchase {
+  id: string
+  user_name: string
+  user_email: string
+  credits: number
+  created_at: string
+}
+
+export const adminPurchases = {
+  async list(): Promise<AdminPurchase[]> {
+    return apiRequest('GET', '/api/admin/purchases')
+  },
+}
+
 export const adminNotices = {
   async list(): Promise<Notice[]> {
     return apiRequest('GET', '/api/admin/notices')

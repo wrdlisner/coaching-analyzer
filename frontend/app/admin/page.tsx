@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { admin, auth, adminNotices, adminMentors, UserInfo, AdminFeedback, AdminTrendDataPoint, Notice, AdminMentorInfo } from '@/lib/api'
+import { admin, auth, adminNotices, adminMentors, adminPurchases, UserInfo, AdminFeedback, AdminTrendDataPoint, Notice, AdminMentorInfo, AdminPurchase } from '@/lib/api'
 
-type Tab = 'users' | 'feedbacks' | 'trends' | 'notices' | 'mentors'
+type Tab = 'users' | 'feedbacks' | 'trends' | 'notices' | 'mentors' | 'purchases'
+
+const PACK_PRICE: Record<number, number> = { 1: 500, 3: 1200, 10: 3500 }
 
 function icfBadgeClass(level: string): string {
   if (level === 'pcc' || level === 'mcc') return 'icf-badge icf-pcc'
@@ -116,6 +118,7 @@ export default function AdminPage() {
   const [noticeForm, setNoticeForm] = useState({ title: '', body: '', published_at: '', is_published: false })
   const [editingNotice, setEditingNotice] = useState<Notice | null>(null)
   const [mentorList, setMentorList] = useState<AdminMentorInfo[]>([])
+  const [purchases, setPurchases] = useState<AdminPurchase[]>([])
 
   useEffect(() => {
     auth.getMe()
@@ -131,6 +134,8 @@ export default function AdminPage() {
       .then((nl) => { if (nl) setNoticeList(nl) })
       .then(() => adminMentors.list())
       .then((ml) => { if (ml) setMentorList(ml) })
+      .then(() => adminPurchases.list())
+      .then((pl) => { if (pl) setPurchases(pl) })
       .catch(() => router.replace('/login'))
       .finally(() => setLoading(false))
   }, [router])
@@ -278,6 +283,7 @@ export default function AdminPage() {
           { key: 'trends', label: 'トレンド', count: null },
           { key: 'notices', label: 'お知らせ管理', count: noticeList.length },
           { key: 'mentors', label: 'メンター管理', count: mentorList.filter(m => m.mentor_status === 'pending').length || null },
+          { key: 'purchases', label: '購入履歴', count: null },
         ] as { key: Tab; label: string; count: number | null }[]).map(t => (
           <button key={t.key} className={`tab${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>
             {t.label}
@@ -758,6 +764,74 @@ export default function AdminPage() {
             </div>
           </>
         )}
+        {/* ── 購入履歴タブ ── */}
+        {tab === 'purchases' && (() => {
+          const totalCredits = purchases.reduce((s, p) => s + p.credits, 0)
+          const estimatedRevenue = purchases.reduce((s, p) => s + (PACK_PRICE[p.credits] ?? 0), 0)
+          return (
+            <>
+              {purchases.length > 0 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div className="kpi-card">
+                    <div className="kpi-label">購入件数</div>
+                    <div className="kpi-val">{purchases.length}<span className="kpi-sub"> 件</span></div>
+                  </div>
+                  <div className="kpi-card">
+                    <div className="kpi-label">販売クレジット合計</div>
+                    <div className="kpi-val">{totalCredits}<span className="kpi-sub"> クレジット</span></div>
+                  </div>
+                  <div className="kpi-card">
+                    <div className="kpi-label">推定売上（定価ベース）</div>
+                    <div className="kpi-val">¥{estimatedRevenue.toLocaleString()}</div>
+                  </div>
+                </div>
+              )}
+              <div className="table-wrap" style={{ overflowX: 'auto' }}>
+                <table className="tbl">
+                  <thead>
+                    <tr>
+                      <th>購入日時</th>
+                      <th>ユーザー</th>
+                      <th style={{ textAlign: 'center' }}>パック</th>
+                      <th style={{ textAlign: 'right' }}>定価</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {purchases.map((p) => (
+                      <tr key={p.id}>
+                        <td style={{ color: 'var(--txt3)', fontSize: 12, whiteSpace: 'nowrap' }}>
+                          {new Date(p.created_at).toLocaleDateString('ja-JP', {
+                            year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit',
+                          })}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>{p.user_name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--txt3)' }}>{p.user_email}</div>
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <span style={{ fontSize: 12, background: 'var(--purple-l)', color: 'var(--purple)', borderRadius: 4, padding: '2px 10px', fontWeight: 600 }}>
+                            {p.credits}回分
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 500, fontSize: 13 }}>
+                          {PACK_PRICE[p.credits] != null ? `¥${PACK_PRICE[p.credits].toLocaleString()}` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {purchases.length === 0 && (
+                  <p style={{ textAlign: 'center', color: 'var(--txt3)', padding: '2rem', fontSize: 13 }}>購入履歴はまだありません</p>
+                )}
+              </div>
+              <p style={{ marginTop: '0.75rem', fontSize: 12, color: 'var(--txt3)' }}>
+                合計 {purchases.length} 件 ※定価ベースの表示です（クーポン割引は反映されません）
+              </p>
+            </>
+          )
+        })()}
+
       </div>
     </div>
   )

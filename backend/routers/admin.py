@@ -313,6 +313,30 @@ def reject_mentor(
     return {"success": True}
 
 
+@router.get("/purchases", response_model=List[schemas.AdminPurchaseResponse])
+def list_purchases(
+    _admin: models.User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(models.Credit, models.User.name, models.User.email)
+        .join(models.User, models.Credit.user_id == models.User.id)
+        .filter(models.Credit.reason == "purchase")
+        .order_by(models.Credit.created_at.desc())
+        .all()
+    )
+    return [
+        schemas.AdminPurchaseResponse(
+            id=c.id,
+            user_name=name,
+            user_email=email,
+            credits=c.amount,
+            created_at=c.created_at,
+        )
+        for c, name, email in rows
+    ]
+
+
 @router.patch("/mentors/{user_id}/toggle-active", response_model=schemas.SuccessResponse)
 def toggle_mentor_active(
     user_id: str,
