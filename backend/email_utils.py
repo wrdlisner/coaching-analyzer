@@ -1,4 +1,4 @@
-"""メール送信ユーティリティ（Resend API）
+"""メール送信ユーティリティ（Resend SDK）
 
 Railway の環境変数に以下を設定してください：
 
@@ -6,11 +6,10 @@ Railway の環境変数に以下を設定してください：
   FROM_EMAIL      - 送信元アドレス（デフォルト: onboarding@resend.dev）
 """
 
-import json
 import logging
 import os
-import urllib.request
-import urllib.error
+
+import resend
 
 logger = logging.getLogger(__name__)
 
@@ -20,39 +19,23 @@ def _resend_configured() -> bool:
 
 
 def send_email(to: str, subject: str, html_body: str) -> bool:
-    """Resend API でメールを送信する。成功時 True、スキップ/失敗時 False。"""
+    """Resend SDK でメールを送信する。成功時 True、スキップ/失敗時 False。"""
     if not _resend_configured():
         logger.info(f"RESEND_API_KEY未設定のためメール送信をスキップ: to={to}")
         return False
 
-    api_key = os.getenv("RESEND_API_KEY", "")
+    resend.api_key = os.getenv("RESEND_API_KEY", "")
     from_addr = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
 
-    payload = json.dumps({
-        "from": from_addr,
-        "to": [to],
-        "subject": subject,
-        "html": html_body,
-    }).encode("utf-8")
-
-    req = urllib.request.Request(
-        "https://api.resend.com/emails",
-        data=payload,
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        method="POST",
-    )
-
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            logger.info(f"メール送信成功: to={to}, status={resp.status}")
-            return True
-    except urllib.error.HTTPError as e:
-        body = e.read().decode("utf-8", errors="replace")
-        logger.error(f"メール送信失敗 (HTTP {e.code}): to={to}, body={body}")
-        return False
+        resend.Emails.send({
+            "from": from_addr,
+            "to": [to],
+            "subject": subject,
+            "html": html_body,
+        })
+        logger.info(f"メール送信成功: to={to}")
+        return True
     except Exception as e:
         logger.error(f"メール送信失敗: to={to}, error={e}")
         return False
