@@ -148,7 +148,12 @@ function RegisterForm() {
             </div>
 
             <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium text-gray-700">利用規約への同意</p>
+              <p className="text-sm font-medium text-gray-700">
+                <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                  利用規約
+                </Link>
+                への同意
+              </p>
               {consentItems.map((item, i) => (
                 <label key={i} className="flex items-start gap-3 cursor-pointer">
                   <input

@@ -178,6 +178,9 @@ export default function LandingPage() {
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
           <p>本ツールはAI（Claude）による自動評価です。ICF資格審査の代替ではありません。</p>
           <p className="mt-3 flex items-center justify-center gap-4 flex-wrap">
+            <Link href="/terms" className="underline hover:text-gray-700">
+              利用規約
+            </Link>
             <Link href="/data-policy" className="underline hover:text-gray-700">
               データの取り扱いについて
             </Link>
