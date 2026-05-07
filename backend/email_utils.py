@@ -1,54 +1,58 @@
-"""メール送信ユーティリティ（SMTP）
+"""メール送信ユーティリティ（Resend API）
 
-環境変数が未設定の場合は送信をスキップします。
 Railway の環境変数に以下を設定してください：
 
-  SMTP_HOST     - 例: smtp.gmail.com
-  SMTP_PORT     - 例: 587
-  SMTP_USER     - 送信元メールアドレス
-  SMTP_PASSWORD - アプリパスワード（Gmailの場合は「アプリパスワード」を使用）
-  FROM_EMAIL    - 送信者表示名付きアドレス（省略時は SMTP_USER）
+  RESEND_API_KEY  - Resend の API キー（re_xxxxxxxx）
+  FROM_EMAIL      - 送信元アドレス（デフォルト: onboarding@resend.dev）
 """
 
+import json
 import logging
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import urllib.request
+import urllib.error
 
 logger = logging.getLogger(__name__)
 
 
-def _smtp_configured() -> bool:
-    return bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_USER") and os.getenv("SMTP_PASSWORD"))
+def _resend_configured() -> bool:
+    return bool(os.getenv("RESEND_API_KEY"))
 
 
 def send_email(to: str, subject: str, html_body: str) -> bool:
-    """メールを送信する。成功時 True、スキップ/失敗時 False。"""
-    if not _smtp_configured():
-        logger.info(f"SMTP未設定のためメール送信をスキップ: to={to}, subject={subject}")
+    """Resend API でメールを送信する。成功時 True、スキップ/失敗時 False。"""
+    if not _resend_configured():
+        logger.info(f"RESEND_API_KEY未設定のためメール送信をスキップ: to={to}")
         return False
 
-    host = os.getenv("SMTP_HOST", "")
-    port = int(os.getenv("SMTP_PORT", "587"))
-    user = os.getenv("SMTP_USER", "")
-    password = os.getenv("SMTP_PASSWORD", "")
-    from_addr = os.getenv("FROM_EMAIL", user)
+    api_key = os.getenv("RESEND_API_KEY", "")
+    from_addr = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"] = from_addr
-    msg["To"] = to
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
+    payload = json.dumps({
+        "from": from_addr,
+        "to": [to],
+        "subject": subject,
+        "html": html_body,
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
 
     try:
-        with smtplib.SMTP(host, port, timeout=10) as smtp:
-            smtp.ehlo()
-            smtp.starttls()
-            smtp.login(user, password)
-            smtp.sendmail(from_addr, [to], msg.as_string())
-        logger.info(f"メール送信成功: to={to}")
-        return True
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            logger.info(f"メール送信成功: to={to}, status={resp.status}")
+            return True
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        logger.error(f"メール送信失敗 (HTTP {e.code}): to={to}, body={body}")
+        return False
     except Exception as e:
         logger.error(f"メール送信失敗: to={to}, error={e}")
         return False
