@@ -15,7 +15,9 @@ import auth as auth_utils
 from database import get_db
 from email_utils import send_password_reset_email
 
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+# カンマ区切りの場合は最初のURLを使用（main.pyと同様の環境変数）
+_raw_frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+FRONTEND_URL = _raw_frontend_url.split(",")[0].strip().rstrip("/")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
