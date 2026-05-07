@@ -93,6 +93,7 @@ def _run_migrations():
         "ALTER TABLE mentors ADD COLUMN session_duration_minutes INTEGER",
         "ALTER TABLE mentors ADD COLUMN session_price_jpy INTEGER",
         "ALTER TABLE password_reset_tokens ADD COLUMN used_at TIMESTAMP",
+        "ALTER TABLE password_reset_tokens DROP COLUMN IF EXISTS used",
     ]
     with engine.connect() as conn:
         for sql in migrations:
