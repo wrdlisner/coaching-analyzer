@@ -54,6 +54,49 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
         return False
 
 
+def send_password_reset_email(to_email: str, reset_url: str) -> bool:
+    subject = "【CoachingAnalyzer】パスワードリセットのご案内"
+    html_body = f"""
+<!DOCTYPE html>
+<html lang="ja">
+<body style="font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif; background:#f8f7f2; padding:32px 16px;">
+  <div style="max-width:560px; margin:0 auto; background:#fff; border-radius:12px; padding:32px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div style="font-size:40px;">🔑</div>
+      <h1 style="font-size:20px; font-weight:700; color:#1a1916; margin:12px 0 4px;">パスワードリセット</h1>
+      <p style="font-size:14px; color:#706f68; margin:0;">CoachingAnalyzer</p>
+    </div>
+
+    <p style="font-size:14px; color:#3a3935; line-height:1.8; margin:0 0 20px;">
+      パスワードリセットのリクエストを受け付けました。<br>
+      下のボタンから新しいパスワードを設定してください。
+    </p>
+
+    <div style="text-align:center; margin:0 0 24px;">
+      <a href="{reset_url}"
+         style="display:inline-block; background:#5B4FD6; color:#fff; font-size:14px; font-weight:600; padding:14px 32px; border-radius:8px; text-decoration:none;">
+        パスワードを再設定する
+      </a>
+    </div>
+
+    <div style="background:#fef9ec; border:1px solid #f5e5a0; border-radius:8px; padding:14px 18px; margin:0 0 24px;">
+      <p style="font-size:12px; color:#8a7a20; margin:0; line-height:1.7;">
+        ⚠️ このリンクは<strong>1時間</strong>で有効期限が切れます。<br>
+        心当たりのない場合はこのメールを無視してください。アカウントへの変更はされません。
+      </p>
+    </div>
+
+    <hr style="border:none; border-top:1px solid #e8e6df; margin:0 0 16px;">
+    <p style="font-size:11px; color:#9c9b94; text-align:center; margin:0;">
+      CoachingAnalyzer — ICFコーチングセッション分析ツール
+    </p>
+  </div>
+</body>
+</html>
+"""
+    return send_email(to_email, subject, html_body)
+
+
 def send_mentor_approved_email(to_email: str, display_name: str) -> bool:
     subject = "【CoachingAnalyzer】メンターコーチとして承認されました"
     html_body = f"""

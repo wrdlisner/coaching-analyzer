@@ -101,16 +101,9 @@ export default function LoginPage() {
 
           <div className="mt-4 space-y-2 text-center text-sm text-gray-500">
             <p>
-              パスワードをお忘れの方は{' '}
-              <a
-                href="https://x.com/sodekooo"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                X（@sodekooo）のDM
-              </a>
-              {' '}よりお問い合わせください
+              <Link href="/forgot-password" className="text-blue-600 hover:underline">
+                パスワードをお忘れですか？
+              </Link>
             </p>
             <p>
               アカウントをお持ちでない方は{' '}

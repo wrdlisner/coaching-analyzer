@@ -1,15 +1,21 @@
 """Auth router: register, login, me"""
 
+import os
 import random
+import secrets
 import string
+from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 import models
 import schemas
 import auth as auth_utils
 from database import get_db
+from email_utils import send_password_reset_email
+
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -86,6 +92,72 @@ def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
 @router.get("/me", response_model=schemas.UserResponse)
 def get_me(current_user: models.User = Depends(auth_utils.get_current_user)):
     return current_user
+
+
+@router.post("/forgot-password", response_model=schemas.SuccessResponse)
+def forgot_password(
+    body: schemas.ForgotPasswordRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    user = db.query(models.User).filter(models.User.email == body.email).first()
+    # ユーザーが存在しなくても成功レスポンスを返す（メールアドレス列挙攻撃を防ぐ）
+    if user:
+        # 既存の未使用トークンを無効化
+        db.query(models.PasswordResetToken).filter(
+            models.PasswordResetToken.user_id == user.id,
+            models.PasswordResetToken.used_at == None,
+        ).delete()
+
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        reset_token = models.PasswordResetToken(
+            user_id=user.id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.add(reset_token)
+        db.commit()
+
+        reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
+        background_tasks.add_task(send_password_reset_email, user.email, reset_url)
+
+    return {"success": True}
+
+
+@router.post("/reset-password", response_model=schemas.SuccessResponse)
+def reset_password(
+    body: schemas.ResetPasswordRequest,
+    db: Session = Depends(get_db),
+):
+    if len(body.new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="パスワードは8文字以上で設定してください",
+        )
+
+    now = datetime.now(timezone.utc)
+    reset_token = db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.token == body.token,
+        models.PasswordResetToken.used_at == None,
+        models.PasswordResetToken.expires_at > now,
+    ).first()
+
+    if not reset_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="リセットリンクが無効または期限切れです。もう一度お試しください。",
+        )
+
+    user = db.query(models.User).filter(models.User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
+
+    user.password_hash = auth_utils.hash_password(body.new_password)
+    reset_token.used_at = now
+    db.commit()
+
+    return {"success": True}
 
 
 @router.patch("/me", response_model=schemas.UserResponse)

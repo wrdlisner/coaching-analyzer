@@ -112,6 +112,14 @@ export const auth = {
   async updateProfile(data: { name?: string; icf_level?: string }): Promise<UserInfo> {
     return apiRequest('PATCH', '/api/auth/me', data)
   },
+
+  async forgotPassword(email: string): Promise<{ success: boolean }> {
+    return apiRequest('POST', '/api/auth/forgot-password', { email })
+  },
+
+  async resetPassword(token: string, new_password: string): Promise<{ success: boolean }> {
+    return apiRequest('POST', '/api/auth/reset-password', { token, new_password })
+  },
 }
 
 // ---- Sessions ----

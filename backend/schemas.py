@@ -273,6 +273,17 @@ class AdminMentorResponse(BaseModel):
     created_at: UTCDatetime
 
 
+# ---- Password Reset ----
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+
 # ---- Purchases (admin) ----
 
 class AdminPurchaseResponse(BaseModel):
