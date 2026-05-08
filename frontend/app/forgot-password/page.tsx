@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">パスワードをお忘れですか？</h1>
           <p className="text-sm text-gray-500 mt-2">登録済みのメールアドレスを入力してください</p>

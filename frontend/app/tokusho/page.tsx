@@ -9,7 +9,7 @@ export default function TokushoPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
         </div>
       </header>
@@ -26,7 +26,7 @@ export default function TokushoPage() {
                 { label: '所在地', value: '東京都中野3-9-4' },
                 { label: '電話番号', value: '090-8432-2182' },
                 { label: 'メールアドレス', value: 'kouhei.sodekawa@gmail.com' },
-                { label: 'サービス名', value: 'CoachingAnalyzer' },
+                { label: 'サービス名', value: 'Coachmark' },
                 {
                   label: '販売価格',
                   value: '各商品ページに表示された価格（消費税込み）\n・1回分クレジット：¥500\n・3回分クレジット：¥1,200\n・10回分クレジット：¥3,500',

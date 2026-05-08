@@ -38,7 +38,7 @@ export default function McqGuidePage() {
       <nav className="topbar">
         <div className="topbar-logo">
           <div className="logo-icon">CA</div>
-          CoachingAnalyzer
+          Coachmark
         </div>
         <div className="topbar-right">
           <Link href="/mentors/profile/edit" className="topbar-link">プロフィール編集</Link>

@@ -12,7 +12,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
@@ -188,7 +188,7 @@ export default function LandingPage() {
               特定商取引法に基づく表記
             </Link>
           </p>
-          <p className="mt-2">© 2025 CoachingAnalyzer</p>
+          <p className="mt-2">© 2025 Coachmark</p>
         </div>
       </footer>
     </div>

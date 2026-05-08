@@ -149,7 +149,7 @@ export default function MentorProfileEditPage() {
       <nav className="topbar">
         <div className="topbar-logo">
           <div className="logo-icon">CA</div>
-          CoachingAnalyzer
+          Coachmark
         </div>
         <div className="topbar-right">
           <Link href="/mentors" className="topbar-link">一覧プレビュー</Link>

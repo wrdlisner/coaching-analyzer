@@ -128,7 +128,7 @@ export default function MentorsPage() {
       <nav className="topbar">
         <div className="topbar-logo">
           <div className="logo-icon">CA</div>
-          CoachingAnalyzer
+          Coachmark
         </div>
         <div className="topbar-right">
           <span className="topbar-user">{user?.name}</span>

@@ -10,7 +10,7 @@ export default function DataPolicyPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
           <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
             ← トップページ
@@ -210,7 +210,7 @@ export default function DataPolicyPage() {
       <footer className="border-t border-gray-200 bg-white mt-12">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
           <p>本ツールはAI（Claude）による自動評価です。ICF資格審査の代替ではありません。</p>
-          <p className="mt-2">© 2025 CoachingAnalyzer</p>
+          <p className="mt-2">© 2025 Coachmark</p>
         </div>
       </footer>
     </div>

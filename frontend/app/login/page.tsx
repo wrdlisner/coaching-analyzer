@@ -40,7 +40,7 @@ export default function LoginPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">ログイン</h1>
         </div>

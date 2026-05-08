@@ -154,7 +154,7 @@ export default function MentorApplyPage() {
       <nav className="topbar">
         <div className="topbar-logo">
           <div className="logo-icon">CA</div>
-          CoachingAnalyzer
+          Coachmark
         </div>
         <div className="topbar-right">
           <Link href="/dashboard" className="topbar-link">← ダッシュボード</Link>

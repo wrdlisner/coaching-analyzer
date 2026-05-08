@@ -65,7 +65,7 @@ function RegisterForm() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">アカウント登録</h1>
           <p className="text-gray-600 text-sm mt-1">無料登録で1クレジット付与</p>

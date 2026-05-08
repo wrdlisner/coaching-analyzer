@@ -42,7 +42,7 @@ def send_email(to: str, subject: str, html_body: str) -> bool:
 
 
 def send_password_reset_email(to_email: str, reset_url: str) -> bool:
-    subject = "【CoachingAnalyzer】パスワードリセットのご案内"
+    subject = "【Coachmark】パスワードリセットのご案内"
     html_body = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -51,7 +51,7 @@ def send_password_reset_email(to_email: str, reset_url: str) -> bool:
     <div style="text-align:center; margin-bottom:24px;">
       <div style="font-size:40px;">🔑</div>
       <h1 style="font-size:20px; font-weight:700; color:#1a1916; margin:12px 0 4px;">パスワードリセット</h1>
-      <p style="font-size:14px; color:#706f68; margin:0;">CoachingAnalyzer</p>
+      <p style="font-size:14px; color:#706f68; margin:0;">Coachmark</p>
     </div>
 
     <p style="font-size:14px; color:#3a3935; line-height:1.8; margin:0 0 20px;">
@@ -75,7 +75,7 @@ def send_password_reset_email(to_email: str, reset_url: str) -> bool:
 
     <hr style="border:none; border-top:1px solid #e8e6df; margin:0 0 16px;">
     <p style="font-size:11px; color:#9c9b94; text-align:center; margin:0;">
-      CoachingAnalyzer — ICFコーチングセッション分析ツール
+      Coachmark — ICFコーチングセッション分析ツール
     </p>
   </div>
 </body>
@@ -85,7 +85,7 @@ def send_password_reset_email(to_email: str, reset_url: str) -> bool:
 
 
 def send_mentor_approved_email(to_email: str, display_name: str) -> bool:
-    subject = "【CoachingAnalyzer】メンターコーチとして承認されました"
+    subject = "【Coachmark】メンターコーチとして承認されました"
     html_body = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -99,7 +99,7 @@ def send_mentor_approved_email(to_email: str, display_name: str) -> bool:
 
     <p style="font-size:14px; color:#3a3935; line-height:1.8; margin:0 0 20px;">
       {display_name} さん、<br>
-      CoachingAnalyzer のメンターコーチ審査が完了し、<strong>承認されました</strong>。
+      Coachmark のメンターコーチ審査が完了し、<strong>承認されました</strong>。
       プロフィールがメンター一覧に公開されます。
     </p>
 
@@ -121,7 +121,7 @@ def send_mentor_approved_email(to_email: str, display_name: str) -> bool:
 
     <hr style="border:none; border-top:1px solid #e8e6df; margin:28px 0 16px;">
     <p style="font-size:11px; color:#9c9b94; text-align:center; margin:0;">
-      CoachingAnalyzer — ICFコーチングセッション分析ツール
+      Coachmark — ICFコーチングセッション分析ツール
     </p>
   </div>
 </body>
@@ -131,7 +131,7 @@ def send_mentor_approved_email(to_email: str, display_name: str) -> bool:
 
 
 def send_mentor_rejected_email(to_email: str, display_name: str) -> bool:
-    subject = "【CoachingAnalyzer】メンター登録審査の結果について"
+    subject = "【Coachmark】メンター登録審査の結果について"
     html_body = f"""
 <!DOCTYPE html>
 <html lang="ja">
@@ -149,7 +149,7 @@ def send_mentor_rejected_email(to_email: str, display_name: str) -> bool:
     </p>
     <hr style="border:none; border-top:1px solid #e8e6df; margin:0 0 16px;">
     <p style="font-size:11px; color:#9c9b94; text-align:center; margin:0;">
-      CoachingAnalyzer — ICFコーチングセッション分析ツール
+      Coachmark — ICFコーチングセッション分析ツール
     </p>
   </div>
 </body>

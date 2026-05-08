@@ -9,7 +9,7 @@ export default function TermsPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
-            <span className="font-bold text-gray-900">CoachingAnalyzer</span>
+            <span className="font-bold text-gray-900">Coachmark</span>
           </Link>
           <Link href="/" className="text-sm text-gray-500 hover:text-gray-700">
             ← トップページ
@@ -29,7 +29,7 @@ export default function TermsPage() {
           <section className="bg-white rounded-2xl shadow-sm p-8">
             <h2 className="text-lg font-bold text-gray-900 mb-4">第1条（適用）</h2>
             <p className="text-sm text-gray-700 leading-relaxed">
-              本利用規約（以下「本規約」といいます）は、SODEKO（以下「当社」といいます）が提供するCoachingAnalyzer（以下「本サービス」といいます）の利用条件を定めるものです。
+              本利用規約（以下「本規約」といいます）は、SODEKO（以下「当社」といいます）が提供するCoachmark（以下「本サービス」といいます）の利用条件を定めるものです。
               登録ユーザーの皆さま（以下「ユーザー」といいます）には、本規約に従って本サービスをご利用いただきます。
             </p>
           </section>
@@ -200,7 +200,7 @@ export default function TermsPage() {
       <footer className="border-t border-gray-200 bg-white mt-12">
         <div className="max-w-4xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
           <p>本ツールはAI（Claude）による自動評価です。ICF資格審査の代替ではありません。</p>
-          <p className="mt-2">© 2025 CoachingAnalyzer</p>
+          <p className="mt-2">© 2025 Coachmark</p>
         </div>
       </footer>
     </div>
