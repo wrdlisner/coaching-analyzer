@@ -2,6 +2,7 @@
 
 import base64
 import io
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -434,7 +435,8 @@ def generate_report(
     client_ratio = 100 - coach_ratio
 
     competencies = analysis["competencies"]
-    avg_score = sum(c["score"] for c in competencies) / len(competencies)
+    raw_avg = sum(c["score"] for c in competencies) / len(competencies)
+    avg_score = math.floor(raw_avg * 10 + 0.5) / 10  # 四捨五入（JS toFixed(1) と同じ挙動）
     qualification_statuses = get_qualification_statuses(
         avg_score,
         analysis.get("pcc_fulfillment_rate", 0.0),

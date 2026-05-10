@@ -57,10 +57,11 @@ def download_pdf(
     if not session.pdf_data:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="PDFが存在しません")
 
+    date_str = session.created_at.strftime("%Y%m%d")
     return Response(
         content=session.pdf_data,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f"attachment; filename=coaching_report_{session_id}.pdf"
+            "Content-Disposition": f"attachment; filename=coaching_report_{date_str}_{session_id}.pdf"
         },
     )
