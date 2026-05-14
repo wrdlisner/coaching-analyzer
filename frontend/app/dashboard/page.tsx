@@ -661,6 +661,7 @@ function DashboardContent() {
         <div style={{ maxWidth: 900, margin: '0 auto', display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
           <Link href="/data-policy" style={{ fontSize: 12, color: 'var(--txt3)', textDecoration: 'underline' }}>データの取り扱い</Link>
           <Link href="/tokusho" style={{ fontSize: 12, color: 'var(--txt3)', textDecoration: 'underline' }}>特定商取引法に基づく表記</Link>
+          <Link href="/updates" style={{ fontSize: 12, color: 'var(--txt3)', textDecoration: 'underline' }}>アップデート情報</Link>
         </div>
       </footer>
     </div>
