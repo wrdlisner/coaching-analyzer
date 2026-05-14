@@ -187,6 +187,9 @@ export default function LandingPage() {
             <Link href="/tokusho" className="underline hover:text-gray-700">
               特定商取引法に基づく表記
             </Link>
+            <Link href="/updates" className="underline hover:text-gray-700">
+              アップデート情報
+            </Link>
           </p>
           <p className="mt-2">© 2025 Coachmark</p>
         </div>
