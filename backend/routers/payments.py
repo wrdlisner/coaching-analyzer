@@ -21,7 +21,8 @@ router = APIRouter(prefix="/api/payments", tags=["payments"])
 
 STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
-FRONTEND_URL = os.environ.get("FRONTEND_URL", "https://frontend-production-9f67.up.railway.app")
+_raw_frontend_url = os.environ.get("FRONTEND_URL", "https://frontend-production-9f67.up.railway.app")
+FRONTEND_URL = _raw_frontend_url.split(",")[0].strip().rstrip("/")
 
 PACK_CONFIG = {
     "1": {"price": 500, "credits": 1},
