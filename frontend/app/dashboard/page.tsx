@@ -459,7 +459,7 @@ function DashboardContent() {
             <div className="hero">
               <div>
                 <h2>新しい分析を始める</h2>
-                <p>1クレジット消費 ／ 現在 {user?.credits} クレジット保有</p>
+                <p>通常分析 1クレジット・ディープ分析 2クレジット ／ 現在 {user?.credits} クレジット保有</p>
                 <button className="hero-link" onClick={() => setShowCreditGuide(true)}>
                   クレジットを増やすには？→
                 </button>

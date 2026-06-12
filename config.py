@@ -6,7 +6,9 @@ load_dotenv()
 ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
+# backend実行時もここが実際に読まれる（backend/main.py の sys.path 操作でルートが優先されるため）。
+# backend/config.py と必ず同期すること。
+CLAUDE_MODEL = "claude-sonnet-4-6"
 
 ICF_COMPETENCIES = [
     {"id": 1, "name": "倫理に従った実践"},

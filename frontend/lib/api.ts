@@ -130,6 +130,7 @@ export interface SessionSummary {
   coach_ratio: number
   avg_score: number
   scores: {
+    analysis_tier?: 'standard' | 'deep'
     competencies: Array<{ id: number; name: string; score: number }>
     overall_summary?: string
     qualification_comment?: string
@@ -165,11 +166,18 @@ export interface JobStatusResponse {
   error_message: string | null
 }
 
+export type AnalysisTier = 'standard' | 'deep'
+
 export const analyze = {
-  async submitAnalysis(file: File, sessionType: 'initial' | 'follow_up' = 'initial'): Promise<JobAcceptedResponse> {
+  async submitAnalysis(
+    file: File,
+    sessionType: 'initial' | 'follow_up' = 'initial',
+    analysisTier: AnalysisTier = 'standard',
+  ): Promise<JobAcceptedResponse> {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('session_type', sessionType)
+    formData.append('analysis_tier', analysisTier)
     return apiRequest('POST', '/api/analyze', formData, true)
   },
 

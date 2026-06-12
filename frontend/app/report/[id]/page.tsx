@@ -90,6 +90,7 @@ if (loading) {
   if (!session) return null
 
   const competencies = session.scores?.competencies || []
+  const analysisTier = session.scores?.analysis_tier
   const overallSummary = session.scores?.overall_summary
   const qualificationComment = session.scores?.qualification_comment
   const strengthsImprovements = session.scores?.strengths_improvements
@@ -102,7 +103,20 @@ if (loading) {
           <Link href="/dashboard" className="flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900 font-medium">
             ← ダッシュボードに戻る
           </Link>
-          <h1 className="font-bold text-gray-900">分析レポート</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="font-bold text-gray-900">分析レポート</h1>
+            {/* analysis_tier はティア機能導入後のレポートにのみ存在する（過去レポートはバッジなし） */}
+            {analysisTier === 'deep' && (
+              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-purple-100 text-purple-700">
+                ディープ分析
+              </span>
+            )}
+            {analysisTier === 'standard' && (
+              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-gray-100 text-gray-600">
+                通常分析
+              </span>
+            )}
+          </div>
           <div className="w-28" />
         </div>
       </header>

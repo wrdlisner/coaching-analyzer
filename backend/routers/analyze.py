@@ -21,14 +21,25 @@ router = APIRouter(prefix="/api", tags=["analyze"])
 
 
 # ---------------------------------------------------------------------------
+# 分析ティア定義
+# モデルIDはクライアントから受け取らず、必ずこのマップでサーバー側解決する
+# ---------------------------------------------------------------------------
+ANALYSIS_TIERS = {
+    "standard": {"label": "通常分析", "model": "claude-sonnet-4-6", "credits": 1, "deep": False},
+    "deep": {"label": "ディープ分析", "model": "claude-opus-4-8", "credits": 2, "deep": True},
+}
+
+
+# ---------------------------------------------------------------------------
 # Background task
 # ---------------------------------------------------------------------------
 
-def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, session_type: str):
+def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, session_type: str, analysis_tier: str = "standard"):
     """バックグラウンドで分析パイプラインを実行する"""
     db = SessionLocal()
     mp3_path = None
     is_temp_mp3 = False
+    tier = ANALYSIS_TIERS.get(analysis_tier, ANALYSIS_TIERS["standard"])
 
     try:
         # ジョブを processing に更新
@@ -50,7 +61,12 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         # Analyze
         from modules.analyzer import analyze_session
         is_follow_up = session_type == "follow_up"
-        analysis = analyze_session(transcription["utterances"], is_follow_up=is_follow_up)
+        analysis = analyze_session(
+            transcription["utterances"],
+            is_follow_up=is_follow_up,
+            model=tier["model"],
+            deep=tier["deep"],
+        )
 
         # Generate PDF
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -74,6 +90,7 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
             if total_chars > 0 else 0
         )
         scores_json = {
+            "analysis_tier": analysis_tier,
             "competencies": competencies,
             "overall_summary": analysis.get("overall_summary", ""),
             "qualification_comment": analysis.get("qualification_comment", ""),
@@ -129,11 +146,11 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
                 job.error_message = str(e)
                 job.updated_at = datetime.now(timezone.utc)
 
-            # 受付時に減算したクレジットを返金する
+            # 受付時に減算したクレジットを返金する（ティアに応じた消費分）
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if user:
-                user.credits += 1
-                db.add(models.Credit(user_id=user_id, amount=1, reason="refund"))
+                user.credits += tier["credits"]
+                db.add(models.Credit(user_id=user_id, amount=tier["credits"], reason="refund"))
             db.commit()
         except Exception:
             logger.error(f"[job {job_id}] failed-state更新/返金に失敗", exc_info=True)
@@ -155,10 +172,19 @@ async def analyze_audio(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     session_type: str = Form("initial"),
+    analysis_tier: str = Form("standard"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth_utils.get_current_user),
 ):
-    logger.info(f"[analyze] session_type='{session_type}' file='{file.filename}' user={current_user.email}")
+    logger.info(f"[analyze] session_type='{session_type}' tier='{analysis_tier}' file='{file.filename}' user={current_user.email}")
+
+    # ティアの検証（不正値は400）
+    tier = ANALYSIS_TIERS.get(analysis_tier)
+    if tier is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="不正な分析プランが指定されました",
+        )
 
     # 拡張子チェック
     filename = file.filename or "upload"
@@ -187,20 +213,21 @@ async def analyze_audio(
         # クレジットを受付時に原子的に減算する
         # （残高チェックと減算を1つのUPDATEで行い、同時アップロードによる二重消費を防ぐ。
         #   分析失敗時は _run_analysis 内で返金する）
+        cost = tier["credits"]
         updated = (
             db.query(models.User)
             .filter(
                 models.User.id == current_user.id,
-                models.User.credits >= 1,
+                models.User.credits >= cost,
             )
-            .update({models.User.credits: models.User.credits - 1}, synchronize_session=False)
+            .update({models.User.credits: models.User.credits - cost}, synchronize_session=False)
         )
         if not updated:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,
-                detail="クレジットが不足しています",
+                detail=f"クレジットが不足しています（{tier['label']}には{cost}クレジット必要です）",
             )
-        db.add(models.Credit(user_id=current_user.id, amount=-1, reason="analysis"))
+        db.add(models.Credit(user_id=current_user.id, amount=-cost, reason="analysis"))
 
         # ジョブをDBに登録
         job = models.AnalysisJob(user_id=current_user.id, status="pending")
@@ -220,6 +247,7 @@ async def analyze_audio(
         input_path=input_path,
         suffix=suffix,
         session_type=session_type,
+        analysis_tier=analysis_tier,
     )
 
     logger.info(f"[analyze] job {job.id} queued")

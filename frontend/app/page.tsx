@@ -153,7 +153,7 @@ export default function LandingPage() {
         <div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center">
           <h2 className="text-2xl font-bold mb-4">クレジット制で始めやすい</h2>
           <p className="text-blue-100 mb-8 max-w-xl mx-auto">
-            無料登録で1クレジット付与。1回の分析に1クレジット消費。
+            無料登録で1クレジット付与。通常分析は1回1クレジット、より詳細なディープ分析は2クレジット消費。
             クレジットの追加購入や、さまざまな方法で獲得できます。
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto text-sm">

@@ -3,10 +3,15 @@
 import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { auth, analyze, getToken } from '@/lib/api'
+import { auth, analyze, getToken, AnalysisTier } from '@/lib/api'
 
 type Step = 1 | 2 | 3
 type SessionType = 'initial' | 'follow_up'
+
+const TIER_INFO: Record<AnalysisTier, { label: string; credits: number; desc: string }> = {
+  standard: { label: '通常分析', credits: 1, desc: '標準AIモデルによるICF 8コンピテンシー分析' },
+  deep: { label: 'ディープ分析', credits: 2, desc: '上位AIモデルによる深掘り分析。コメント・改善提案がより詳細になります' },
+}
 
 interface PhaseInfo {
   label: string
@@ -32,6 +37,7 @@ export default function AnalyzePage() {
   const [consents, setConsents] = useState([false, false, false, false])
   const [file, setFile] = useState<File | null>(null)
   const [sessionType, setSessionType] = useState<SessionType>('initial')
+  const [analysisTier, setAnalysisTier] = useState<AnalysisTier>('standard')
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState('')
 
@@ -88,7 +94,7 @@ export default function AnalyzePage() {
     // Estimated durations (seconds)
     const conversionSec = needsConversion ? Math.max(5, fileSizeMb * 0.5) : 3
     const transcriptionSec = Math.max(30, fileSizeMb * 28)
-    const analysisSec = 90
+    const analysisSec = analysisTier === 'deep' ? 150 : 90
     const totalSec = conversionSec + transcriptionSec + analysisSec
 
     // Phase breakpoints in seconds
@@ -135,7 +141,7 @@ export default function AnalyzePage() {
 
     let jobId: string
     try {
-      const accepted = await analyze.submitAnalysis(file, sessionType)
+      const accepted = await analyze.submitAnalysis(file, sessionType, analysisTier)
       jobId = accepted.job_id
     } catch (err: unknown) {
       if (progressInterval.current) clearInterval(progressInterval.current)
@@ -172,7 +178,7 @@ export default function AnalyzePage() {
     '本ツールのセッション分析はAI（Claude）が自動的に行います',
     '分析結果はICF公式の評価ではなく、参考情報です',
     '分析データはサービス改善のために利用される場合があります（データには個人が特定される情報は含まれません）',
-    '分析に1クレジット消費することに同意します（現在: ' + credits + ' クレジット）',
+    '分析にクレジットを消費することに同意します（通常分析: 1 ／ ディープ分析: 2、現在: ' + credits + ' クレジット）',
   ]
 
   const currentPhase = PHASES[phaseIndex]
@@ -269,6 +275,51 @@ export default function AnalyzePage() {
               <p className="text-sm text-gray-500">mp3 / mp4 / m4a 形式、最大500MB</p>
             </div>
 
+            {/* Analysis tier */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-3">分析プラン</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {(Object.keys(TIER_INFO) as AnalysisTier[]).map((tierKey) => {
+                  const info = TIER_INFO[tierKey]
+                  const insufficient = credits < info.credits
+                  return (
+                    <label
+                      key={tierKey}
+                      className={`flex-1 border-2 rounded-lg px-4 py-3 transition-colors ${
+                        insufficient
+                          ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                          : analysisTier === tierKey
+                          ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                          : 'border-gray-200 hover:border-gray-300 cursor-pointer'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="analysisTier"
+                          value={tierKey}
+                          checked={analysisTier === tierKey}
+                          disabled={insufficient}
+                          onChange={() => setAnalysisTier(tierKey)}
+                          className="text-blue-600"
+                        />
+                        <span className="text-sm font-bold text-gray-800">{info.label}</span>
+                        <span className={`ml-auto text-xs font-medium rounded-full px-2 py-0.5 ${
+                          tierKey === 'deep' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {info.credits}クレジット
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2 leading-relaxed">{info.desc}</p>
+                      {insufficient && (
+                        <p className="text-xs text-red-500 mt-1">クレジットが不足しています</p>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+
             {/* Session type */}
             <div>
               <p className="text-sm font-medium text-gray-700 mb-3">セッション種別</p>
@@ -360,10 +411,10 @@ export default function AnalyzePage() {
               </button>
               <button
                 onClick={handleStartAnalysis}
-                disabled={!file}
+                disabled={!file || credits < TIER_INFO[analysisTier].credits}
                 className="btn-primary flex-1 py-3"
               >
-                分析を開始する
+                {TIER_INFO[analysisTier].label}を開始する（{TIER_INFO[analysisTier].credits}クレジット）
               </button>
             </div>
           </div>
