@@ -379,13 +379,12 @@ def analyze_session(utterances: list[dict], is_follow_up: bool = False) -> dict:
     else:
         json_str = response_text.strip()
 
-    # 文字列値内の生の改行をエスケープ（Claude が稀に出力する不正JSON対策）
+    # Claude が稀に文字列値内に生の改行を出力するため、
+    # strict=False で文字列内の制御文字を許容して再パースする
     try:
         result = json.loads(json_str)
     except json.JSONDecodeError:
-        import re
-        json_str_fixed = re.sub(r'(?<!\\)\n', '\\n', json_str)
-        result = json.loads(json_str_fixed)
+        result = json.loads(json_str, strict=False)
 
     # -----------------------------------------------------------------------
     # PCCマーカー充足率 → スコア の後処理

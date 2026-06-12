@@ -12,6 +12,7 @@ anthropic
 assemblyai
 matplotlib
 numpy
+pillow
 apscheduler
 stripe
 aiofiles

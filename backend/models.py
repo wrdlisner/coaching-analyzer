@@ -135,6 +135,7 @@ class Coupon(Base):
     discount_amount = Column(Integer, nullable=False)  # ¥100 / 200 / 300
     expires_at = Column(DateTime, nullable=False)
     used_at = Column(DateTime, nullable=True)
+    reserved_until = Column(DateTime, nullable=True)  # 決済処理中の予約（多重利用防止）
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="coupons")

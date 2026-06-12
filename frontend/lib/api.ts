@@ -150,10 +150,6 @@ export const sessions = {
   async get(id: string): Promise<SessionSummary> {
     return apiRequest('GET', `/api/sessions/${id}`)
   },
-
-  getPdfUrl(id: string): string {
-    return `${API_URL}/api/sessions/${id}/pdf`
-  },
 }
 
 // ---- Analyze ----

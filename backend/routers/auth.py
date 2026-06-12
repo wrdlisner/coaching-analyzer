@@ -1,5 +1,6 @@
 """Auth router: register, login, me"""
 
+import hashlib
 import os
 import random
 import secrets
@@ -22,6 +23,11 @@ FRONTEND_URL = _raw_frontend_url.split(",")[0].strip().rstrip("/")
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _hash_reset_token(token: str) -> str:
+    """リセットトークンはハッシュ化して保存する（DB漏洩時の乗っ取りを防ぐ）"""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def _generate_referral_code(db: Session) -> str:
     chars = string.ascii_uppercase + string.digits
     for _ in range(10):
@@ -33,6 +39,13 @@ def _generate_referral_code(db: Session) -> str:
 
 @router.post("/register", response_model=schemas.TokenResponse)
 def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
+    # reset-passwordと同じ基準をサーバー側でも強制する
+    if len(body.password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="パスワードは8文字以上で設定してください",
+        )
+
     existing = db.query(models.User).filter(models.User.email == body.email).first()
     if existing:
         raise HTTPException(
@@ -115,7 +128,7 @@ def forgot_password(
         expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
         reset_token = models.PasswordResetToken(
             user_id=user.id,
-            token=token,
+            token=_hash_reset_token(token),
             expires_at=expires_at,
         )
         db.add(reset_token)
@@ -140,7 +153,7 @@ def reset_password(
 
     now = datetime.now(timezone.utc)
     reset_token = db.query(models.PasswordResetToken).filter(
-        models.PasswordResetToken.token == body.token,
+        models.PasswordResetToken.token == _hash_reset_token(body.token),
         models.PasswordResetToken.used_at == None,
         models.PasswordResetToken.expires_at > now,
     ).first()

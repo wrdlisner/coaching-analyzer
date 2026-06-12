@@ -4,7 +4,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, cast, Date
 from typing import List, Optional
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 import models
 import schemas
@@ -179,10 +179,16 @@ def create_notice(
     _admin: models.User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
+    # 公開フラグONで日時未指定の場合は現在時刻を設定する
+    # （published_atがNULLだと /api/notices/latest の published_at <= now に一致せず表示されない）
+    published_at = body.published_at
+    if body.is_published and published_at is None:
+        published_at = datetime.now(timezone.utc)
+
     notice = models.Notice(
         title=body.title,
         body=body.body,
-        published_at=body.published_at,
+        published_at=published_at,
         is_published=body.is_published,
     )
     db.add(notice)
@@ -209,6 +215,9 @@ def update_notice(
         notice.published_at = body.published_at
     if body.is_published is not None:
         notice.is_published = body.is_published
+    # 公開状態で日時未設定なら現在時刻を補完する（createと同じ理由）
+    if notice.is_published and notice.published_at is None:
+        notice.published_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(notice)
     return notice

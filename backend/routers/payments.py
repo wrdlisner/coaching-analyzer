@@ -3,12 +3,13 @@
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -72,6 +73,28 @@ def create_checkout(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="クーポンが無効または期限切れです",
             )
+
+        # 同じクーポンで複数の決済セッションを並行作成できないよう、原子的に1時間予約する
+        # （決済が完了しなかった場合は1時間後に自動的に再利用可能になる）
+        claimed = (
+            db.query(models.Coupon)
+            .filter(
+                models.Coupon.id == coupon_obj.id,
+                models.Coupon.used_at == None,
+                or_(
+                    models.Coupon.reserved_until == None,
+                    models.Coupon.reserved_until <= now,
+                ),
+            )
+            .update({models.Coupon.reserved_until: now + timedelta(hours=1)}, synchronize_session=False)
+        )
+        if not claimed:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="このクーポンは別の決済処理で使用中です。決済を完了していない場合は1時間後に再度お試しください。",
+            )
+        db.commit()
         discount = coupon_obj.discount_amount
 
     final_price = max(0, config["price"] - discount)
@@ -96,6 +119,8 @@ def create_checkout(
             ],
             success_url=f"{FRONTEND_URL}/dashboard?payment=success",
             cancel_url=f"{FRONTEND_URL}/dashboard?payment=cancel",
+            # クーポン予約期間（1時間）と合わせてセッションを失効させる
+            expires_at=int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp()),
             metadata={
                 "user_id": str(current_user.id),
                 "pack": body.pack,
@@ -105,6 +130,12 @@ def create_checkout(
         )
     except stripe.error.StripeError as e:
         logger.error(f"Stripe Checkout Session作成エラー: {e}")
+        if coupon_obj:
+            # セッション作成に失敗した場合はクーポン予約を解放する
+            db.query(models.Coupon).filter(models.Coupon.id == coupon_obj.id).update(
+                {models.Coupon.reserved_until: None}, synchronize_session=False
+            )
+            db.commit()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="決済セッションの作成に失敗しました",

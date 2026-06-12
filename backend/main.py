@@ -20,6 +20,8 @@ import models  # noqa: F401 - ensure models are registered
 
 from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments, mentors
 
+# uvicorn起動前のimport時ログ（CORS設定等）も出力されるようにする
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Coaching Analyzer API", version="1.0.0")
@@ -93,6 +95,35 @@ def delete_expired_sessions():
         db.close()
 
 
+def _fail_stale_jobs():
+    """再デプロイ・クラッシュで中断されたジョブをfailedにし、クレジットを返金する。
+
+    バックグラウンドタスクはプロセスと共に消えるため、起動時点で
+    pending/processingのまま残っているジョブは再開不能。
+    """
+    db = SessionLocal()
+    try:
+        stale_jobs = db.query(models.AnalysisJob).filter(
+            models.AnalysisJob.status.in_(["pending", "processing"])
+        ).all()
+        for job in stale_jobs:
+            job.status = "failed"
+            job.error_message = "サーバーの再起動により分析が中断されました。クレジットは返金済みです。お手数ですが再度アップロードしてください。"
+            job.updated_at = datetime.now(timezone.utc)
+            user = db.query(models.User).filter(models.User.id == job.user_id).first()
+            if user:
+                user.credits += 1
+                db.add(models.Credit(user_id=job.user_id, amount=1, reason="refund"))
+        if stale_jobs:
+            db.commit()
+            logger.info(f"中断されたジョブ {len(stale_jobs)} 件をfailedにして返金しました")
+    except Exception as e:
+        logger.error(f"中断ジョブの復旧処理エラー: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
 def _run_migrations():
     """既存テーブルへのカラム追加（create_allでは対応できないため手動で実行）"""
     migrations = [
@@ -105,6 +136,7 @@ def _run_migrations():
         "ALTER TABLE password_reset_tokens ADD COLUMN used_at TIMESTAMP",
         "ALTER TABLE password_reset_tokens DROP COLUMN IF EXISTS used",
         "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'refund'",
+        "ALTER TABLE coupons ADD COLUMN reserved_until TIMESTAMP",
     ]
     with engine.connect() as conn:
         for sql in migrations:
@@ -143,6 +175,7 @@ def startup():
     """Create all database tables on startup"""
     Base.metadata.create_all(bind=engine)
     _run_migrations()
+    _fail_stale_jobs()
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(delete_expired_sessions, "cron", hour=2, minute=0)

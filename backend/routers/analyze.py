@@ -169,9 +169,16 @@ async def analyze_audio(
             detail="mp3、mp4、m4aファイルのみアップロードできます",
         )
 
+    # ファイルサイズチェック（フロントエンドと同じ500MB上限をサーバー側でも強制）
+    content = await file.read()
+    if len(content) > 500 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイルサイズは500MB以下にしてください",
+        )
+
     # アップロードファイルを永続的な一時ファイルに保存
     tmp_input = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-    content = await file.read()
     tmp_input.write(content)
     tmp_input.close()
     input_path = Path(tmp_input.name)

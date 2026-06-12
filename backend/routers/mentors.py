@@ -2,7 +2,10 @@
 
 import base64
 from datetime import datetime, timezone
+from io import BytesIO
 from typing import List, Optional
+
+from PIL import Image, ImageOps
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from sqlalchemy.orm import Session
@@ -47,6 +50,7 @@ def _validate_mentor_data(data: schemas.MentorApplyRequest | schemas.MentorUpdat
 
 
 ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
+MAX_PHOTO_DIMENSION = 512  # 一覧サムネイル用途には十分なサイズ
 
 
 @router.post("/upload-photo")
@@ -62,9 +66,23 @@ async def upload_photo(
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="ファイルサイズは5MB以下にしてください")
 
+    # リサイズ・JPEG再エンコード（DBに保存する一覧APIレスポンスの肥大化を防ぐ）
+    # Image.openが通ることで実際に画像であることの検証も兼ねる
+    try:
+        img = Image.open(BytesIO(content))
+        img = ImageOps.exif_transpose(img)  # スマホ写真の向きを補正
+        img.thumbnail((MAX_PHOTO_DIMENSION, MAX_PHOTO_DIMENSION))
+        buf = BytesIO()
+        img.convert("RGB").save(buf, "JPEG", quality=85)
+        content = buf.getvalue()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=400, detail="画像ファイルを読み込めませんでした")
+
     # base64 データURLとして返す（サーバーファイル保存不要・デプロイ間で消えない）
     b64 = base64.b64encode(content).decode("utf-8")
-    data_url = f"data:{mime};base64,{b64}"
+    data_url = f"data:image/jpeg;base64,{b64}"
     return {"url": data_url}
 
 
