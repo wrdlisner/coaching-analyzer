@@ -26,14 +26,14 @@ export const changelog: ChangeEntry[] = [
     ],
   },
   {
-    date: '2025-05-09',
+    date: '2026-05-09',
     changes: [
       { type: 'fix', text: '旧RailwayドメインからのアクセスをCoachmarkドメインへ自動リダイレクト' },
       { type: 'fix', text: 'PDFのスコア端数表示を統一し、ファイル名に分析日付を追加' },
     ],
   },
   {
-    date: '2025-05-08',
+    date: '2026-05-08',
     changes: [
       { type: 'improve', text: 'サービス名をCoachingAnalyzerからCoachmarkに変更' },
       { type: 'new', text: '利用規約ページを追加（/terms）' },
@@ -41,14 +41,14 @@ export const changelog: ChangeEntry[] = [
     ],
   },
   {
-    date: '2025-05-07',
+    date: '2026-05-07',
     changes: [
       { type: 'new', text: 'パスワードリセット機能を追加（メールでのリセットリンク送信）' },
       { type: 'new', text: '管理者画面にクレジット購入履歴タブを追加' },
     ],
   },
   {
-    date: '2025-05-06',
+    date: '2026-05-06',
     changes: [
       { type: 'new', text: 'メンターセッション時間・料金フィールドを追加' },
       { type: 'improve', text: 'メンターガイドをダッシュボードからメンター一覧ページへ移動' },
