@@ -305,7 +305,7 @@ improvements（改善提案）は各コンピテンシー{improvements_count}、
 ```json
 {{
   "overall_summary": "セッション全体の総評（200字程度）",
-  "qualification_comment": "ICF資格合格可能性に関するコメント。PCCマーカー充足状況と最注力課題を具体的に（80〜120字）",
+  "qualification_comment": "参考スコア水準に関するコメント。「合格」「不合格」などの断定表現は使わず、現在のスコアと伸ばすべき点を具体的に記述（80〜120字）",
   "strengths_improvements": {{
     "strengths": ["強み1", "強み2", "強み3"],
     "improvements": ["改善点1", "改善点2", "改善点3"],

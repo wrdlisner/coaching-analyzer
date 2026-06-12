@@ -238,10 +238,22 @@ SYSTEM_PROMPT = """\
 """
 
 
-def build_prompt(transcript_text: str, is_follow_up: bool) -> str:
+def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -> str:
     session_type_note = "継続セッション（2回目以降）" if is_follow_up else "初回セッション"
     markers_section = _build_markers_prompt_section()
     comp12_ex, comp38_ex, mcc_ex = _build_comp_json_schema()
+
+    improvements_count = "3〜4点" if deep else "2〜3点"
+    deep_instruction = ""
+    if deep:
+        deep_instruction = """\
+
+【ディープ分析モード】
+このセッションは詳細分析の対象です。以下を追加で守ってください：
+- comment はより詳細に記述すること（コンピテンシー1・2は300〜500字、3〜8は150〜300字）
+- quotes・evidence の引用は前後の文脈がわかる長さで、できるだけ具体的に含めること
+- mentor_advice には言い換え例に加えて、その関わりがなぜ効果的か（ICFコンピテンシー上の意図）を1文添えること
+"""
 
     follow_up_instruction = ""
     comp1_note = ""
@@ -264,7 +276,7 @@ def build_prompt(transcript_text: str, is_follow_up: bool) -> str:
 
 ## セッション種別
 {session_type_note}
-{follow_up_instruction}
+{follow_up_instruction}{deep_instruction}
 ## トランスクリプト
 {transcript_text}
 
@@ -285,7 +297,7 @@ def build_prompt(transcript_text: str, is_follow_up: bool) -> str:
 コンピテンシー1・2は総合スコア（1〜5）で評価し、コンピテンシー3〜8は\
 各PCCマーカーを「observed: true/false」で評価してください。
 
-improvements（改善提案）は各コンピテンシー2〜3点、以下の3層構造のオブジェクト配列で記述してください：
+improvements（改善提案）は各コンピテンシー{improvements_count}、以下の3層構造のオブジェクト配列で記述してください：
 - proposal: 何をどう改善すべきか（ICFコアコンピテンシー2025年版の観点から）
 - mentor_advice: ICFメンターコーチングコンピテンシーC5に基づき、実際のセッションの発言を引用しながら「ここでこう言い換えるとより良かった」という具体的な言い回し例（非審判的スタイル）。引用符付きの発言例を必ず含めること。
 - next_action: すぐに実践できる具体的なアクションを1つ
@@ -326,11 +338,20 @@ axesを空配列（[]）にしてください。
 # ---------------------------------------------------------------------------
 # メイン分析関数
 # ---------------------------------------------------------------------------
-def analyze_session(utterances: list[dict], is_follow_up: bool = False) -> dict:
+def analyze_session(
+    utterances: list[dict],
+    is_follow_up: bool = False,
+    model: str | None = None,
+    deep: bool = False,
+) -> dict:
     """
     文字起こし結果をClaude APIで分析する。
 
     PCCマーカー充足率からスコアを算出し、80%以上の場合はMCC質的評価も行う。
+
+    Args:
+        model: 使用するClaudeモデルID。未指定時は config.CLAUDE_MODEL。
+        deep: ディープ分析モード（上位モデル向け。詳細なコメント・改善提案を生成）
 
     Returns dict with:
         overall_summary, qualification_comment, strengths_improvements,
@@ -347,29 +368,41 @@ def analyze_session(utterances: list[dict], is_follow_up: bool = False) -> dict:
 
     transcript_text = "\n".join(transcript_lines)
 
-    # [LOG] Step 3: confirm is_follow_up received in analyzer
-    logger.info(f"[analyzer] analyze_session called: is_follow_up={is_follow_up}, utterances={len(utterances)}")
+    model = model or CLAUDE_MODEL
 
-    prompt = build_prompt(transcript_text, is_follow_up)
+    # [LOG] Step 3: confirm is_follow_up received in analyzer
+    logger.info(f"[analyzer] analyze_session called: model={model}, deep={deep}, is_follow_up={is_follow_up}, utterances={len(utterances)}")
+
+    prompt = build_prompt(transcript_text, is_follow_up, deep=deep)
 
     # [LOG] Step 4: confirm session type line appears in prompt
     session_type_line = next((l for l in prompt.splitlines() if "セッション種別" in l or "初回" in l or "継続" in l), "NOT FOUND")
     logger.info(f"[analyzer] prompt session_type_note: {session_type_line.strip()}")
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
-    message = client.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=16000,
+    request_kwargs: dict = dict(
+        model=model,
+        max_tokens=32000 if deep else 16000,
         system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": prompt}],
     )
+    if deep:
+        # ディープ分析では適応的思考を有効化（思考トークンはmax_tokensに含まれる）
+        request_kwargs["thinking"] = {"type": "adaptive"}
+
+    # 大きいmax_tokensでもHTTPタイムアウトしないようストリーミングで受信する
+    with client.messages.stream(**request_kwargs) as stream:
+        message = stream.get_final_message()
 
     logger.info(f"[analyzer] stop_reason={message.stop_reason}, output_tokens={message.usage.output_tokens}")
 
     if message.stop_reason == "max_tokens":
         raise RuntimeError("Claude のレスポンスがトークン上限に達し、JSONが不完全です。セッションを短くして再試行してください。")
 
-    response_text = message.content[0].text
+    # thinking ブロックが先頭に来る場合があるため、text ブロックを探して抽出する
+    response_text = next((b.text for b in message.content if b.type == "text"), None)
+    if response_text is None:
+        raise RuntimeError("Claude のレスポンスにテキストが含まれていません。")
 
     # JSONブロックを抽出
     if "```json" in response_text:

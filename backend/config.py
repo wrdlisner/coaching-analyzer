@@ -6,8 +6,9 @@ load_dotenv()
 ASSEMBLYAI_API_KEY = os.getenv("ASSEMBLYAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-# 注意: backend実行時は main.py の sys.path 操作によりリポジトリルートの config.py が
-# 先に解決されるため、この値は実質シャドーイングされる。ルート側と必ず同期すること。
+# 本番（Railway）はアプリルート=backend/ のため、このファイルと backend/modules/ が実際に使われる。
+# ローカルでフルリポジトリから起動した場合はルートの config.py / modules/ が優先される点に注意。
+# ルート側と必ず同期すること。
 CLAUDE_MODEL = "claude-sonnet-4-6"
 
 ICF_COMPETENCIES = [
