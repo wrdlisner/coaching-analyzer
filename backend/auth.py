@@ -16,7 +16,15 @@ import models
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    # 本番（Railway）ではSECRET_KEY未設定なら起動を止める（JWT偽造を防ぐ）
+    if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_ENVIRONMENT_NAME"):
+        raise RuntimeError(
+            "SECRET_KEY環境変数が設定されていません。"
+            "Railwayの環境変数にランダムな秘密鍵を設定してください。"
+        )
+    SECRET_KEY = "dev-only-secret-key"  # ローカル開発専用
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 

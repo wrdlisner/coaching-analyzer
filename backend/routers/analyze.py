@@ -83,6 +83,7 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         }
 
         # Save session
+        # （クレジットはアップロード受付時に減算済み）
         user = db.query(models.User).filter(models.User.id == user_id).first()
         session = models.Session(
             user_id=user_id,
@@ -95,15 +96,6 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         )
         db.add(session)
         db.flush()
-
-        # Deduct 1 credit
-        user.credits -= 1
-        credit_record = models.Credit(
-            user_id=user_id,
-            amount=-1,
-            reason="analysis",
-        )
-        db.add(credit_record)
 
         # 初回分析完了時：紹介者に+1クレジット付与
         session_count = db.query(models.Session).filter(
@@ -130,14 +122,21 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
     except Exception as e:
         logger.error(f"[job {job_id}] failed: {e}", exc_info=True)
         try:
+            db.rollback()
             job = db.query(models.AnalysisJob).filter(models.AnalysisJob.id == job_id).first()
             if job:
                 job.status = "failed"
                 job.error_message = str(e)
                 job.updated_at = datetime.now(timezone.utc)
-                db.commit()
+
+            # 受付時に減算したクレジットを返金する
+            user = db.query(models.User).filter(models.User.id == user_id).first()
+            if user:
+                user.credits += 1
+                db.add(models.Credit(user_id=user_id, amount=1, reason="refund"))
+            db.commit()
         except Exception:
-            pass
+            logger.error(f"[job {job_id}] failed-state更新/返金に失敗", exc_info=True)
     finally:
         db.close()
         # クリーンアップ
@@ -161,13 +160,6 @@ async def analyze_audio(
 ):
     logger.info(f"[analyze] session_type='{session_type}' file='{file.filename}' user={current_user.email}")
 
-    # クレジット確認
-    if current_user.credits < 1:
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail="クレジットが不足しています",
-        )
-
     # 拡張子チェック
     filename = file.filename or "upload"
     suffix = Path(filename).suffix.lower()
@@ -184,11 +176,34 @@ async def analyze_audio(
     tmp_input.close()
     input_path = Path(tmp_input.name)
 
-    # ジョブをDBに登録
-    job = models.AnalysisJob(user_id=current_user.id, status="pending")
-    db.add(job)
-    db.commit()
-    db.refresh(job)
+    try:
+        # クレジットを受付時に原子的に減算する
+        # （残高チェックと減算を1つのUPDATEで行い、同時アップロードによる二重消費を防ぐ。
+        #   分析失敗時は _run_analysis 内で返金する）
+        updated = (
+            db.query(models.User)
+            .filter(
+                models.User.id == current_user.id,
+                models.User.credits >= 1,
+            )
+            .update({models.User.credits: models.User.credits - 1}, synchronize_session=False)
+        )
+        if not updated:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail="クレジットが不足しています",
+            )
+        db.add(models.Credit(user_id=current_user.id, amount=-1, reason="analysis"))
+
+        # ジョブをDBに登録
+        job = models.AnalysisJob(user_id=current_user.id, status="pending")
+        db.add(job)
+        db.commit()
+        db.refresh(job)
+    except Exception:
+        db.rollback()
+        input_path.unlink(missing_ok=True)
+        raise
 
     # バックグラウンドタスクとして分析を起動
     background_tasks.add_task(

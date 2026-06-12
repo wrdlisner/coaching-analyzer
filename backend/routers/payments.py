@@ -9,6 +9,7 @@ from typing import Optional
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import models
@@ -136,6 +137,18 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     event_dict = json.loads(payload)
 
     if event_dict.get("type") == "checkout.session.completed":
+        # 冪等性チェック：Stripeは同一イベントを再送することがあるため、
+        # 処理済みイベントIDを記録して二重クレジット付与を防ぐ
+        event_id = event_dict.get("id")
+        if event_id:
+            already_processed = db.query(models.StripeEvent).filter(
+                models.StripeEvent.id == event_id
+            ).first()
+            if already_processed:
+                logger.info(f"処理済みWebhookイベントをスキップ: {event_id}")
+                return {"status": "already_processed"}
+            db.add(models.StripeEvent(id=event_id))
+
         session_obj = event_dict["data"]["object"]
         metadata = session_obj.get("metadata", {})
         user_id = metadata.get("user_id")
@@ -173,7 +186,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             if coupon and coupon.used_at is None:
                 coupon.used_at = datetime.now(timezone.utc)
 
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:
+            # 同一イベントが並行処理された場合（stripe_events主キー衝突）
+            db.rollback()
+            logger.info(f"並行処理されたWebhookイベントをスキップ: {event_id}")
+            return {"status": "already_processed"}
         logger.info(f"クレジット追加完了: user_id={user_id}, credits={credits_int}")
 
     return {"status": "ok"}

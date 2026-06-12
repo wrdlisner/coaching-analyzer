@@ -27,6 +27,7 @@ const REASON_LABELS: Record<string, string> = {
   bonus: '新規登録ボーナス',
   referral: '友達紹介ボーナス',
   purchase: 'クレジット購入',
+  refund: '返金（分析エラー）',
 }
 
 const ICF_LEVEL_LABELS: Record<string, string> = {
@@ -35,7 +36,7 @@ const ICF_LEVEL_LABELS: Record<string, string> = {
 
 function reasonBadgeClass(reason: string): string {
   if (reason === 'purchase') return 'reason-badge reason-buy'
-  if (reason === 'bonus' || reason === 'referral') return 'reason-badge reason-bonus'
+  if (reason === 'bonus' || reason === 'referral' || reason === 'refund') return 'reason-badge reason-bonus'
   if (reason === 'analysis') return 'reason-badge reason-use'
   return 'reason-badge reason-other'
 }

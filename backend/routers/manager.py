@@ -1,25 +1,76 @@
 """Manager 1on1 router: /api/manager/analyze（認証・クレジット不要）"""
 
 import logging
+import os
 import tempfile
+import threading
+import time
+from collections import defaultdict, deque
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, status
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File, status
 from fastapi.responses import Response
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/manager", tags=["manager"])
 
+# ---------------------------------------------------------------------------
+# レート制限（認証なしエンドポイントのため、外部APIコストの濫用を防ぐ）
+# インメモリ実装：再起動でリセットされるが、コスト抑止には十分
+# ---------------------------------------------------------------------------
+RATE_LIMIT_PER_IP = int(os.environ.get("MANAGER_RATE_LIMIT_PER_IP", "3"))
+RATE_LIMIT_GLOBAL = int(os.environ.get("MANAGER_RATE_LIMIT_GLOBAL", "30"))
+RATE_WINDOW_SECONDS = 24 * 60 * 60  # 24時間
+
+_rate_lock = threading.Lock()
+_requests_by_ip: dict[str, deque] = defaultdict(deque)
+_requests_global: deque = deque()
+
+
+def _client_ip(request: Request) -> str:
+    # Railway等のリバースプロキシ経由ではX-Forwarded-Forに実IPが入る
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _check_rate_limit(ip: str) -> None:
+    now = time.time()
+    cutoff = now - RATE_WINDOW_SECONDS
+    with _rate_lock:
+        while _requests_global and _requests_global[0] < cutoff:
+            _requests_global.popleft()
+        ip_queue = _requests_by_ip[ip]
+        while ip_queue and ip_queue[0] < cutoff:
+            ip_queue.popleft()
+
+        if len(ip_queue) >= RATE_LIMIT_PER_IP:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="本日の利用回数の上限に達しました。明日以降に再度お試しください。",
+            )
+        if len(_requests_global) >= RATE_LIMIT_GLOBAL:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="現在アクセスが集中しています。時間をおいて再度お試しください。",
+            )
+        ip_queue.append(now)
+        _requests_global.append(now)
+
 
 @router.post("/analyze")
 def analyze_manager_audio(
+    request: Request,
     file: UploadFile = File(...),
 ):
     """
     1on1音声ファイルをアップロードし、分析PDFを同期的に返す。
-    認証・クレジット不要。DBへの保存なし。
+    認証・クレジット不要。DBへの保存なし。レート制限あり。
     """
+    _check_rate_limit(_client_ip(request))
+
     filename = file.filename or "upload"
     suffix = Path(filename).suffix.lower()
     if suffix not in (".mp3", ".mp4", ".m4a"):

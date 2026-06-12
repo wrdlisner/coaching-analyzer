@@ -54,7 +54,7 @@ class Session(Base):
     expires_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="sessions")
-    feedbacks = relationship("Feedback", back_populates="session")
+    feedbacks = relationship("Feedback", back_populates="session", cascade="all, delete-orphan")
 
 
 class Credit(Base):
@@ -64,7 +64,7 @@ class Credit(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     amount = Column(Integer, nullable=False)
     reason = Column(
-        SAEnum("analysis", "feedback", "bonus", "referral", "purchase", name="credit_reason_enum"),
+        SAEnum("analysis", "feedback", "bonus", "referral", "purchase", "refund", name="credit_reason_enum"),
         nullable=False
     )
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -108,7 +108,7 @@ class AnalysisJob(Base):
         nullable=False,
         default="pending",
     )
-    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id"), nullable=True)
+    session_id = Column(UUID(as_uuid=True), ForeignKey("sessions.id", ondelete="SET NULL"), nullable=True)
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -138,6 +138,14 @@ class Coupon(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="coupons")
+
+
+class StripeEvent(Base):
+    """処理済みStripe WebhookイベントID（再送による二重クレジット付与を防ぐ）"""
+    __tablename__ = "stripe_events"
+
+    id = Column(String(255), primary_key=True)  # Stripe イベントID（evt_xxx）
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class PasswordResetToken(Base):

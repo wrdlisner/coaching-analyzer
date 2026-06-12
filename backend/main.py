@@ -66,16 +66,26 @@ def delete_expired_sessions():
     db = SessionLocal()
     try:
         now = datetime.now(timezone.utc)
-        expired = db.query(models.Session).filter(
-            models.Session.expires_at != None,
-            models.Session.expires_at <= now,
-        ).all()
-        count = len(expired)
-        for session in expired:
-            db.delete(session)
-        db.commit()
-        if count:
-            logger.info(f"期限切れセッション {count} 件を削除しました")
+        expired_ids = [
+            row[0]
+            for row in db.query(models.Session.id).filter(
+                models.Session.expires_at != None,
+                models.Session.expires_at <= now,
+            ).all()
+        ]
+        if expired_ids:
+            # FK制約があるため、子レコード（フィードバック・分析ジョブ）を先に処理する
+            db.query(models.AnalysisJob).filter(
+                models.AnalysisJob.session_id.in_(expired_ids)
+            ).update({models.AnalysisJob.session_id: None}, synchronize_session=False)
+            db.query(models.Feedback).filter(
+                models.Feedback.session_id.in_(expired_ids)
+            ).delete(synchronize_session=False)
+            db.query(models.Session).filter(
+                models.Session.id.in_(expired_ids)
+            ).delete(synchronize_session=False)
+            db.commit()
+            logger.info(f"期限切れセッション {len(expired_ids)} 件を削除しました")
     except Exception as e:
         logger.error(f"セッション自動削除エラー: {e}")
         db.rollback()
@@ -94,6 +104,7 @@ def _run_migrations():
         "ALTER TABLE mentors ADD COLUMN session_price_jpy INTEGER",
         "ALTER TABLE password_reset_tokens ADD COLUMN used_at TIMESTAMP",
         "ALTER TABLE password_reset_tokens DROP COLUMN IF EXISTS used",
+        "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'refund'",
     ]
     with engine.connect() as conn:
         for sql in migrations:
