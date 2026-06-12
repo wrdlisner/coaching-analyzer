@@ -8,6 +8,18 @@ export interface ChangeEntry {
 
 export const changelog: ChangeEntry[] = [
   {
+    date: '2026-06-12',
+    changes: [
+      { type: 'new', text: '分析エラー・中断時にクレジットを自動返金（履歴に「返金（分析エラー）」と表示）' },
+      { type: 'improve', text: 'パスワードリセットの安全性を向上（リセットリンクの管理方法を見直し）' },
+      { type: 'improve', text: '新規登録時のパスワードを8文字以上必須に変更' },
+      { type: 'improve', text: 'メンタープロフィール写真をアップロード時に自動最適化（一覧の表示速度向上）' },
+      { type: 'improve', text: '決済処理とクーポン適用の安定性を向上' },
+      { type: 'fix', text: '公開日時の設定によってお知らせが表示されないことがある問題を修正' },
+      { type: 'fix', text: '保存期間（180日）を過ぎた分析データの自動削除処理を修正' },
+    ],
+  },
+  {
     date: '2026-05-14',
     changes: [
       { type: 'new', text: 'アップデート履歴ページを追加（/updates）' },
