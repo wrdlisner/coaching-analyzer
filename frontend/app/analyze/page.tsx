@@ -318,6 +318,9 @@ export default function AnalyzePage() {
                   )
                 })}
               </div>
+              <p className="text-xs text-gray-400 mt-2 leading-relaxed">
+                通常分析は日々のセッション後の振り返りに。ディープ分析は、資格申請前の提出セッション選びや、伸び悩みを感じたときの&quot;精密検査&quot;に。
+              </p>
             </div>
 
             {/* Session type */}

@@ -148,6 +148,97 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Analysis plans */}
+      <section className="bg-gradient-to-b from-white to-purple-50 py-16">
+        <div className="max-w-6xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">選べる2つの分析プラン</h2>
+          <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
+            通常分析は日々のセッション後の振り返りに。
+            <br className="hidden sm:block" />
+            ディープ分析は、資格申請前の提出セッション選びや、伸び悩みを感じたときの&quot;精密検査&quot;に。
+          </p>
+
+          {/* Plan cards */}
+          <div className="grid md:grid-cols-2 gap-6 mb-14">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900">通常分析</h3>
+                <span className="text-xs font-medium bg-gray-100 text-gray-600 rounded-full px-3 py-1">1クレジット</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">標準AIモデルによるICF 8コンピテンシー分析。日々の振り返りに十分な詳しさです。</p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex gap-2"><span className="text-blue-500">✓</span>PCCマーカー充足率に基づくスコア評価</li>
+                <li className="flex gap-2"><span className="text-blue-500">✓</span>コンピテンシーごとの評価コメントと改善提案2〜3点</li>
+                <li className="flex gap-2"><span className="text-blue-500">✓</span>レーダーチャート付きPDFレポート</li>
+              </ul>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-300 relative">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-gray-900">ディープ分析</h3>
+                <span className="text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-3 py-1">2クレジット</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-4">上位AIモデルがセッション全体を熟考してから評価。見落とされがちな細かな癖まで指摘します。</p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex gap-2"><span className="text-purple-500">✓</span>通常分析のすべての内容</li>
+                <li className="flex gap-2"><span className="text-purple-500">✓</span>評価コメントが発言の引用・タイムスタンプつきでより詳細に</li>
+                <li className="flex gap-2"><span className="text-purple-500">✓</span>改善提案が3〜4点に増え、より繊細な指摘まで</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Real example comparison */}
+          <h3 className="text-xl font-bold text-center text-gray-900 mb-3">同じセッションを両プランで分析すると</h3>
+          <p className="text-center text-sm text-gray-500 mb-8">
+            サンプルセッションの「気づきの喚起」に対する改善提案の実例
+          </p>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="text-sm font-bold text-gray-500 mb-4">通常分析の指摘（2点）</div>
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="text-gray-400 font-bold shrink-0">1.</span>
+                  観察・直感・経験は執着なくシェアし、クライアントへの影響を確認する
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-gray-400 font-bold shrink-0">2.</span>
+                  特定したパターンを他の場面にも広げて探求する
+                </li>
+              </ul>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-300">
+              <div className="text-sm font-bold text-purple-700 mb-4">ディープ分析の指摘（3点）</div>
+              <ul className="space-y-3 text-sm text-gray-700">
+                <li className="flex gap-2">
+                  <span className="text-purple-400 font-bold shrink-0">1.</span>
+                  直感のシェアを&quot;手放した提供&quot;に変え、採否をクライアントに委ねる
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-purple-400 font-bold shrink-0">2.</span>
+                  <span>
+                    二重質問を避け、一つの問いに絞って内省の&quot;間&quot;を確保する
+                    <span className="ml-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-purple-400 font-bold shrink-0">3.</span>
+                  <span>
+                    クライアントが生んだ再定義を、価値観のレベルまでもう一段掘り下げる
+                    <span className="ml-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
+                  </span>
+                </li>
+              </ul>
+              <div className="mt-4 bg-purple-50 rounded-lg p-4 text-xs text-gray-600 leading-relaxed">
+                <span className="font-bold text-purple-700 block mb-1">ディープ分析の言い換え例（抜粋）</span>
+                「もう少し探求してもいいですか？それとも別の角度から見てみたいですか？」は選択肢提示として有効ですが、深い内省を狙う場面では「いま、どこに向かいたいですか？」と一問に絞ると思考が散らずに済みます
+              </div>
+            </div>
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-6">
+            ※実際のサンプルセッションを両プランで分析した結果からの抜粋です
+          </p>
+        </div>
+      </section>
+
       {/* Credit system */}
       <section className="max-w-6xl mx-auto px-4 py-16">
         <div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center">
