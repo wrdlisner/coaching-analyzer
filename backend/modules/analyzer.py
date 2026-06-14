@@ -294,12 +294,16 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
 
 以下のJSON形式で出力してください。JSON以外のテキストは含めないでください。
 
+【重要・JSON構文の厳守】文字列値の中では半角ダブルクォート（"）を絶対に使わないでください。\
+発言の引用など括弧で囲みたい場合は、必ず日本語のかぎ括弧「」を用いてください\
+（半角ダブルクォートを値の中に入れるとJSONが壊れ、分析が失敗します）。
+
 コンピテンシー1・2は総合スコア（1〜5）で評価し、コンピテンシー3〜8は\
 各PCCマーカーを「observed: true/false」で評価してください。
 
 improvements（改善提案）は各コンピテンシー{improvements_count}、以下の3層構造のオブジェクト配列で記述してください：
 - proposal: 何をどう改善すべきか（ICFコアコンピテンシー2025年版の観点から）
-- mentor_advice: ICFメンターコーチングコンピテンシーC5に基づき、実際のセッションの発言を引用しながら「ここでこう言い換えるとより良かった」という具体的な言い回し例（非審判的スタイル）。引用符付きの発言例を必ず含めること。
+- mentor_advice: ICFメンターコーチングコンピテンシーC5に基づき、実際のセッションの発言を引用しながら「ここでこう言い換えるとより良かった」という具体的な言い回し例（非審判的スタイル）。発言例を引用する際は必ず日本語のかぎ括弧「」で囲み、半角ダブルクォート（"）は使わないこと。
 - next_action: すぐに実践できる具体的なアクションを1つ
 
 ```json
@@ -333,6 +337,56 @@ improvements（改善提案）は各コンピテンシー{improvements_count}、
 mcc_evaluationは、コンピテンシー3〜8の全PCCマーカーの充足率が80%未満の場合は\
 axesを空配列（[]）にしてください。
 """
+
+
+# ---------------------------------------------------------------------------
+# JSON 修復ヘルパー
+# ---------------------------------------------------------------------------
+def _repair_json(s: str) -> str:
+    """文字列値内のエスケープされていないダブルクォートを補修する。
+
+    Claude が稀に mentor_advice 等の文字列値の中で「"発言例"」のように半角クォートを
+    混入させ、JSONが壊れる（Expecting ',' delimiter）ことがある。
+    文字列の途中に現れる " のうち、直後の非空白文字が構造的デリミタ（, } ] : または末尾）
+    でないものを、文字列内のリテラルとみなして \\" にエスケープする。
+    """
+    out: list[str] = []
+    in_string = False
+    i = 0
+    n = len(s)
+    while i < n:
+        c = s[i]
+        if not in_string:
+            out.append(c)
+            if c == '"':
+                in_string = True
+            i += 1
+            continue
+        # 文字列内
+        if c == '\\':
+            # エスケープシーケンスは2文字まとめてそのまま通す
+            out.append(c)
+            if i + 1 < n:
+                out.append(s[i + 1])
+                i += 2
+            else:
+                i += 1
+            continue
+        if c == '"':
+            # 直後の非空白文字で文字列の終端かどうかを判定する
+            j = i + 1
+            while j < n and s[j] in ' \t\r\n':
+                j += 1
+            if j >= n or s[j] in ',}]:':
+                out.append(c)          # 正当な終端
+                in_string = False
+            else:
+                out.append('\\"')      # 値の中のリテラルクォート → エスケープ
+            i += 1
+            continue
+        out.append(c)
+        i += 1
+    return ''.join(out)
 
 
 # ---------------------------------------------------------------------------
@@ -412,12 +466,15 @@ def analyze_session(
     else:
         json_str = response_text.strip()
 
-    # Claude が稀に文字列値内に生の改行を出力するため、
-    # strict=False で文字列内の制御文字を許容して再パースする
+    # Claude が稀に文字列値内に生の改行や、エスケープされていないダブルクォートを
+    # 出力するため、strict=False（制御文字許容）→ クォート修復 の順に救済する
     try:
         result = json.loads(json_str)
     except json.JSONDecodeError:
-        result = json.loads(json_str, strict=False)
+        try:
+            result = json.loads(json_str, strict=False)
+        except json.JSONDecodeError:
+            result = json.loads(_repair_json(json_str), strict=False)
 
     # -----------------------------------------------------------------------
     # PCCマーカー充足率 → スコア の後処理
