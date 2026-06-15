@@ -234,10 +234,14 @@ export default function AnalyzePage() {
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-gray-500">💳 クレジット</span>
             <span className="font-bold text-gray-800">現在 {credits}</span>
-            <span className="text-gray-400">→</span>
-            <span className={`font-bold ${afterCredits < 0 ? 'text-red-500' : 'text-blue-600'}`}>
-              {afterCredits < 0 ? '不足' : `分析後 ${afterCredits}`}
-            </span>
+            {step !== 1 && (
+              <>
+                <span className="text-gray-400">→</span>
+                <span className={`font-bold ${afterCredits < 0 ? 'text-red-500' : 'text-blue-600'}`}>
+                  {afterCredits < 0 ? '不足' : `分析後 ${afterCredits}`}
+                </span>
+              </>
+            )}
           </div>
           <p className="text-center text-xs text-gray-400 mt-1">
             分析が失敗した場合、消費したクレジットは自動的に返却されます
