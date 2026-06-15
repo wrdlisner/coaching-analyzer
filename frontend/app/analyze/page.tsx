@@ -149,6 +149,8 @@ export default function AnalyzePage() {
       setError(message)
       setStep(2)
       setProgress(0)
+      // 失敗後はクレジット残高を取り直す（返却の反映・表示の正確性のため）
+      auth.getMe().then((u) => setCredits(u.credits)).catch(() => {})
       return
     }
 
@@ -167,6 +169,8 @@ export default function AnalyzePage() {
           setError(status.error_message || '分析に失敗しました')
           setStep(2)
           setProgress(0)
+          // 失敗時はバックエンドがクレジットを返却するため、残高を取り直して反映する
+          auth.getMe().then((u) => setCredits(u.credits)).catch(() => {})
         }
       } catch {
         // ポーリング失敗は一時的なものとして無視し、次のポーリングで再試行
@@ -182,6 +186,9 @@ export default function AnalyzePage() {
   ]
 
   const currentPhase = PHASES[phaseIndex]
+
+  const cost = TIER_INFO[analysisTier].credits
+  const afterCredits = credits - cost
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -220,6 +227,21 @@ export default function AnalyzePage() {
               {n < 3 && <div className="w-8 h-px bg-gray-300" />}
             </div>
           ))}
+        </div>
+
+        {/* Credit balance badge (persistent across steps) */}
+        <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <span className="text-gray-500">💳 クレジット</span>
+            <span className="font-bold text-gray-800">現在 {credits}</span>
+            <span className="text-gray-400">→</span>
+            <span className={`font-bold ${afterCredits < 0 ? 'text-red-500' : 'text-blue-600'}`}>
+              {afterCredits < 0 ? '不足' : `分析後 ${afterCredits}`}
+            </span>
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-1">
+            分析が失敗した場合、消費したクレジットは自動的に返却されます
+          </p>
         </div>
 
         {/* Step 1: Consent */}
