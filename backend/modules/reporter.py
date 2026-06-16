@@ -136,6 +136,78 @@ class CoachingReportPDF(FPDF):
         self.set_draw_color(0, 0, 0)
         self.ln(6)
 
+    def tier_explanation_section(self, analysis_tier: str):
+        """分析タイプ（通常／ディープ）の違いを示す説明ボックス。
+        「通常分析はここまで／ディープ分析はここから」を可視化し、
+        受け取ったレポートがどちらの分析かを明示する。"""
+        is_deep = analysis_tier == "deep"
+        x = self.l_margin
+        w = self.w - self.l_margin - self.r_margin
+
+        self.ln(2)
+        self._set_font_bold(11)
+        self.set_text_color(26, 54, 93)
+        self.set_x(x)
+        label = "ディープ分析" if is_deep else "通常分析"
+        self.cell(w, 8, f"このレポートの分析タイプ： {label}", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1)
+
+        def _block(title, lines, fill, title_color, text_color, active):
+            self.set_x(x)
+            self.set_fill_color(*fill)
+            self._set_font_bold(10)
+            self.set_text_color(*title_color)
+            head = ("【今回のレポート】" if active else "") + title
+            self.cell(w, 8, "  " + head, fill=True, new_x="LMARGIN", new_y="NEXT")
+            self._set_font_regular(9)
+            self.set_text_color(*text_color)
+            for item in lines:
+                self.set_x(x)
+                self.cell(w, 6, "    ・" + item, new_x="LMARGIN", new_y="NEXT")
+
+        # 通常分析（どのレポートにも必ず含まれる）
+        _block(
+            "通常分析でわかること（ここまで）",
+            [
+                "8コンピテンシーの評価コメント",
+                "改善提案 各2〜3点",
+                "根拠となる発言の引用",
+            ],
+            (240, 247, 255), (26, 54, 93), (51, 51, 51), active=not is_deep,
+        )
+
+        # 区切り
+        self.ln(1)
+        self._set_font_bold(9)
+        self.set_text_color(120, 120, 120)
+        self.set_x(x)
+        self.cell(w, 6, "──── ここからディープ分析 ────", align="C", new_x="LMARGIN", new_y="NEXT")
+        self.ln(1)
+
+        # ディープ分析（deep のときのみレポートに反映される）
+        deep_lines = [
+            "コメントをさらに詳細化（重点項目は300〜500字）",
+            "改善提案 各3〜4点に増量",
+            "言い換え例にICF上のねらいを付記",
+            "上位AIモデル＋拡張思考で精緻化",
+        ]
+        if is_deep:
+            _block(
+                "ディープ分析で追加されること（ここから）",
+                deep_lines,
+                (243, 240, 255), (91, 33, 182), (51, 51, 51), active=True,
+            )
+        else:
+            _block(
+                "ディープ分析で追加される内容（今回は対象外）",
+                deep_lines,
+                (245, 245, 245), (130, 130, 130), (150, 150, 150), active=False,
+            )
+
+        self.set_text_color(0, 0, 0)
+        self.set_draw_color(0, 0, 0)
+        self.ln(4)
+
     def cover_page(self, analysis_date: datetime, duration_min: int, duration_sec: int):
         self.add_page()
         self.ln(60)
@@ -417,6 +489,7 @@ def generate_report(
     transcription: dict,
     output_dir: Path,
     css_path: Path | None = None,
+    analysis_tier: str | None = None,
 ) -> Path:
     now = datetime.now(timezone.utc)
     filename = f"coaching_report_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
@@ -452,6 +525,10 @@ def generate_report(
 
     # ⚠️ AI注意文
     pdf.ai_notice_section()
+
+    # 分析タイプ（通常／ディープ）の説明
+    if analysis_tier:
+        pdf.tier_explanation_section(analysis_tier)
 
     # 1. セッション概要（合格可能性表示を含む）
     pdf.overview_section(

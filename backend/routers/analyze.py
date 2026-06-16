@@ -75,6 +75,7 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
                 analysis=analysis,
                 transcription=transcription,
                 output_dir=Path(tmp_dir),
+                analysis_tier=analysis_tier,
             )
             pdf_bytes = pdf_path.read_bytes()
 
