@@ -75,7 +75,6 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
                 analysis=analysis,
                 transcription=transcription,
                 output_dir=Path(tmp_dir),
-                analysis_tier=analysis_tier,
             )
             pdf_bytes = pdf_path.read_bytes()
 
@@ -98,6 +97,7 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
             "strengths_improvements": analysis.get("strengths_improvements"),
             "pcc_fulfillment_rate": analysis.get("pcc_fulfillment_rate", 0.0),
             "mcc_evaluation": analysis.get("mcc_evaluation"),
+            "deep_dive": analysis.get("deep_dive"),
         }
 
         # Save session

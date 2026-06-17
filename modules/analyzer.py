@@ -244,6 +244,7 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
     comp12_ex, comp38_ex, mcc_ex = _build_comp_json_schema()
 
     improvements_count = "3〜4点" if deep else "2〜3点"
+    deep_dive_schema = ""
     deep_instruction = ""
     if deep:
         deep_instruction = """\
@@ -253,7 +254,19 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
 - comment はより詳細に記述すること（コンピテンシー1・2は300〜500字、3〜8は150〜300字）
 - quotes・evidence の引用は前後の文脈がわかる長さで、できるだけ具体的に含めること
 - mentor_advice には言い換え例に加えて、その関わりがなぜ効果的か（ICFコンピテンシー上の意図）を1文添えること
+- 出力JSONの末尾に deep_dive オブジェクトを必ず含めること。これは通常分析にはない「総合考察」であり、\
+個別コンピテンシーの指摘を超えて、セッション全体を俯瞰した根本パターン・いま最優先で取り組むべき重点テーマ1つ・\
+次のセッションで試す具体的な練習プランを示すこと
 """
+        deep_dive_schema = """,
+  "deep_dive": {
+    "core_patterns": "セッション全体を貫く根本的なパターンや、繰り返し現れたコーチの癖・強みについての考察（200〜300字）",
+    "focus_theme": {
+      "title": "いま最も伸ばすべき重点テーマ（15字程度の短いフレーズ）",
+      "detail": "なぜこのテーマを最優先にすべきかを、ICFコアコンピテンシーの観点から深掘りして説明（200〜300字）"
+    },
+    "practice_steps": ["次のセッションですぐ試せる具体的な練習ステップ1", "練習ステップ2", "練習ステップ3"]
+  }"""
 
     follow_up_instruction = ""
     comp1_note = ""
@@ -320,7 +333,7 @@ improvements（改善提案）は各コンピテンシー{improvements_count}、
     {comp38_ex},
     ...（コンピテンシー4〜8も同様にmarkers形式で記載）
   ],
-  "mcc_evaluation": {mcc_ex}
+  "mcc_evaluation": {mcc_ex}{deep_dive_schema}
 }}
 ```
 

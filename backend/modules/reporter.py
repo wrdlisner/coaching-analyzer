@@ -136,77 +136,75 @@ class CoachingReportPDF(FPDF):
         self.set_draw_color(0, 0, 0)
         self.ln(6)
 
-    def tier_explanation_section(self, analysis_tier: str):
-        """分析タイプ（通常／ディープ）の違いを示す説明ボックス。
-        「通常分析はここまで／ディープ分析はここから」を可視化し、
-        受け取ったレポートがどちらの分析かを明示する。"""
-        is_deep = analysis_tier == "deep"
-        x = self.l_margin
+    def deep_dive_section(self, deep_dive: dict):
+        """ディープ分析だけに含まれる「総合考察」セクション。
+        通常分析には存在しない章として、セッション全体を俯瞰した
+        根本パターン・重点テーマ・練習プランを示す。"""
+        self.add_page()
         w = self.w - self.l_margin - self.r_margin
 
-        self.ln(2)
-        self._set_font_bold(11)
-        self.set_text_color(26, 54, 93)
-        self.set_x(x)
-        label = "ディープ分析" if is_deep else "通常分析"
-        self.cell(w, 8, f"このレポートの分析タイプ： {label}", new_x="LMARGIN", new_y="NEXT")
-        self.ln(1)
+        # 紫のタイトル（ディープ専用であることを視覚的に強調）
+        self._set_font_bold(14)
+        self.set_text_color(91, 33, 182)
+        self.cell(0, 10, "ディープ分析による総合考察", new_x="LEFT", new_y="NEXT")
+        self.set_draw_color(124, 58, 237)
+        self.set_line_width(0.5)
+        self.line(self.l_margin, self.get_y(), self.w - self.r_margin, self.get_y())
+        self.ln(3)
 
-        def _block(title, lines, fill, title_color, text_color, active):
-            self.set_x(x)
-            self.set_fill_color(*fill)
-            self._set_font_bold(10)
-            self.set_text_color(*title_color)
-            head = ("【今回のレポート】" if active else "") + title
-            self.cell(w, 8, "  " + head, fill=True, new_x="LMARGIN", new_y="NEXT")
-            self._set_font_regular(9)
-            self.set_text_color(*text_color)
-            for item in lines:
-                self.set_x(x)
-                self.cell(w, 6, "    ・" + item, new_x="LMARGIN", new_y="NEXT")
+        self._set_font_regular(9)
+        self.set_text_color(124, 58, 237)
+        self.multi_cell(w, 5, "※ この考察は通常分析には含まれない、ディープ分析だけの総合的な深掘りです。")
+        self.ln(3)
+        self.set_draw_color(0, 0, 0)
 
-        # 通常分析（どのレポートにも必ず含まれる）
-        _block(
-            "通常分析でわかること（ここまで）",
-            [
-                "8コンピテンシーの評価コメント",
-                "改善提案 各2〜3点",
-                "根拠となる発言の引用",
-            ],
-            (240, 247, 255), (26, 54, 93), (51, 51, 51), active=not is_deep,
-        )
+        # 1. 根本パターン
+        core = deep_dive.get("core_patterns")
+        if core:
+            self._set_font_bold(11)
+            self.set_text_color(45, 55, 72)
+            self.cell(0, 8, "セッション全体を貫くパターン", new_x="LEFT", new_y="NEXT")
+            self._set_font_regular(10)
+            self.set_text_color(51, 51, 51)
+            self.set_x(self.l_margin)
+            self.multi_cell(w, 6, core)
+            self.ln(3)
 
-        # 区切り
-        self.ln(1)
-        self._set_font_bold(9)
-        self.set_text_color(120, 120, 120)
-        self.set_x(x)
-        self.cell(w, 6, "──── ここからディープ分析 ────", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.ln(1)
+        # 2. 重点テーマ
+        theme = deep_dive.get("focus_theme") or {}
+        if theme.get("title") or theme.get("detail"):
+            self._set_font_bold(11)
+            self.set_text_color(45, 55, 72)
+            self.cell(0, 8, "いま最も伸ばすべき重点テーマ", new_x="LEFT", new_y="NEXT")
+            if theme.get("title"):
+                self.set_fill_color(243, 240, 255)
+                self._set_font_bold(11)
+                self.set_text_color(91, 33, 182)
+                self.set_x(self.l_margin)
+                self.multi_cell(w, 8, "  " + theme["title"], fill=True)
+                self.ln(1)
+            if theme.get("detail"):
+                self._set_font_regular(10)
+                self.set_text_color(51, 51, 51)
+                self.set_x(self.l_margin)
+                self.multi_cell(w, 6, theme["detail"])
+            self.ln(3)
 
-        # ディープ分析（deep のときのみレポートに反映される）
-        deep_lines = [
-            "コメントをさらに詳細化（重点項目は300〜500字）",
-            "改善提案 各3〜4点に増量",
-            "言い換え例にICF上のねらいを付記",
-            "上位AIモデル＋拡張思考で精緻化",
-        ]
-        if is_deep:
-            _block(
-                "ディープ分析で追加されること（ここから）",
-                deep_lines,
-                (243, 240, 255), (91, 33, 182), (51, 51, 51), active=True,
-            )
-        else:
-            _block(
-                "ディープ分析で追加される内容（今回は対象外）",
-                deep_lines,
-                (245, 245, 245), (130, 130, 130), (150, 150, 150), active=False,
-            )
+        # 3. 練習ステップ
+        steps = deep_dive.get("practice_steps") or []
+        if steps:
+            self._set_font_bold(11)
+            self.set_text_color(45, 55, 72)
+            self.cell(0, 8, "次のセッションで試す練習ステップ", new_x="LEFT", new_y="NEXT")
+            self._set_font_regular(10)
+            self.set_text_color(51, 51, 51)
+            for i, step in enumerate(steps, 1):
+                self.set_x(self.l_margin)
+                self.multi_cell(w, 6, f"  {i}. {step}")
+            self.ln(2)
 
         self.set_text_color(0, 0, 0)
         self.set_draw_color(0, 0, 0)
-        self.ln(4)
 
     def cover_page(self, analysis_date: datetime, duration_min: int, duration_sec: int):
         self.add_page()
@@ -489,7 +487,6 @@ def generate_report(
     transcription: dict,
     output_dir: Path,
     css_path: Path | None = None,
-    analysis_tier: str | None = None,
 ) -> Path:
     now = datetime.now(timezone.utc)
     filename = f"coaching_report_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
@@ -526,10 +523,6 @@ def generate_report(
     # ⚠️ AI注意文
     pdf.ai_notice_section()
 
-    # 分析タイプ（通常／ディープ）の説明
-    if analysis_tier:
-        pdf.tier_explanation_section(analysis_tier)
-
     # 1. セッション概要（合格可能性表示を含む）
     pdf.overview_section(
         duration_min, duration_sec,
@@ -538,6 +531,11 @@ def generate_report(
         qualification_statuses=qualification_statuses,
         qualification_comment=analysis.get("qualification_comment"),
     )
+
+    # ディープ分析の総合考察（ディープ分析時のみ存在）
+    deep_dive = analysis.get("deep_dive")
+    if deep_dive:
+        pdf.deep_dive_section(deep_dive)
 
     # 2. レーダーチャート
     pdf.radar_chart_section(chart_png)

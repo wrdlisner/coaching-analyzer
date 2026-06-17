@@ -94,6 +94,7 @@ if (loading) {
   const overallSummary = session.scores?.overall_summary
   const qualificationComment = session.scores?.qualification_comment
   const strengthsImprovements = session.scores?.strengths_improvements
+  const deepDive = session.scores?.deep_dive
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,70 +123,6 @@ if (loading) {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-        {/* 分析タイプの説明（通常／ディープの違いを明示）。
-            analysis_tier はティア機能導入後のレポートにのみ存在する */}
-        {(analysisTier === 'standard' || analysisTier === 'deep') && (
-          <div className="card">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-lg font-bold text-gray-900">このレポートの分析タイプ</h2>
-              {analysisTier === 'deep' ? (
-                <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-purple-100 text-purple-700">
-                  ディープ分析
-                </span>
-              ) : (
-                <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-gray-100 text-gray-600">
-                  通常分析
-                </span>
-              )}
-            </div>
-
-            {/* 通常分析（ここまで） */}
-            <div className={`rounded-lg border p-4 ${analysisTier === 'standard' ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-sm font-semibold text-blue-800">通常分析でわかること（ここまで）</span>
-                {analysisTier === 'standard' && (
-                  <span className="text-xs font-medium rounded px-1.5 py-0.5 bg-blue-600 text-white">今回のレポート</span>
-                )}
-              </div>
-              <ul className="space-y-1 text-sm text-gray-700">
-                <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">・</span>8コンピテンシーの評価コメント</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">・</span>改善提案 各2〜3点</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 shrink-0">・</span>根拠となる発言の引用</li>
-              </ul>
-            </div>
-
-            {/* 区切り */}
-            <div className="flex items-center gap-3 my-3">
-              <div className="flex-1 border-t border-dashed border-gray-300" />
-              <span className="text-xs font-medium text-gray-500">ここからディープ分析</span>
-              <div className="flex-1 border-t border-dashed border-gray-300" />
-            </div>
-
-            {/* ディープ分析（ここから） */}
-            <div className={`rounded-lg border p-4 ${analysisTier === 'deep' ? 'border-purple-300 bg-purple-50' : 'border-gray-200 bg-gray-50'}`}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className={`text-sm font-semibold ${analysisTier === 'deep' ? 'text-purple-800' : 'text-gray-400'}`}>
-                  {analysisTier === 'deep' ? 'ディープ分析で追加されること（ここから）' : 'ディープ分析で追加される内容（今回は対象外）'}
-                </span>
-                {analysisTier === 'deep' && (
-                  <span className="text-xs font-medium rounded px-1.5 py-0.5 bg-purple-600 text-white">今回のレポート</span>
-                )}
-              </div>
-              <ul className={`space-y-1 text-sm ${analysisTier === 'deep' ? 'text-gray-700' : 'text-gray-400'}`}>
-                <li className="flex items-start gap-2"><span className="shrink-0">・</span>コメントをさらに詳細化（重点項目は300〜500字）</li>
-                <li className="flex items-start gap-2"><span className="shrink-0">・</span>改善提案 各3〜4点に増量</li>
-                <li className="flex items-start gap-2"><span className="shrink-0">・</span>言い換え例にICF上のねらいを付記</li>
-                <li className="flex items-start gap-2"><span className="shrink-0">・</span>上位AIモデル＋拡張思考で精緻化</li>
-              </ul>
-              {analysisTier === 'standard' && (
-                <p className="mt-3 text-xs text-gray-500">
-                  次回の分析で「ディープ分析」を選ぶと、上記の深掘りが追加されます。
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Session meta */}
         <div className="card">
           <h2 className="text-lg font-bold text-gray-900 mb-4">セッション情報</h2>
@@ -220,6 +157,60 @@ if (loading) {
                 {qualificationComment}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ディープ分析の総合考察（ディープ分析時のみ存在。通常分析には無い章） */}
+        {deepDive && (deepDive.core_patterns || deepDive.focus_theme?.title || deepDive.focus_theme?.detail || (deepDive.practice_steps && deepDive.practice_steps.length > 0)) && (
+          <div className="card border-2 border-purple-200 bg-purple-50/40">
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-lg font-bold text-purple-800">ディープ分析による総合考察</h2>
+              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-purple-100 text-purple-700">
+                ディープ分析限定
+              </span>
+            </div>
+            <p className="text-xs text-purple-600 mb-4">
+              ※ この考察は通常分析には含まれない、ディープ分析だけの総合的な深掘りです。
+            </p>
+
+            <div className="space-y-5">
+              {deepDive.core_patterns && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">セッション全体を貫くパターン</h3>
+                  <p className="text-sm text-gray-700 leading-relaxed">{deepDive.core_patterns}</p>
+                </div>
+              )}
+
+              {(deepDive.focus_theme?.title || deepDive.focus_theme?.detail) && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">いま最も伸ばすべき重点テーマ</h3>
+                  {deepDive.focus_theme?.title && (
+                    <div className="inline-block rounded-md bg-purple-100 text-purple-800 text-sm font-semibold px-3 py-1 mb-2">
+                      {deepDive.focus_theme.title}
+                    </div>
+                  )}
+                  {deepDive.focus_theme?.detail && (
+                    <p className="text-sm text-gray-700 leading-relaxed">{deepDive.focus_theme.detail}</p>
+                  )}
+                </div>
+              )}
+
+              {deepDive.practice_steps && deepDive.practice_steps.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-2">次のセッションで試す練習ステップ</h3>
+                  <ol className="space-y-2">
+                    {deepDive.practice_steps.map((step, i) => (
+                      <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
+                          {i + 1}
+                        </span>
+                        <span className="leading-relaxed">{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

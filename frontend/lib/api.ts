@@ -139,6 +139,11 @@ export interface SessionSummary {
       improvements: string[]
       overall_comment: string
     }
+    deep_dive?: {
+      core_patterns?: string
+      focus_theme?: { title?: string; detail?: string }
+      practice_steps?: string[]
+    } | null
   } | null
   created_at: string
 }
