@@ -136,6 +136,8 @@ def _run_migrations():
         "ALTER TABLE password_reset_tokens ADD COLUMN used_at TIMESTAMP",
         "ALTER TABLE password_reset_tokens DROP COLUMN IF EXISTS used",
         "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'refund'",
+        "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'referral'",
+        "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'purchase'",
         "ALTER TABLE coupons ADD COLUMN reserved_until TIMESTAMP",
     ]
     with engine.connect() as conn:

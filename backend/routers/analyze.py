@@ -115,20 +115,6 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         db.add(session)
         db.flush()
 
-        # 初回分析完了時：紹介者に+1クレジット付与
-        session_count = db.query(models.Session).filter(
-            models.Session.user_id == user_id
-        ).count()
-        if session_count == 1 and user.referred_by:
-            referrer = db.query(models.User).filter(models.User.id == user.referred_by).first()
-            if referrer:
-                referrer.credits += 1
-                db.add(models.Credit(
-                    user_id=referrer.id,
-                    amount=1,
-                    reason="referral",
-                ))
-
         # ジョブを completed に更新
         job.status = "completed"
         job.session_id = session.id
@@ -137,14 +123,42 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
 
         logger.info(f"[job {job_id}] completed: session_id={session.id}")
 
+        # 初回分析完了時：紹介者に+1クレジット付与
+        # レポート保存とは別トランザクションにする（付与失敗が完了済み分析を
+        # 巻き込んでロールバックさせないため）
+        try:
+            session_count = db.query(models.Session).filter(
+                models.Session.user_id == user_id
+            ).count()
+            if session_count == 1 and user.referred_by:
+                referrer = db.query(models.User).filter(models.User.id == user.referred_by).first()
+                if referrer:
+                    referrer.credits += 1
+                    db.add(models.Credit(
+                        user_id=referrer.id,
+                        amount=1,
+                        reason="referral",
+                    ))
+                    db.commit()
+                    logger.info(f"[job {job_id}] 紹介者 {referrer.id} に+1クレジット付与")
+        except Exception:
+            logger.error(f"[job {job_id}] 紹介ボーナス付与に失敗（分析結果は保存済み）", exc_info=True)
+            db.rollback()
+
     except Exception as e:
         logger.error(f"[job {job_id}] failed: {e}", exc_info=True)
+        # ValueError/RuntimeErrorは各モジュールが投げるユーザー向けメッセージ。
+        # それ以外（DBエラー等）は内部情報を含むため汎用メッセージに置き換える
+        if isinstance(e, (ValueError, RuntimeError)):
+            user_message = str(e)
+        else:
+            user_message = "分析処理中に予期しないエラーが発生しました。クレジットは返金済みです。時間をおいて再度お試しください。"
         try:
             db.rollback()
             job = db.query(models.AnalysisJob).filter(models.AnalysisJob.id == job_id).first()
             if job:
                 job.status = "failed"
-                job.error_message = str(e)
+                job.error_message = user_message
                 job.updated_at = datetime.now(timezone.utc)
 
             # 受付時に減算したクレジットを返金する（ティアに応じた消費分）
