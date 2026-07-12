@@ -94,10 +94,10 @@ export default function ManagerPage() {
             <div
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
                 dragOver
-                  ? 'border-blue-400 bg-blue-50'
+                  ? 'border-[var(--purple-m)] bg-[var(--purple-l)]'
                   : file
                   ? 'border-green-400 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50/50'
+                  : 'border-gray-300 hover:border-[var(--purple-m)] hover:bg-[var(--purple-l)]/50'
               }`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -154,7 +154,7 @@ export default function ManagerPage() {
               disabled={!file}
               className={`w-full py-3 rounded-xl font-medium text-white transition-colors ${
                 file
-                  ? 'bg-blue-600 hover:bg-blue-700'
+                  ? 'bg-[var(--purple)] hover:bg-[var(--purple-m)]'
                   : 'bg-gray-300 cursor-not-allowed'
               }`}
             >
@@ -167,7 +167,7 @@ export default function ManagerPage() {
         {step === 'processing' && (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center space-y-6">
             <div className="flex justify-center">
-              <div className="w-12 h-12 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-12 h-12 border-4 border-gray-200 border-t-[var(--purple)] rounded-full animate-spin" />
             </div>
             <div>
               <p className="font-medium text-gray-800 text-lg">分析中...</p>
@@ -185,7 +185,7 @@ export default function ManagerPage() {
                 'AI分析・レポート生成（Claude）',
               ].map((label, i) => (
                 <div key={i} className="flex items-center gap-2 text-sm text-gray-500">
-                  <div className="w-4 h-4 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin" />
+                  <div className="w-4 h-4 border-2 border-[var(--purple-m)] border-t-[var(--purple)] rounded-full animate-spin" />
                   <span>{label}</span>
                 </div>
               ))}
@@ -205,7 +205,7 @@ export default function ManagerPage() {
             </div>
             <button
               onClick={() => { setFile(null); setStep('upload') }}
-              className="text-sm text-blue-600 hover:text-blue-800 underline"
+              className="text-sm text-[var(--purple)] hover:text-[var(--purple-m)] underline"
             >
               別のファイルを分析する
             </button>

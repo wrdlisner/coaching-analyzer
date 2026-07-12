@@ -3,13 +3,13 @@ import { LightModeGuard } from '@/app/components/LightModeGuard'
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-[var(--purple-l)] via-white to-[var(--purple-l)]">
       <LightModeGuard />
       {/* Header */}
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -27,13 +27,13 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="max-w-6xl mx-auto px-4 py-24 text-center">
-        <div className="inline-block bg-blue-100 text-blue-700 text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
+        <div className="inline-block bg-[var(--purple-l)] text-[var(--purple)] text-sm font-semibold px-4 py-1.5 rounded-full mb-6">
           ICFコアコンピテンシー（2025年最新版）準拠
         </div>
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
           AIがセッションを評価し、
           <br />
-          <span className="text-blue-600">メンターコーチが伴走する。</span>
+          <span className="text-[var(--purple)]">メンターコーチが伴走する。</span>
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-4">
           コーチとしての成長を、科学的に。
@@ -54,20 +54,20 @@ export default function LandingPage() {
       </section>
 
       {/* Differentiators */}
-      <section className="bg-blue-50 py-12">
+      <section className="bg-[var(--purple-l)] py-12">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-xl font-bold text-center text-gray-900 mb-8">このツールの特徴</h2>
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <div className="text-blue-600 font-bold text-sm mb-2">ICFコアコンピテンシー 2025年最新版</div>
+              <div className="text-[var(--purple)] font-bold text-sm mb-2">ICFコアコンピテンシー 2025年最新版</div>
               <p className="text-sm text-gray-600">2025年9月改訂版に基づく最新の評価基準で、あなたのセッションを正確に評価します。</p>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <div className="text-blue-600 font-bold text-sm mb-2">3層構造の改善提案</div>
+              <div className="text-[var(--purple)] font-bold text-sm mb-2">3層構造の改善提案</div>
               <p className="text-sm text-gray-600">ICFメンターコーチングコンピテンシーを活用した「改善提案・具体的な言い換え例・次のアクション」の3層で提示。</p>
             </div>
             <div className="bg-white rounded-xl p-5 shadow-sm">
-              <div className="text-blue-600 font-bold text-sm mb-2">メンターコーチが伴走</div>
+              <div className="text-[var(--purple)] font-bold text-sm mb-2">メンターコーチが伴走</div>
               <p className="text-sm text-gray-600">AIの分析レポートをもとに、メンターコーチとの対話で気づきをより深く実践に繋げられます。</p>
             </div>
           </div>
@@ -83,25 +83,25 @@ export default function LandingPage() {
               step: '01',
               title: '音声アップロード',
               desc: 'mp3/mp4/m4a形式の音声ファイルをアップロード。最大500MBまで対応。',
-              color: 'bg-blue-100 text-blue-600',
+              color: 'bg-[var(--purple-l)] text-[var(--purple)]',
             },
             {
               step: '02',
               title: '自動文字起こし',
               desc: 'AssemblyAI技術で高精度な日本語文字起こしと話者分離を実行。',
-              color: 'bg-indigo-100 text-indigo-600',
+              color: 'bg-[var(--blue-l)] text-[var(--blue)]',
             },
             {
               step: '03',
               title: 'AI分析',
               desc: 'Claude AIがICF PCC/MCC基準に基づき8つのコンピテンシーを評価。',
-              color: 'bg-purple-100 text-purple-600',
+              color: 'bg-[var(--teal-l)] text-[var(--teal)]',
             },
             {
               step: '04',
               title: 'PDFレポート',
               desc: 'レーダーチャート付きの詳細レポートをダウンロード。改善点も明示。',
-              color: 'bg-pink-100 text-pink-600',
+              color: 'bg-[var(--amber-l)] text-[var(--amber)]',
             },
           ].map((item) => (
             <div key={item.step} className="card text-center">
@@ -138,7 +138,7 @@ export default function LandingPage() {
                 key={i}
                 className="flex items-center gap-3 bg-gray-50 rounded-lg px-4 py-3"
               >
-                <span className="text-blue-600 font-bold text-sm w-6 shrink-0">
+                <span className="text-[var(--purple)] font-bold text-sm w-6 shrink-0">
                   {String(i + 1).padStart(2, '0')}
                 </span>
                 <span className="text-sm text-gray-700">{name}</span>
@@ -149,7 +149,7 @@ export default function LandingPage() {
       </section>
 
       {/* Analysis plans */}
-      <section className="bg-gradient-to-b from-white to-purple-50 py-16">
+      <section className="bg-gradient-to-b from-white to-[var(--purple-l)] py-16">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-4">選べる2つの分析プラン</h2>
           <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
@@ -167,21 +167,21 @@ export default function LandingPage() {
               </div>
               <p className="text-sm text-gray-600 mb-4">標準AIモデルによるICF 8コンピテンシー分析。日々の振り返りに十分な詳しさです。</p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex gap-2"><span className="text-blue-500">✓</span>PCCマーカー充足率に基づくスコア評価</li>
-                <li className="flex gap-2"><span className="text-blue-500">✓</span>コンピテンシーごとの評価コメントと改善提案2〜3点</li>
-                <li className="flex gap-2"><span className="text-blue-500">✓</span>レーダーチャート付きPDFレポート</li>
+                <li className="flex gap-2"><span className="text-gray-400">✓</span>PCCマーカー充足率に基づくスコア評価</li>
+                <li className="flex gap-2"><span className="text-gray-400">✓</span>コンピテンシーごとの評価コメントと改善提案2〜3点</li>
+                <li className="flex gap-2"><span className="text-gray-400">✓</span>レーダーチャート付きPDFレポート</li>
               </ul>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-300 relative">
+            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-[var(--purple)] relative">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-gray-900">ディープ分析</h3>
-                <span className="text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-3 py-1">2クレジット</span>
+                <span className="text-xs font-medium bg-[var(--purple-l)] text-[var(--purple)] rounded-full px-3 py-1">2クレジット</span>
               </div>
               <p className="text-sm text-gray-600 mb-4">上位AIモデルがセッション全体を熟考してから評価。見落とされがちな細かな癖まで指摘します。</p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex gap-2"><span className="text-purple-500">✓</span>通常分析のすべての内容</li>
-                <li className="flex gap-2"><span className="text-purple-500">✓</span>評価コメントが発言の引用・タイムスタンプつきでより詳細に</li>
-                <li className="flex gap-2"><span className="text-purple-500">✓</span>改善提案が3〜4点に増え、より繊細な指摘まで</li>
+                <li className="flex gap-2"><span className="text-[var(--purple)]">✓</span>通常分析のすべての内容</li>
+                <li className="flex gap-2"><span className="text-[var(--purple)]">✓</span>評価コメントが発言の引用・タイムスタンプつきでより詳細に</li>
+                <li className="flex gap-2"><span className="text-[var(--purple)]">✓</span>改善提案が3〜4点に増え、より繊細な指摘まで</li>
               </ul>
             </div>
           </div>
@@ -196,39 +196,39 @@ export default function LandingPage() {
               <div className="text-sm font-bold text-gray-500 mb-4">通常分析の指摘（2点）</div>
               <ul className="space-y-3 text-sm text-gray-700">
                 <li className="flex gap-2">
-                  <span className="text-gray-400 font-bold shrink-0">1.</span>
+                  <span className="text-gray-500 font-bold shrink-0">1.</span>
                   観察・直感・経験は執着なくシェアし、クライアントへの影響を確認する
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-gray-400 font-bold shrink-0">2.</span>
+                  <span className="text-gray-500 font-bold shrink-0">2.</span>
                   特定したパターンを他の場面にも広げて探求する
                 </li>
               </ul>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-purple-300">
-              <div className="text-sm font-bold text-purple-700 mb-4">ディープ分析の指摘（3点）</div>
+            <div className="bg-white rounded-xl p-6 shadow-md border-2 border-[var(--purple)]">
+              <div className="text-sm font-bold text-[var(--purple)] mb-4">ディープ分析の指摘（3点）</div>
               <ul className="space-y-3 text-sm text-gray-700">
                 <li className="flex gap-2">
-                  <span className="text-purple-400 font-bold shrink-0">1.</span>
+                  <span className="text-[var(--purple-m)] font-bold shrink-0">1.</span>
                   直感のシェアを&quot;手放した提供&quot;に変え、採否をクライアントに委ねる
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-purple-400 font-bold shrink-0">2.</span>
+                  <span className="text-[var(--purple-m)] font-bold shrink-0">2.</span>
                   <span>
                     二重質問を避け、一つの問いに絞って内省の&quot;間&quot;を確保する
-                    <span className="ml-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
+                    <span className="ml-1 text-xs font-medium bg-[var(--purple-l)] text-[var(--purple)] rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
                   </span>
                 </li>
                 <li className="flex gap-2">
-                  <span className="text-purple-400 font-bold shrink-0">3.</span>
+                  <span className="text-[var(--purple-m)] font-bold shrink-0">3.</span>
                   <span>
                     クライアントが生んだ再定義を、価値観のレベルまでもう一段掘り下げる
-                    <span className="ml-1 text-xs font-medium bg-purple-100 text-purple-700 rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
+                    <span className="ml-1 text-xs font-medium bg-[var(--purple-l)] text-[var(--purple)] rounded-full px-2 py-0.5 whitespace-nowrap">ディープのみ</span>
                   </span>
                 </li>
               </ul>
-              <div className="mt-4 bg-purple-50 rounded-lg p-4 text-xs text-gray-600 leading-relaxed">
-                <span className="font-bold text-purple-700 block mb-1">ディープ分析の言い換え例（抜粋）</span>
+              <div className="mt-4 bg-[var(--purple-l)] rounded-lg p-4 text-xs text-gray-600 leading-relaxed">
+                <span className="font-bold text-[var(--purple)] block mb-1">ディープ分析の言い換え例（抜粋）</span>
                 「もう少し探求してもいいですか？それとも別の角度から見てみたいですか？」は選択肢提示として有効ですが、深い内省を狙う場面では「いま、どこに向かいたいですか？」と一問に絞ると思考が散らずに済みます
               </div>
             </div>
@@ -241,9 +241,9 @@ export default function LandingPage() {
 
       {/* Credit system */}
       <section className="max-w-6xl mx-auto px-4 py-16">
-        <div className="card bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center">
+        <div className="card bg-gradient-to-r from-[var(--purple)] to-[var(--purple-m)] text-white text-center">
           <h2 className="text-2xl font-bold mb-4">クレジット制で始めやすい</h2>
-          <p className="text-blue-100 mb-8 max-w-xl mx-auto">
+          <p className="text-white/80 mb-8 max-w-xl mx-auto">
             無料登録で1クレジット付与。通常分析は1回1クレジット、より詳細なディープ分析は2クレジット消費。
             クレジットの追加購入や、さまざまな方法で獲得できます。
           </p>
@@ -257,7 +257,7 @@ export default function LandingPage() {
               <div key={item.label} className="bg-white/20 rounded-lg px-4 py-4">
                 <div className="text-xl font-bold mb-1">{item.amount}</div>
                 <div className="font-semibold text-xs">{item.label}</div>
-                <div className="text-blue-200 text-xs mt-0.5">{item.desc}</div>
+                <div className="text-white/70 text-xs mt-0.5">{item.desc}</div>
               </div>
             ))}
           </div>

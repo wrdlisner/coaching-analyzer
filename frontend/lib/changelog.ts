@@ -69,7 +69,7 @@ export const typeLabel: Record<ChangeType, string> = {
 }
 
 export const typeStyle: Record<ChangeType, string> = {
-  new: 'bg-blue-100 text-blue-700',
+  new: 'bg-[var(--purple-l)] text-[var(--purple)]',
   fix: 'bg-red-100 text-red-600',
   improve: 'bg-green-100 text-green-700',
 }

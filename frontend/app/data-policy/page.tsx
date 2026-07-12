@@ -7,7 +7,7 @@ export default function DataPolicyPage() {
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -42,29 +42,29 @@ export default function DataPolicyPage() {
                   num: '01',
                   label: 'アップロード',
                   desc: '音声ファイルを選択してサーバーに送信',
-                  color: 'bg-blue-100 text-blue-600 border-blue-200',
-                  dot: 'bg-blue-500',
+                  color: 'bg-[var(--purple-l)] text-[var(--purple)] border-[var(--purple-l)]',
+                  dot: 'bg-[var(--purple)]',
                 },
                 {
                   num: '02',
                   label: '形式変換',
                   desc: 'mp4/m4aの場合、mp3に変換（サーバー上）',
-                  color: 'bg-indigo-100 text-indigo-600 border-indigo-200',
-                  dot: 'bg-indigo-500',
+                  color: 'bg-[var(--blue-l)] text-[var(--blue)] border-[var(--blue-l)]',
+                  dot: 'bg-[var(--blue)]',
                 },
                 {
                   num: '03',
                   label: '文字起こし',
                   desc: 'AssemblyAI APIで音声を文字に変換・話者分離',
-                  color: 'bg-purple-100 text-purple-600 border-purple-200',
-                  dot: 'bg-purple-500',
+                  color: 'bg-[var(--teal-l)] text-[var(--teal)] border-[var(--teal-l)]',
+                  dot: 'bg-[var(--teal)]',
                 },
                 {
                   num: '04',
                   label: 'AI分析',
                   desc: 'Claude AIがICF 8コンピテンシーを評価',
-                  color: 'bg-violet-100 text-violet-600 border-violet-200',
-                  dot: 'bg-violet-500',
+                  color: 'bg-[var(--amber-l)] text-[var(--amber)] border-[var(--amber-l)]',
+                  dot: 'bg-[var(--amber)]',
                 },
                 {
                   num: '05',
@@ -134,7 +134,7 @@ export default function DataPolicyPage() {
           {/* Stored */}
           <div className="bg-white rounded-2xl shadow p-6">
             <div className="flex items-center gap-2 mb-5">
-              <span className="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-sm font-bold">✓</span>
+              <span className="w-8 h-8 bg-[var(--purple-l)] text-[var(--purple)] rounded-full flex items-center justify-center text-sm font-bold">✓</span>
               <h3 className="font-semibold text-gray-900">保存されるデータ</h3>
             </div>
             <ul className="space-y-3">
@@ -145,7 +145,7 @@ export default function DataPolicyPage() {
                 { label: 'アカウント情報', desc: '登録時に入力した名前・メールアドレス' },
               ].map((item) => (
                 <li key={item.label} className="flex items-start gap-2.5">
-                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-xs">✓</span>
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[var(--purple-l)] text-[var(--purple)] flex items-center justify-center text-xs">✓</span>
                   <div>
                     <p className="text-sm font-medium text-gray-800">{item.label}</p>
                     <p className="text-xs text-gray-500">{item.desc}</p>
@@ -183,7 +183,7 @@ export default function DataPolicyPage() {
             ].map((faq, i) => (
               <div key={i} className={i > 0 ? 'pt-6 border-t border-gray-100' : ''}>
                 <p className="font-medium text-gray-900 mb-2 flex items-start gap-2">
-                  <span className="text-blue-500 font-bold shrink-0">Q.</span>
+                  <span className="text-[var(--purple)] font-bold shrink-0">Q.</span>
                   {faq.q}
                 </p>
                 <p className="text-sm text-gray-600 leading-relaxed pl-6">

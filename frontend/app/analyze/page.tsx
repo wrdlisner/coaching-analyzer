@@ -209,7 +209,7 @@ export default function AnalyzePage() {
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
                   step === n
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[var(--purple)] text-white'
                     : step > n
                     ? 'bg-green-500 text-white'
                     : 'bg-gray-200 text-gray-500'
@@ -219,7 +219,7 @@ export default function AnalyzePage() {
               </div>
               <span
                 className={`text-sm hidden sm:block ${
-                  step === n ? 'text-blue-600 font-medium' : 'text-gray-400'
+                  step === n ? 'text-[var(--purple)] font-medium' : 'text-gray-500'
                 }`}
               >
                 {n === 1 ? '確認事項' : n === 2 ? 'ファイル選択' : '分析中'}
@@ -230,14 +230,14 @@ export default function AnalyzePage() {
         </div>
 
         {/* Credit balance badge (persistent across steps) */}
-        <div className="mb-6 rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3">
+        <div className="mb-6 rounded-lg border border-[var(--purple-l)] bg-[var(--purple-l)]/60 px-4 py-3">
           <div className="flex items-center justify-center gap-2 text-sm">
             <span className="text-gray-500">💳 クレジット</span>
             <span className="font-bold text-gray-800">現在 {credits}</span>
             {step !== 1 && (
               <>
                 <span className="text-gray-400">→</span>
-                <span className={`font-bold ${afterCredits < 0 ? 'text-red-500' : 'text-blue-600'}`}>
+                <span className={`font-bold ${afterCredits < 0 ? 'text-red-500' : 'text-[var(--purple)]'}`}>
                   {afterCredits < 0 ? '不足' : `分析後 ${afterCredits}`}
                 </span>
               </>
@@ -260,7 +260,7 @@ export default function AnalyzePage() {
                 <label key={i} className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300"
+                    className="mt-0.5 w-4 h-4 accent-[var(--purple)] rounded border-gray-300"
                     checked={consents[i]}
                     onChange={(e) => {
                       const next = [...consents]
@@ -273,7 +273,7 @@ export default function AnalyzePage() {
               ))}
             </div>
             <div className="mt-5 text-center">
-              <Link href="/data-policy" target="_blank" className="text-xs text-blue-500 hover:text-blue-700 underline">
+              <Link href="/data-policy" target="_blank" className="text-xs text-[var(--purple)] hover:text-[var(--purple-m)] underline">
                 データの取り扱いについて詳しく見る →
               </Link>
             </div>
@@ -315,7 +315,7 @@ export default function AnalyzePage() {
                         insufficient
                           ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
                           : analysisTier === tierKey
-                          ? 'border-blue-500 bg-blue-50 cursor-pointer'
+                          ? 'border-[var(--purple)] bg-[var(--purple-l)] cursor-pointer'
                           : 'border-gray-200 hover:border-gray-300 cursor-pointer'
                       }`}
                     >
@@ -327,11 +327,11 @@ export default function AnalyzePage() {
                           checked={analysisTier === tierKey}
                           disabled={insufficient}
                           onChange={() => setAnalysisTier(tierKey)}
-                          className="text-blue-600"
+                          className="accent-[var(--purple)]"
                         />
                         <span className="text-sm font-bold text-gray-800">{info.label}</span>
                         <span className={`ml-auto text-xs font-medium rounded-full px-2 py-0.5 ${
-                          tierKey === 'deep' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+                          tierKey === 'deep' ? 'bg-[var(--purple-l)] text-[var(--purple)]' : 'bg-gray-100 text-gray-600'
                         }`}>
                           {info.credits}クレジット
                         </span>
@@ -361,7 +361,7 @@ export default function AnalyzePage() {
                     key={opt.value}
                     className={`flex-1 flex items-center gap-2 border-2 rounded-lg px-4 py-3 cursor-pointer transition-colors ${
                       sessionType === opt.value
-                        ? 'border-blue-500 bg-blue-50'
+                        ? 'border-[var(--purple)] bg-[var(--purple-l)]'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -371,7 +371,7 @@ export default function AnalyzePage() {
                       value={opt.value}
                       checked={sessionType === opt.value}
                       onChange={() => setSessionType(opt.value as SessionType)}
-                      className="text-blue-600"
+                      className="accent-[var(--purple)]"
                     />
                     <span className="text-sm font-medium text-gray-700">{opt.label}</span>
                   </label>
@@ -388,10 +388,10 @@ export default function AnalyzePage() {
             <div
               className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
                 dragOver
-                  ? 'border-blue-400 bg-blue-50'
+                  ? 'border-[var(--purple-m)] bg-[var(--purple-l)]'
                   : file
                   ? 'border-green-400 bg-green-50'
-                  : 'border-gray-300 hover:border-blue-300 hover:bg-blue-50/50'
+                  : 'border-gray-300 hover:border-[var(--purple-m)] hover:bg-[var(--purple-l)]/50'
               }`}
               onClick={() => fileInputRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -460,7 +460,7 @@ export default function AnalyzePage() {
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
                 <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-500 ease-out"
+                  className="bg-[var(--purple)] h-3 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -484,22 +484,22 @@ export default function AnalyzePage() {
                 return (
                   <div key={i} className={`rounded-lg border px-4 py-3 transition-colors ${
                     isDone ? 'border-green-200 bg-green-50' :
-                    isActive ? 'border-blue-200 bg-blue-50' :
+                    isActive ? 'border-[var(--purple-l)] bg-[var(--purple-l)]' :
                     'border-gray-100 bg-gray-50'
                   }`}>
                     <div className="flex items-center justify-between mb-1">
                       <div className="flex items-center gap-2">
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                           isDone ? 'bg-green-500 text-white' :
-                          isActive ? 'bg-blue-600 text-white' :
-                          'bg-gray-200 text-gray-400'
+                          isActive ? 'bg-[var(--purple)] text-white' :
+                          'bg-gray-200 text-gray-500'
                         }`}>
                           {isDone ? '✓' : i + 1}
                         </span>
                         <span className={`text-sm font-medium ${
                           isDone ? 'text-green-700' :
-                          isActive ? 'text-blue-700' :
-                          'text-gray-400'
+                          isActive ? 'text-[var(--purple)]' :
+                          'text-gray-500'
                         }`}>
                           {phase.label}
                         </span>
@@ -510,14 +510,14 @@ export default function AnalyzePage() {
                     </div>
                     {isActive && (
                       <div className="mt-2">
-                        <div className="w-full bg-blue-100 rounded-full h-1.5">
+                        <div className="w-full bg-[var(--purple-l)] rounded-full h-1.5">
                           <div
-                            className="bg-blue-500 h-1.5 rounded-full transition-all duration-500"
+                            className="bg-[var(--purple)] h-1.5 rounded-full transition-all duration-500"
                             style={{ width: `${phaseProgress}%` }}
                           />
                         </div>
                         {i === 2 && (
-                          <p className="text-xs text-blue-600 mt-1">残り時間の目安：約1〜2分</p>
+                          <p className="text-xs text-[var(--purple)] mt-1">残り時間の目安：約1〜2分</p>
                         )}
                       </div>
                     )}
@@ -528,7 +528,7 @@ export default function AnalyzePage() {
 
             {/* Spinner */}
             <div className="flex items-center justify-center gap-3 text-sm text-gray-500">
-              <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-gray-200 border-t-[var(--purple)] rounded-full animate-spin" />
               <span>分析中... このページを閉じないでください</span>
             </div>
 

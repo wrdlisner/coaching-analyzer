@@ -48,7 +48,7 @@ export default function NoticeDetailPage() {
       <main className="max-w-2xl mx-auto px-4 py-8">
         <div className="card">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-semibold bg-blue-600 text-white px-2 py-0.5 rounded">NEW</span>
+            <span className="text-xs font-semibold bg-[var(--purple)] text-white px-2 py-0.5 rounded">NEW</span>
             <span className="text-sm text-gray-500">
               {notice.published_at
                 ? new Date(notice.published_at).toLocaleDateString('ja-JP', {

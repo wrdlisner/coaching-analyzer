@@ -27,7 +27,7 @@ function ScoreBar({ score }: { score: number }) {
     <div className="flex items-center gap-2">
       <div className="flex-1 bg-gray-100 rounded-full h-2">
         <div
-          className="bg-blue-500 rounded-full h-2 transition-all"
+          className="bg-[var(--teal)] rounded-full h-2 transition-all"
           style={{ width: `${(score / 5) * 100}%` }}
         />
       </div>
@@ -108,7 +108,7 @@ if (loading) {
             <h1 className="font-bold text-gray-900">分析レポート</h1>
             {/* analysis_tier はティア機能導入後のレポートにのみ存在する（過去レポートはバッジなし） */}
             {analysisTier === 'deep' && (
-              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-purple-100 text-purple-700">
+              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-[var(--purple-l)] text-[var(--purple)]">
                 ディープ分析
               </span>
             )}
@@ -139,10 +139,10 @@ if (loading) {
               <div className="text-xs text-gray-500 mb-1">コーチ発話比率</div>
               <div className="text-sm font-medium">{session.coach_ratio}%</div>
             </div>
-            <div className="bg-blue-50 rounded-lg p-3 text-center">
-              <div className="text-xs text-blue-500 mb-1">平均スコア</div>
-              <div className="text-2xl font-bold text-blue-600">{session.avg_score.toFixed(1)}</div>
-              <div className="text-xs text-gray-400">/ 5.0</div>
+            <div className="bg-[var(--teal-l)] rounded-lg p-3 text-center">
+              <div className="text-xs text-[var(--teal)] mb-1">平均スコア</div>
+              <div className="text-2xl font-bold text-[var(--teal)]">{session.avg_score.toFixed(1)}</div>
+              <div className="text-xs text-gray-500">/ 5.0</div>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ if (loading) {
             <h2 className="text-lg font-bold text-gray-900 mb-3">全体総評</h2>
             <p className="text-gray-700 text-sm leading-relaxed">{overallSummary}</p>
             {qualificationComment && (
-              <div className="mt-3 bg-blue-50 rounded-lg px-4 py-3 text-sm text-blue-800">
+              <div className="mt-3 bg-[var(--purple-l)] rounded-lg px-4 py-3 text-sm text-[var(--purple)]">
                 {qualificationComment}
               </div>
             )}
@@ -162,14 +162,14 @@ if (loading) {
 
         {/* ディープ分析の総合考察（ディープ分析時のみ存在。通常分析には無い章） */}
         {deepDive && (deepDive.core_patterns || deepDive.focus_theme?.title || deepDive.focus_theme?.detail || (deepDive.practice_steps && deepDive.practice_steps.length > 0)) && (
-          <div className="card border-2 border-purple-200 bg-purple-50/40">
+          <div className="card border-2 border-[var(--purple-l)] bg-[var(--purple-l)]/40">
             <div className="flex items-center gap-2 mb-1">
-              <h2 className="text-lg font-bold text-purple-800">ディープ分析による総合考察</h2>
-              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-purple-100 text-purple-700">
+              <h2 className="text-lg font-bold text-[var(--purple)]">ディープ分析による総合考察</h2>
+              <span className="text-xs font-medium rounded-full px-2 py-0.5 bg-[var(--purple-l)] text-[var(--purple)]">
                 ディープ分析限定
               </span>
             </div>
-            <p className="text-xs text-purple-600 mb-4">
+            <p className="text-xs text-[var(--purple-m)] mb-4">
               ※ この考察は通常分析には含まれない、ディープ分析だけの総合的な深掘りです。
             </p>
 
@@ -185,7 +185,7 @@ if (loading) {
                 <div>
                   <h3 className="text-sm font-semibold text-gray-800 mb-1">いま最も伸ばすべき重点テーマ</h3>
                   {deepDive.focus_theme?.title && (
-                    <div className="inline-block rounded-md bg-purple-100 text-purple-800 text-sm font-semibold px-3 py-1 mb-2">
+                    <div className="inline-block rounded-md bg-[var(--purple-l)] text-[var(--purple)] text-sm font-semibold px-3 py-1 mb-2">
                       {deepDive.focus_theme.title}
                     </div>
                   )}
@@ -201,7 +201,7 @@ if (loading) {
                   <ol className="space-y-2">
                     {deepDive.practice_steps.map((step, i) => (
                       <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-[var(--purple)] text-white text-xs font-bold flex items-center justify-center">
                           {i + 1}
                         </span>
                         <span className="leading-relaxed">{step}</span>
@@ -221,7 +221,7 @@ if (loading) {
             <div className="space-y-3">
               {competencies.map((c) => (
                 <div key={c.id} className="flex items-center gap-4">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-bold flex items-center justify-center shrink-0">
+                  <div className="w-6 h-6 rounded-full bg-[var(--purple-l)] text-[var(--purple)] text-xs font-bold flex items-center justify-center shrink-0">
                     {c.id}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -284,7 +284,7 @@ if (loading) {
           </button>
 
           {/* Mentor coaching CTA */}
-          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+          <div className="border border-[var(--teal-l)] rounded-lg p-4 bg-[var(--teal-l)]">
             <p className="font-semibold text-gray-900 mb-1">
               📋 このレポートをメンターコーチングで活用しませんか？
             </p>

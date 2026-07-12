@@ -50,7 +50,7 @@ function ResetPasswordForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -68,7 +68,7 @@ function ResetPasswordForm() {
               </p>
               <Link
                 href="/login"
-                className="inline-block mt-4 text-sm text-blue-600 hover:underline"
+                className="inline-block mt-4 text-sm text-[var(--purple)] hover:underline"
               >
                 今すぐログインページへ
               </Link>

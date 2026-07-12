@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
               <p className="text-xs text-gray-400 mt-4">リンクの有効期限は1時間です</p>
               <Link
                 href="/login"
-                className="inline-block mt-6 text-sm text-blue-600 hover:underline"
+                className="inline-block mt-6 text-sm text-[var(--purple)] hover:underline"
               >
                 ログインページに戻る
               </Link>
@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
               </button>
 
               <p className="text-center text-sm text-gray-500">
-                <Link href="/login" className="text-blue-600 hover:underline">
+                <Link href="/login" className="text-[var(--purple)] hover:underline">
                   ログインに戻る
                 </Link>
               </p>

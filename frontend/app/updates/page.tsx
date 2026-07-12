@@ -12,7 +12,7 @@ export default function UpdatesPage() {
       <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -38,7 +38,7 @@ export default function UpdatesPage() {
               <div key={i} className="flex gap-6">
                 {/* ドット */}
                 <div className="relative shrink-0 mt-1.5">
-                  <div className="w-[15px] h-[15px] rounded-full border-2 border-blue-500 bg-white" />
+                  <div className="w-[15px] h-[15px] rounded-full border-2 border-[var(--purple)] bg-white" />
                 </div>
 
                 <div className="flex-1 pb-2">

@@ -62,7 +62,7 @@ function RegisterForm() {
         </div>
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -72,7 +72,7 @@ function RegisterForm() {
         </div>
 
         {referralCode && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 text-sm text-blue-800">
+          <div className="bg-[var(--purple-l)] border border-[var(--purple-l)] rounded-lg px-4 py-3 mb-4 text-sm text-[var(--purple)]">
             友達の紹介リンクから登録しています
           </div>
         )}
@@ -149,7 +149,7 @@ function RegisterForm() {
 
             <div className="space-y-3 pt-2">
               <p className="text-sm font-medium text-gray-700">
-                <Link href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                <Link href="/terms" target="_blank" className="text-[var(--purple)] hover:underline">
                   利用規約
                 </Link>
                 への同意
@@ -158,7 +158,7 @@ function RegisterForm() {
                 <label key={i} className="flex items-start gap-3 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="mt-0.5 w-4 h-4 text-blue-600 rounded border-gray-300"
+                    className="mt-0.5 w-4 h-4 accent-[var(--purple)] rounded border-gray-300"
                     checked={consents[i]}
                     onChange={(e) => {
                       const next = [...consents]
@@ -188,7 +188,7 @@ function RegisterForm() {
 
           <p className="text-center text-sm text-gray-500 mt-4">
             すでにアカウントをお持ちの方は{' '}
-            <Link href="/login" className="text-blue-600 hover:underline">
+            <Link href="/login" className="text-[var(--purple)] hover:underline">
               ログイン
             </Link>
           </p>

@@ -37,7 +37,7 @@ export default function LoginPage() {
         </div>
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[var(--purple)] rounded-lg flex items-center justify-center">
               <span className="text-white text-sm font-bold">C</span>
             </div>
             <span className="font-bold text-gray-900">Coachmark</span>
@@ -101,13 +101,13 @@ export default function LoginPage() {
 
           <div className="mt-4 space-y-2 text-center text-sm text-gray-500">
             <p>
-              <Link href="/forgot-password" className="text-blue-600 hover:underline">
+              <Link href="/forgot-password" className="text-[var(--purple)] hover:underline">
                 パスワードをお忘れですか？
               </Link>
             </p>
             <p>
               アカウントをお持ちでない方は{' '}
-              <Link href="/register" className="text-blue-600 hover:underline">
+              <Link href="/register" className="text-[var(--purple)] hover:underline">
                 新規登録
               </Link>
             </p>

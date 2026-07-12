@@ -69,8 +69,8 @@ function CouponSuccess({ coupon }: { coupon: CouponInfo }) {
         <p className="text-sm text-gray-500">クーポンを獲得しました</p>
       </div>
 
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
-        <div className="text-3xl font-bold text-blue-600 mb-1">¥{coupon.discount_amount} OFF</div>
+      <div className="bg-[var(--amber-l)] border border-[var(--amber-l)] rounded-xl p-6">
+        <div className="text-3xl font-bold text-[var(--amber)] mb-1">¥{coupon.discount_amount} OFF</div>
         <div className="text-xs text-gray-500 mb-4">クレジット購入時に使えるクーポン</div>
         <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-4 py-3">
           <span className="flex-1 font-mono text-lg font-semibold tracking-widest text-gray-800">
@@ -78,7 +78,7 @@ function CouponSuccess({ coupon }: { coupon: CouponInfo }) {
           </span>
           <button
             onClick={handleCopy}
-            className="text-sm text-blue-600 hover:text-blue-800 font-medium shrink-0"
+            className="text-sm text-[var(--purple)] hover:text-[var(--purple-m)] font-medium shrink-0"
           >
             {copied ? 'コピー済み' : 'コピー'}
           </button>
