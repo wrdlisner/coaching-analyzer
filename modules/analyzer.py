@@ -10,6 +10,20 @@ logger = logging.getLogger(__name__)
 from config import ANTHROPIC_API_KEY, CLAUDE_MODEL, ICF_COMPETENCIES
 
 # ---------------------------------------------------------------------------
+# 分析エンジンバージョン
+# 運用ルール: プロンプト・マーカー定義・スコアリングロジックを変更するときは
+# 必ずこの値をバンプすること（セッションに保存され、グラフの境界線表示や
+# 「標準 · v2.0」等のバッジ表記に使われる）。
+# メタデータ導入前の旧セッション（DB上NULL）は表示層で v2.0 / standard 扱い。
+# ---------------------------------------------------------------------------
+ENGINE_VERSION = "2.1"  # 2.1: ACC評価モード・差分コメントを追加
+
+# 評価モード（ユーザーの目標資格に応じて評価軸を切り替える）
+EVAL_MODE_STANDARD = "standard"
+EVAL_MODE_ACC = "acc"
+EVAL_MODE_LABELS = {"standard": "標準", "acc": "ACC"}
+
+# ---------------------------------------------------------------------------
 # PCC マーカー定義（コンピテンシー3〜8）
 # コンピテンシー1・2はPCC公式マーカーがないため総合評価
 # ---------------------------------------------------------------------------
@@ -66,6 +80,48 @@ PCC_MARKERS: dict[int, list[dict]] = {
         {"id": "8.8", "text": "コーチはクライアントの進歩と学びを称える"},
         {"id": "8.9", "text": "コーチはクライアントとともに、このセッションの締め方を設計する"},
         {"id": "8.07", "text": "コーチングエンゲージメント全体を通じた学びの統合と進捗の持続をサポートする（ICF 2025年追加）"},
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# ACC 評価項目定義（コンピテンシー3〜8）
+# ICF ACC Minimum Skills Requirements をベースに、PCCマーカーより基礎的・
+# 行動観察可能なレベルに落とした評価項目。PCC_MARKERSと同一構造なので、
+# 充足率→スコア変換などの後処理はそのまま流用できる。
+# ユーザーの目標資格が ACC のとき、この評価軸に切り替わる（evaluation_mode="acc"）。
+# ---------------------------------------------------------------------------
+ACC_MARKERS: dict[int, list[dict]] = {
+    3: [
+        {"id": "A3.1", "text": "コーチはクライアントがこのセッションで扱いたいトピックを確認する"},
+        {"id": "A3.2", "text": "コーチはセッションの成果（何を得たいか）についてクライアントと合意する"},
+        {"id": "A3.3", "text": "コーチはセッション中、合意したトピック・成果に沿って関わり続ける（外れた場合は立ち返る）"},
+    ],
+    4: [
+        {"id": "A4.1", "text": "コーチはクライアントの発言・視点を尊重し、批判や否定をしない"},
+        {"id": "A4.2", "text": "コーチはクライアントへの関心・サポートを言葉や相槌で示す"},
+        {"id": "A4.3", "text": "コーチはクライアントが安心して話せる雰囲気を維持する"},
+    ],
+    5: [
+        {"id": "A5.1", "text": "コーチはクライアントの発言内容に応答して関わる（用意した質問の消化になっていない）"},
+        {"id": "A5.2", "text": "コーチはクライアントに好奇心を向けて関わる"},
+        {"id": "A5.3", "text": "コーチは適度な間・沈黙を許容する"},
+    ],
+    6: [
+        {"id": "A6.1", "text": "コーチはクライアントの発言を遮らずに聴く"},
+        {"id": "A6.2", "text": "コーチはクライアントの発言を反映・要約して確認する"},
+        {"id": "A6.3", "text": "コーチはクライアントの言葉や感情に言及して探求する"},
+        {"id": "A6.4", "text": "コーチの傾聴がクライアント中心である（コーチの興味・関心中心になっていない）"},
+    ],
+    7: [
+        {"id": "A7.1", "text": "コーチは主にオープンクエスチョンを使う"},
+        {"id": "A7.2", "text": "コーチは一度に一つの質問をする"},
+        {"id": "A7.3", "text": "コーチは誘導的でなく、クライアント自身の探求を促す質問をする"},
+        {"id": "A7.4", "text": "コーチは助言・提案ではなく質問を中心に関わる"},
+    ],
+    8: [
+        {"id": "A8.1", "text": "コーチはクライアントがセッションの学び・気づきを言語化するよう促す"},
+        {"id": "A8.2", "text": "コーチはクライアントがセッション後の行動を決めるよう支援する"},
+        {"id": "A8.3", "text": "コーチはクライアントが自ら行動を選択できるようにする（押し付けない）"},
     ],
 }
 
@@ -142,16 +198,27 @@ def get_qualification_statuses(avg_score: float, pcc_fulfillment_rate: float, mc
 # ---------------------------------------------------------------------------
 # プロンプト生成ヘルパー
 # ---------------------------------------------------------------------------
-def _build_markers_prompt_section() -> str:
+def _build_markers_prompt_section(markers_map: dict[int, list[dict]], marker_label: str) -> str:
     lines = []
-    for comp_id, markers in PCC_MARKERS.items():
-        lines.append(f"\n**コンピテンシー{comp_id}（{COMP_NAMES[comp_id]}）のPCCマーカー**")
+    for comp_id, markers in markers_map.items():
+        lines.append(f"\n**コンピテンシー{comp_id}（{COMP_NAMES[comp_id]}）の{marker_label}**")
         for m in markers:
             lines.append(f"  {m['id']}: {m['text']}")
     return "\n".join(lines)
 
 
-def _build_comp_json_schema() -> str:
+def _build_comp3_markers_example(markers_map: dict[int, list[dict]]) -> str:
+    """コンピテンシー3のmarkers配列のJSON例を評価軸のIDから動的生成する"""
+    lines = []
+    for i, m in enumerate(markers_map[3]):
+        observed = "true " if i % 2 == 0 else "false"
+        evidence = "観察された発言の引用" if i % 2 == 0 else "観察されなかった理由を簡潔に"
+        comma = "," if i < len(markers_map[3]) - 1 else ""
+        lines.append(f'        {{{{"id": "{m["id"]}", "observed": {observed.strip()}, "evidence": "{evidence}"}}}}{comma}')
+    return "\n".join(lines)
+
+
+def _build_comp_json_schema(markers_map: dict[int, list[dict]]) -> str:
     """JSON出力スキーマの例を生成（コンピテンシー1・2と3〜8で形式が異なる）"""
     comp12_example = """\
     {{
@@ -183,26 +250,22 @@ def _build_comp_json_schema() -> str:
       ]
     }}"""
 
-    comp38_example = """\
-    {{
+    comp38_example = f"""\
+    {{{{
       "id": 3,
       "name": "合意内容の確立と維持",
       "comment": "コンピテンシー全体の評価コメント（100〜200字）",
       "markers": [
-        {{"id": "3.1", "observed": true,  "evidence": "観察された発言の引用"}},
-        {{"id": "3.2", "observed": false, "evidence": "観察されなかった理由を簡潔に"}},
-        {{"id": "3.3", "observed": true,  "evidence": "観察された発言の引用"}},
-        {{"id": "3.4", "observed": false, "evidence": "観察されなかった理由を簡潔に"}},
-        {{"id": "3.05", "observed": true, "evidence": "クライアントとの相性確認に関する発言の引用"}}
+{_build_comp3_markers_example(markers_map)}
       ],
       "improvements": [
-        {{
+        {{{{
           "proposal": "ICFコアコンピテンシー（2025年版）の観点からの改善内容",
           "mentor_advice": "実際の発言を引用した具体的な言い換え例（ICF MC C5-5：非審判的なフィードバック）",
           "next_action": "次のセッションで試せる具体的なアクション"
-        }}
+        }}}}
       ]
-    }}"""
+    }}}}"""
 
     mcc_example = """\
     {{
@@ -238,10 +301,22 @@ SYSTEM_PROMPT = """\
 """
 
 
-def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -> str:
+def build_prompt(
+    transcript_text: str,
+    is_follow_up: bool,
+    deep: bool = False,
+    evaluation_mode: str = EVAL_MODE_STANDARD,
+    prev_summary: str | None = None,
+) -> str:
     session_type_note = "継続セッション（2回目以降）" if is_follow_up else "初回セッション"
-    markers_section = _build_markers_prompt_section()
-    comp12_ex, comp38_ex, mcc_ex = _build_comp_json_schema()
+    is_acc = evaluation_mode == EVAL_MODE_ACC
+    markers_map = ACC_MARKERS if is_acc else PCC_MARKERS
+    marker_label = "ACC評価項目（ミニマムスキル要件ベース）" if is_acc else "PCCマーカー"
+    markers_section = _build_markers_prompt_section(markers_map, marker_label)
+    comp12_ex, comp38_ex, mcc_ex = _build_comp_json_schema(markers_map)
+    if is_acc:
+        # ACC評価モードではMCC質的評価を行わないため、スキーマ例も空にする
+        mcc_ex = '{{"axes": []}}'
 
     improvements_count = "3〜4点" if deep else "2〜3点"
     deep_dive_schema = ""
@@ -284,6 +359,59 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
         comp1_note = "（継続セッション：守秘義務・契約説明など初回固有部分は対象外）"
         comp3_note = "（継続セッション：前回からの継続性・ゴールの更新という観点で評価）"
 
+    # 前回分析の要約（差分コメント生成用）。初回分析（prev_summaryなし）では
+    # セクションもスキーマも出さない = diff_comment は生成されない
+    prev_section = ""
+    diff_comment_schema = ""
+    diff_instruction = ""
+    if prev_summary:
+        prev_section = f"""
+## 前回分析の要約
+{prev_summary}
+"""
+        diff_comment_schema = ',\n  "diff_comment": "前回分析との比較コメント（1〜2文・80字程度）"'
+        diff_instruction = """
+diff_comment には「## 前回分析の要約」との比較を記述してください。\
+前回の改善指摘テーマに必ず言及し、今回改善が見られた場合は具体的な行動を挙げて認め、\
+まだ課題が残る場合は非審判的に伝えてください\
+（例：「前回指摘の『合意の確認』、今回はセッション冒頭で丁寧に行えています」）。
+"""
+
+    # 評価軸に応じた表記
+    axis_word = "ACC評価項目" if is_acc else "PCCマーカー"
+    if is_acc:
+        qual_note = "目標資格ACCの参考基準（平均スコア3.0）を中心に、"
+        mcc_section = """
+## MCC質的評価
+ACC評価モードのため、MCC質的評価は行いません。mcc_evaluationは必ず {"axes": []} としてください。
+"""
+        mcc_closing_note = "mcc_evaluationのaxesは常に空配列（[]）にしてください（ACC評価モード）。"
+    else:
+        qual_note = ""
+        mcc_section = """
+## MCC質的評価軸（コンピテンシー3〜8のPCCマーカー全体の充足率が80%以上の場合のみ評価）
+- mcc1「介入の少なさ」: コーチの発言が短く、クライアントの思考を遮らない
+- mcc2「質問の深さ」: 表面的な確認ではなく、クライアントの本質的な変容を促す問いかけ
+- mcc3「クライアントの自律性」: クライアント自身が気づき・決断・行動を選択している
+- mcc4「存在としてのコーチ」: 技術ではなく、コーチの「在り方」から自然に湧き出る関わり
+- mcc5「セッションの流れ」: 構造に依存せず、クライアントのニーズに完全に応じた柔軟な展開
+"""
+        mcc_closing_note = (
+            "mcc_evaluationは、コンピテンシー3〜8の全PCCマーカーの充足率が80%未満の場合は"
+            "axesを空配列（[]）にしてください。"
+        )
+
+    # コンピテンシー一覧（評価軸のID範囲から動的生成）
+    comp_list_lines = [
+        f"1. 倫理に従った実践{comp1_note}（総合評価）",
+        "2. コーチングマインドセットの体現（総合評価）",
+    ]
+    for cid in range(3, 9):
+        ids = markers_map[cid]
+        note = comp3_note if cid == 3 else ""
+        comp_list_lines.append(f"{cid}. {COMP_NAMES[cid]}{note}（{axis_word}{ids[0]['id']}〜{ids[-1]['id']}）")
+    comp_list_text = "\n".join(comp_list_lines)
+
     return f"""\
 以下のコーチングセッションのトランスクリプトを分析してください。
 
@@ -292,17 +420,10 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
 {follow_up_instruction}{deep_instruction}
 ## トランスクリプト
 {transcript_text}
-
-## 評価対象PCCマーカー一覧
+{prev_section}
+## 評価対象{axis_word}一覧
 {markers_section}
-
-## MCC質的評価軸（コンピテンシー3〜8のPCCマーカー全体の充足率が80%以上の場合のみ評価）
-- mcc1「介入の少なさ」: コーチの発言が短く、クライアントの思考を遮らない
-- mcc2「質問の深さ」: 表面的な確認ではなく、クライアントの本質的な変容を促す問いかけ
-- mcc3「クライアントの自律性」: クライアント自身が気づき・決断・行動を選択している
-- mcc4「存在としてのコーチ」: 技術ではなく、コーチの「在り方」から自然に湧き出る関わり
-- mcc5「セッションの流れ」: 構造に依存せず、クライアントのニーズに完全に応じた柔軟な展開
-
+{mcc_section}
 ## 分析指示
 
 以下のJSON形式で出力してください。JSON以外のテキストは含めないでください。
@@ -312,8 +433,8 @@ def build_prompt(transcript_text: str, is_follow_up: bool, deep: bool = False) -
 （半角ダブルクォートを値の中に入れるとJSONが壊れ、分析が失敗します）。
 
 コンピテンシー1・2は総合スコア（1〜5）で評価し、コンピテンシー3〜8は\
-各PCCマーカーを「observed: true/false」で評価してください。
-
+各{axis_word}を「observed: true/false」で評価してください。
+{diff_instruction}
 improvements（改善提案）は各コンピテンシー{improvements_count}、以下の3層構造のオブジェクト配列で記述してください：
 - proposal: 何をどう改善すべきか（ICFコアコンピテンシー2025年版の観点から）
 - mentor_advice: ICFメンターコーチングコンピテンシーC5に基づき、実際のセッションの発言を引用しながら「ここでこう言い換えるとより良かった」という具体的な言い回し例（非審判的スタイル）。発言例を引用する際は必ず日本語のかぎ括弧「」で囲み、半角ダブルクォート（"）は使わないこと。
@@ -322,7 +443,7 @@ improvements（改善提案）は各コンピテンシー{improvements_count}、
 ```json
 {{
   "overall_summary": "セッション全体の総評（200字程度）",
-  "qualification_comment": "参考スコア水準に関するコメント。「合格」「不合格」などの断定表現は使わず、現在のスコアと伸ばすべき点を具体的に記述（80〜120字）",
+  "qualification_comment": "{qual_note}参考スコア水準に関するコメント。「合格」「不合格」などの断定表現は使わず、現在のスコアと伸ばすべき点を具体的に記述（80〜120字）",
   "strengths_improvements": {{
     "strengths": ["強み1", "強み2", "強み3"],
     "improvements": ["改善点1", "改善点2", "改善点3"],
@@ -333,22 +454,14 @@ improvements（改善提案）は各コンピテンシー{improvements_count}、
     {comp38_ex},
     ...（コンピテンシー4〜8も同様にmarkers形式で記載）
   ],
-  "mcc_evaluation": {mcc_ex}{deep_dive_schema}
+  "mcc_evaluation": {mcc_ex}{deep_dive_schema}{diff_comment_schema}
 }}
 ```
 
 コンピテンシー一覧：
-1. 倫理に従った実践{comp1_note}（総合評価）
-2. コーチングマインドセットの体現（総合評価）
-3. 合意内容の確立と維持{comp3_note}（PCCマーカー3.1〜3.4）
-4. 信頼と安心感の育成（PCCマーカー4.1〜4.4）
-5. プレゼンスの維持（PCCマーカー5.1〜5.5）
-6. 積極的傾聴（PCCマーカー6.1〜6.7）
-7. 気づきの喚起（PCCマーカー7.1〜7.8）
-8. クライアントの成長の促進（PCCマーカー8.1〜8.9）
+{comp_list_text}
 
-mcc_evaluationは、コンピテンシー3〜8の全PCCマーカーの充足率が80%未満の場合は\
-axesを空配列（[]）にしてください。
+{mcc_closing_note}
 """
 
 
@@ -410,20 +523,26 @@ def analyze_session(
     is_follow_up: bool = False,
     model: str | None = None,
     deep: bool = False,
+    evaluation_mode: str = EVAL_MODE_STANDARD,
+    prev_summary: str | None = None,
 ) -> dict:
     """
     文字起こし結果をClaude APIで分析する。
 
-    PCCマーカー充足率からスコアを算出し、80%以上の場合はMCC質的評価も行う。
+    標準モード: PCCマーカー充足率からスコアを算出し、80%以上の場合はMCC質的評価も行う。
+    ACCモード（evaluation_mode="acc"）: ACC評価項目に切り替え、MCC評価は対象外。
 
     Args:
         model: 使用するClaudeモデルID。未指定時は config.CLAUDE_MODEL。
         deep: ディープ分析モード（上位モデル向け。詳細なコメント・改善提案を生成）
+        evaluation_mode: "standard" | "acc"。ユーザーの目標資格から呼び出し側が決定
+        prev_summary: 前回分析の要約テキスト。指定時は diff_comment（前回からの差分
+            コメント）が結果に含まれる。初回分析では None
 
     Returns dict with:
         overall_summary, qualification_comment, strengths_improvements,
         competencies (with markers for 3-8, score computed from fulfillment),
-        pcc_fulfillment_rate, mcc_evaluation
+        pcc_fulfillment_rate, mcc_evaluation, diff_comment (prev_summary指定時のみ)
     """
     # トランスクリプトをテキスト化
     transcript_lines = []
@@ -438,9 +557,9 @@ def analyze_session(
     model = model or CLAUDE_MODEL
 
     # [LOG] Step 3: confirm is_follow_up received in analyzer
-    logger.info(f"[analyzer] analyze_session called: model={model}, deep={deep}, is_follow_up={is_follow_up}, utterances={len(utterances)}")
+    logger.info(f"[analyzer] analyze_session called: model={model}, deep={deep}, is_follow_up={is_follow_up}, mode={evaluation_mode}, has_prev={prev_summary is not None}, utterances={len(utterances)}")
 
-    prompt = build_prompt(transcript_text, is_follow_up, deep=deep)
+    prompt = build_prompt(transcript_text, is_follow_up, deep=deep, evaluation_mode=evaluation_mode, prev_summary=prev_summary)
 
     # [LOG] Step 4: confirm session type line appears in prompt
     session_type_line = next((l for l in prompt.splitlines() if "セッション種別" in l or "初回" in l or "継続" in l), "NOT FOUND")
@@ -490,14 +609,15 @@ def analyze_session(
             result = json.loads(_repair_json(json_str), strict=False)
 
     # -----------------------------------------------------------------------
-    # PCCマーカー充足率 → スコア の後処理
+    # マーカー充足率 → スコア の後処理（PCC/ACCとも同一構造なので共通）
     # -----------------------------------------------------------------------
+    markers_map = ACC_MARKERS if evaluation_mode == EVAL_MODE_ACC else PCC_MARKERS
     total_markers = 0
     total_observed = 0
 
     for comp in result.get("competencies", []):
         comp_id = comp["id"]
-        if comp_id in PCC_MARKERS:
+        if comp_id in markers_map:
             markers = comp.get("markers", [])
             observed_count = sum(1 for m in markers if m.get("observed", False))
             total_count = len(markers)
@@ -523,7 +643,13 @@ def analyze_session(
     mcc_eval = result.get("mcc_evaluation", {})
     mcc_axes = mcc_eval.get("axes", [])
 
-    if pcc_fulfillment_rate >= 0.80 and mcc_axes:
+    if evaluation_mode == EVAL_MODE_ACC:
+        # ACC評価モードではMCC質的評価は対象外（プロンプトでも除外済みだが念のため固定）
+        mcc_eval["axes"] = []
+        mcc_eval["avg_score"] = None
+        mcc_eval["is_mcc_eligible"] = False
+        mcc_eval["reason"] = "ACC評価モードのためMCC評価対象外"
+    elif pcc_fulfillment_rate >= 0.80 and mcc_axes:
         mcc_scores = [a["score"] for a in mcc_axes if isinstance(a.get("score"), (int, float))]
         mcc_avg = sum(mcc_scores) / len(mcc_scores) if mcc_scores else 0.0
         mcc_eval["avg_score"] = round(mcc_avg, 2)

@@ -3,177 +3,26 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { auth, sessions, credits, coupons, notices, payments, removeToken, UserInfo, SessionSummary, CreditRecord, Notice, CouponInfo } from '@/lib/api'
+import {
+  auth, sessions, credits, coupons, notices, payments, insights, meta, removeToken,
+  UserInfo, SessionSummary, CreditRecord, Notice, CouponInfo, ProfileInsightPayload,
+} from '@/lib/api'
+import { engineBadgeLabel } from '@/lib/format'
+import { LOW_CREDIT_THRESHOLD } from '@/components/dashboard/constants'
+import PurchaseConfirmModal from '@/components/dashboard/PurchaseConfirmModal'
+import CreditGuideModal from '@/components/dashboard/CreditGuideModal'
+import ScoreTrendChart from '@/components/dashboard/ScoreTrendChart'
+import SessionListSection from '@/components/dashboard/SessionListSection'
+import DiffCommentCard from '@/components/dashboard/DiffCommentCard'
+import CreditPurchaseCard from '@/components/dashboard/CreditPurchaseCard'
+import AccountSettingsAccordion from '@/components/dashboard/AccountSettingsAccordion'
+import PersonCard from '@/components/dashboard/PersonCard'
+import RadarChartSVG from '@/components/dashboard/RadarChartSVG'
+import AiCommentCard from '@/components/dashboard/AiCommentCard'
+import GrowthReportsCard from '@/components/dashboard/GrowthReportsCard'
+import { PACK_OPTIONS } from '@/components/dashboard/constants'
 
 type DashTab = 'home' | 'profile'
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  return d.toLocaleDateString('ja-JP', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  })
-}
-
-function formatDuration(seconds: number): string {
-  const m = Math.floor(seconds / 60)
-  const s = Math.floor(seconds % 60)
-  return `${m}分${s}秒`
-}
-
-const REASON_LABELS: Record<string, string> = {
-  analysis: '分析実行',
-  feedback: 'フィードバック',
-  bonus: '新規登録ボーナス',
-  referral: '友達紹介ボーナス',
-  purchase: 'クレジット購入',
-  refund: '返金（分析エラー）',
-}
-
-const ICF_LEVEL_LABELS: Record<string, string> = {
-  none: '未取得', acc: 'ACC', pcc: 'PCC', mcc: 'MCC',
-}
-
-function reasonBadgeClass(reason: string): string {
-  if (reason === 'purchase') return 'reason-badge reason-buy'
-  if (reason === 'bonus' || reason === 'referral' || reason === 'refund') return 'reason-badge reason-bonus'
-  if (reason === 'analysis') return 'reason-badge reason-use'
-  return 'reason-badge reason-other'
-}
-
-type PackOption = { pack: '1' | '3' | '10'; label: string; price: string; credits: number; save?: string }
-
-const PACK_OPTIONS: PackOption[] = [
-  { pack: '1',  label: '1回',      price: '¥500',   credits: 1 },
-  { pack: '3',  label: '3回パック', price: '¥1,200', credits: 3,  save: '¥300お得' },
-  { pack: '10', label: '10回パック', price: '¥3,500', credits: 10, save: '¥1,500お得' },
-]
-
-function ScoreChart({ sessionList }: { sessionList: SessionSummary[] }) {
-  if (sessionList.length === 0) return null
-  const sorted = [...sessionList].reverse()
-  const W = 520, H = 140
-  const pL = 38, pR = 16, pT = 10, pB = 28
-  const innerW = W - pL - pR
-  const innerH = H - pT - pB
-  const scores = sorted.map(s => s.avg_score)
-  const rawMin = Math.min(...scores)
-  const rawMax = Math.max(...scores)
-  const yMin = Math.max(0, rawMin - 0.5)
-  const yMax = Math.min(5, rawMax + 0.5)
-  const range = yMax - yMin || 1
-  const xAt = (i: number) => pL + (sorted.length <= 1 ? innerW / 2 : (i / (sorted.length - 1)) * innerW)
-  const yAt = (v: number) => pT + innerH - ((v - yMin) / range) * innerH
-  const pts = sorted.map((s, i) => ({ x: xAt(i), y: yAt(s.avg_score) }))
-  const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ')
-  const fillPath = pts.length > 1
-    ? `${linePath} L ${pts[pts.length - 1].x.toFixed(1)} ${(pT + innerH).toFixed(1)} L ${pts[0].x.toFixed(1)} ${(pT + innerH).toFixed(1)} Z`
-    : ''
-  const step = range / 4
-  const ticks = [0, 1, 2, 3, 4].map(i => parseFloat((yMin + step * i).toFixed(1)))
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: H }} role="img" aria-label="スコア推移グラフ">
-      {ticks.map(t => (
-        <g key={t}>
-          <line x1={pL} x2={W - pR} y1={yAt(t)} y2={yAt(t)} stroke="#e8e6df" strokeWidth="1" />
-          <text x={pL - 4} y={yAt(t) + 4} textAnchor="end" fontSize="9" fill="#9c9b94">{t.toFixed(1)}</text>
-        </g>
-      ))}
-      {fillPath && <path d={fillPath} fill="rgba(29,158,117,0.12)" />}
-      {pts.length > 1 && <path d={linePath} fill="none" stroke="#1D9E75" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />}
-      {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={5} fill="#1D9E75" stroke="white" strokeWidth={2} />)}
-      {sorted.map((s, i) => (
-        <text key={i} x={xAt(i)} y={H - 4} textAnchor="middle" fontSize="9" fill="#9c9b94">
-          {new Date(s.created_at).toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit' })}
-        </text>
-      ))}
-    </svg>
-  )
-}
-
-function PurchaseConfirmModal({ option, couponCode, onCouponChange, onConfirm, onClose, loading, error }: {
-  option: PackOption; couponCode: string; onCouponChange: (v: string) => void
-  onConfirm: () => void; onClose: () => void; loading: boolean; error: string
-}) {
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }} onClick={onClose}>
-      <div style={{ background: 'var(--surface)', borderRadius: 'var(--r)', width: '100%', maxWidth: 360, boxShadow: '0 8px 32px rgba(0,0,0,0.16)' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '0.5px solid var(--border)' }}>
-          <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--txt)' }}>購入内容の確認</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt3)', fontSize: 18 }}>×</button>
-        </div>
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ background: 'var(--purple-l)', border: '0.5px solid var(--border)', borderRadius: 'var(--rs)', padding: '14px 16px', textAlign: 'center' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--txt2)', marginBottom: 4 }}>{option.label}</div>
-            <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--purple)' }}>{option.price}</div>
-            <div style={{ fontSize: 11, color: 'var(--txt3)', marginTop: 4 }}>{option.credits}クレジット</div>
-          </div>
-          <div>
-            <label className="ds-label">クーポンコード（任意）</label>
-            <input
-              type="text"
-              className="ds-input"
-              style={{ fontFamily: 'monospace', textTransform: 'uppercase' }}
-              placeholder="例：FB-A1B2C3"
-              value={couponCode}
-              onChange={e => onCouponChange(e.target.value.toUpperCase())}
-            />
-          </div>
-          {error && <p style={{ fontSize: 12, color: 'var(--coral)', margin: 0 }}>{error}</p>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={onConfirm} disabled={loading} className="btn-create" style={{ width: '100%', opacity: loading ? 0.6 : 1 }}>
-              {loading ? '処理中...' : '決済へ進む'}
-            </button>
-            <button onClick={onClose} className="btn-cancel-sm" style={{ width: '100%' }}>キャンセル</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function CreditGuideModal({ onClose }: { onClose: () => void }) {
-  const items = [
-    { icon: '🎁', title: '新規登録ボーナス', desc: '登録時に +1クレジット 付与されます。' },
-    {
-      icon: '🎟️', title: 'フィードバック投稿でクーポン獲得',
-      desc: 'セッション分析後にフィードバックを送ると、クレジット購入時に使える割引クーポンがもらえます。',
-      extra: ['・通常：¥100クーポン', '・累計3回目：¥200クーポン', '・累計5回目：¥300クーポン', '（未使用5枚まで保有可能・有効期限30日）'],
-    },
-    { icon: '👥', title: '友達紹介ボーナス', desc: '紹介した友達が初回分析を完了すると +1クレジット 付与されます。紹介URLはこのページの「友達を紹介する」からコピーできます。' },
-    { icon: '💳', title: 'クレジット購入', desc: '1回分（¥500）、3回分（¥1,200）、10回分（¥3,500）のパックから選べます。クーポンコードをお持ちの場合は購入時に入力してください。' },
-  ]
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }} onClick={onClose}>
-      <div style={{ background: 'var(--surface)', borderRadius: 'var(--r)', width: '100%', maxWidth: 440, boxShadow: '0 8px 32px rgba(0,0,0,0.16)' }} onClick={e => e.stopPropagation()}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '0.5px solid var(--border)' }}>
-          <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--txt)' }}>クレジットの増やし方</span>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--txt3)', fontSize: 18 }}>×</button>
-        </div>
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {items.map(item => (
-            <div key={item.title} style={{ display: 'flex', gap: 14 }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{item.icon}</span>
-              <div>
-                <p style={{ fontWeight: 600, fontSize: 13, color: 'var(--txt)', margin: '0 0 4px' }}>{item.title}</p>
-                <p style={{ fontSize: 13, color: 'var(--txt2)', margin: 0 }}>{item.desc}</p>
-                {item.extra && (
-                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {item.extra.map(e => <span key={e} style={{ fontSize: 11, color: 'var(--txt3)' }}>{e}</span>)}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: '0 20px 20px' }}>
-          <button onClick={onClose} className="btn-create" style={{ width: '100%' }}>閉じる</button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function DashboardContent() {
   const router = useRouter()
@@ -181,26 +30,25 @@ function DashboardContent() {
   const paymentStatus = searchParams.get('payment')
   const mentorApplied = searchParams.get('mentor_applied')
 
-  const [activeTab, setActiveTab] = useState<DashTab>('home')
+  const [activeTab, setActiveTab] = useState<DashTab>(
+    searchParams.get('tab') === 'profile' ? 'profile' : 'home'
+  )
   const [user, setUser] = useState<UserInfo | null>(null)
   const [sessionList, setSessionList] = useState<SessionSummary[]>([])
   const [creditHistory, setCreditHistory] = useState<CreditRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [notice, setNotice] = useState<Notice | null>(null)
   const [noticeDismissed, setNoticeDismissed] = useState(false)
-  const [editingProfile, setEditingProfile] = useState(false)
-  const [profileForm, setProfileForm] = useState({ icf_level: 'none' })
-  const [profileSaving, setProfileSaving] = useState(false)
-  const [profileError, setProfileError] = useState('')
   const [couponList, setCouponList] = useState<CouponInfo[]>([])
   const [couponCode, setCouponCode] = useState('')
   const [showCreditGuide, setShowCreditGuide] = useState(false)
   const [selectedPack, setSelectedPack] = useState<'1' | '3' | '10' | null>(null)
   const [purchaseLoading, setPurchaseLoading] = useState(false)
   const [purchaseError, setPurchaseError] = useState('')
-  const [copied, setCopied] = useState(false)
   const [isDark, setIsDark] = useState(false)
   const [showMentorCongrats, setShowMentorCongrats] = useState(false)
+  const [insight, setInsight] = useState<ProfileInsightPayload | null>(null)
+  const [engineVersion, setEngineVersion] = useState<string | null>(null)
 
   useEffect(() => {
     const stored = localStorage.getItem('theme')
@@ -218,6 +66,16 @@ function DashboardContent() {
     localStorage.setItem('theme', cls)
   }
 
+  const switchTab = (tab: DashTab) => {
+    setActiveTab(tab)
+    // タブをURLに同期（直リンク・リロード対応）。既存パラメータは維持
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === 'home') params.delete('tab')
+    else params.set('tab', tab)
+    const qs = params.toString()
+    router.replace(`/dashboard${qs ? `?${qs}` : ''}`, { scroll: false })
+  }
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -225,7 +83,6 @@ function DashboardContent() {
           auth.getMe(), sessions.list(), credits.getHistory(), coupons.list(),
         ])
         setUser(userData)
-        setProfileForm({ icf_level: userData.icf_level })
         setSessionList(sessionsData)
         setCreditHistory(creditsData)
         setCouponList(couponsData)
@@ -244,6 +101,8 @@ function DashboardContent() {
     }
     load()
     notices.getLatest().then(setNotice).catch(() => {})
+    insights.getMe().then(res => setInsight(res.payload)).catch(() => {})
+    meta.getEngine().then(res => setEngineVersion(res.engine_version)).catch(() => {})
   }, [router])
 
   const handleDismissNotice = async () => {
@@ -275,28 +134,10 @@ function DashboardContent() {
     setSelectedPack(null); setCouponCode(''); setPurchaseError(''); setPurchaseLoading(false)
   }
 
-  const handleSaveProfile = async () => {
-    setProfileSaving(true); setProfileError('')
-    try {
-      const updated = await auth.updateProfile({ icf_level: profileForm.icf_level })
-      setUser(updated); setEditingProfile(false)
-    } catch (err: unknown) {
-      setProfileError(err instanceof Error ? err.message : '保存に失敗しました')
-    } finally {
-      setProfileSaving(false)
-    }
-  }
-
-  const referralUrl = typeof window !== 'undefined' && user?.referral_code
-    ? `${window.location.origin}/register?ref=${user.referral_code}`
-    : user?.referral_code ? `/register?ref=${user.referral_code}` : ''
-
-  const handleCopyReferral = () => {
-    if (!referralUrl) return
-    navigator.clipboard.writeText(referralUrl)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  // グラフ右上に表示する現行エンジン表記（ユーザーの目標資格からモードを決定）
+  const currentEngineLabel = engineVersion
+    ? engineBadgeLabel(user?.icf_level === 'acc' ? 'acc' : 'standard', engineVersion)
+    : null
 
   if (loading) {
     return (
@@ -347,18 +188,17 @@ function DashboardContent() {
 
       {/* Tabs */}
       <div className="tabs">
-        <button className={`tab${activeTab === 'home' ? ' active' : ''}`} onClick={() => setActiveTab('home')}>
+        <button className={`tab${activeTab === 'home' ? ' active' : ''}`} onClick={() => switchTab('home')}>
           ホーム
         </button>
-        <button className={`tab${activeTab === 'profile' ? ' active' : ''}`} onClick={() => setActiveTab('profile')}>
+        <button className={`tab${activeTab === 'profile' ? ' active' : ''}`} onClick={() => switchTab('profile')}>
           プロフィール
-          {sessionList.length > 0 && <span className="tab-count">{sessionList.length}</span>}
         </button>
       </div>
 
       <main style={{ maxWidth: 900, margin: '0 auto', padding: '1.25rem 1.5rem' }}>
 
-        {/* ── ホームタブ ── */}
+        {/* ── ホームタブ ──「今日使う」: 分析の実行と時系列データ ── */}
         {activeTab === 'home' && (
           <div>
             {/* Notice banner */}
@@ -467,193 +307,77 @@ function DashboardContent() {
               <Link href="/analyze" className="hero-btn">分析を開始</Link>
             </div>
 
-            {/* Coupon list */}
-            {couponList.length > 0 && (
-              <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 12, marginTop: 0 }}>保有クーポン</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {couponList.map(c => (
-                    <div key={c.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--purple-l)', border: '0.5px solid var(--border)', borderRadius: 'var(--rs)', padding: '10px 14px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontFamily: 'monospace', fontWeight: 600, letterSpacing: '0.08em', color: 'var(--txt)' }}>{c.code}</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)' }}>¥{c.discount_amount} OFF</span>
-                      </div>
-                      <span style={{ fontSize: 11, color: 'var(--txt3)' }}>
-                        {new Date(c.expires_at).toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' })}まで
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* 前回からの差分コメント（最新分析分） */}
+            <DiffCommentCard sessionList={sessionList} />
 
-            {/* Credit purchase plans */}
-            <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
-              <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 12, marginTop: 0 }}>クレジットを購入</h2>
-              <div className="credit-plans">
-                {PACK_OPTIONS.map(opt => (
-                  <button
-                    key={opt.pack}
-                    className={`plan${opt.pack === '3' ? ' featured' : ''}`}
-                    onClick={() => handleOpenPurchaseModal(opt.pack)}
-                  >
-                    <span className="plan-label">{opt.label}</span>
-                    <span className="plan-price">{opt.price}</span>
-                    <span className="plan-credits">{opt.credits}クレジット</span>
-                    {opt.save && <span className="plan-save">{opt.save}</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Referral */}
-            {user?.referral_code && (
-              <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 4, marginTop: 0 }}>友達を紹介する</h2>
-                <p style={{ fontSize: 13, color: 'var(--txt2)', marginBottom: 12, marginTop: 0 }}>
-                  紹介した友達が初回分析を完了すると、あなたに <span style={{ fontWeight: 600, color: 'var(--purple)' }}>+1クレジット</span> が付与されます
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--surface2)', border: '0.5px solid var(--border)', borderRadius: 'var(--rs)', padding: '10px 14px' }}>
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--txt2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{referralUrl}</span>
-                  <button onClick={handleCopyReferral} style={{ fontSize: 12, fontWeight: 600, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', flexShrink: 0 }}>
-                    {copied ? 'コピー済み' : 'URLをコピー'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Profile settings */}
-            <div className="ds-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', margin: 0 }}>プロフィール設定</h2>
-                {!editingProfile && (
-                  <button
-                    onClick={() => { setProfileForm({ icf_level: user?.icf_level || 'none' }); setProfileError(''); setEditingProfile(true) }}
-                    style={{ fontSize: 12, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 500 }}
-                  >
-                    編集
-                  </button>
-                )}
-              </div>
-              {editingProfile ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div>
-                    <label className="ds-label">ICF資格レベル</label>
-                    <select className="ds-input" value={profileForm.icf_level} onChange={e => setProfileForm({ ...profileForm, icf_level: e.target.value })}>
-                      <option value="none">未取得</option>
-                      <option value="acc">ACC</option>
-                      <option value="pcc">PCC</option>
-                      <option value="mcc">MCC</option>
-                    </select>
-                  </div>
-                  {profileError && <p style={{ fontSize: 12, color: 'var(--coral)', margin: 0 }}>{profileError}</p>}
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={handleSaveProfile} disabled={profileSaving} className="btn-create" style={{ flex: 1 }}>
-                      {profileSaving ? '保存中...' : '保存する'}
-                    </button>
-                    <button onClick={() => setEditingProfile(false)} className="btn-cancel-sm" style={{ flex: 1 }}>
-                      キャンセル
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ fontSize: 13, color: 'var(--txt)' }}>
-                  <span style={{ color: 'var(--txt3)' }}>ICF資格レベル：</span>
-                  <span style={{ fontWeight: 500, marginLeft: 4 }}>{ICF_LEVEL_LABELS[user?.icf_level || 'none']}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── プロフィールタブ ── */}
-        {activeTab === 'profile' && (
-          <div>
             {/* Score trend chart */}
             {sessionList.length >= 2 && (
               <div className="ds-card" style={{ marginBottom: '0.75rem' }}>
-                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', marginBottom: 12, marginTop: 0 }}>スコア推移</h2>
-                <ScoreChart sessionList={sessionList} />
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', margin: 0 }}>スコア推移</h2>
+                  {currentEngineLabel && (
+                    <span className="engine-badge" title="現在の評価モード・分析エンジンバージョン">{currentEngineLabel}</span>
+                  )}
+                </div>
+                <ScoreTrendChart sessionList={sessionList} />
               </div>
             )}
 
             {/* Session list */}
-            <div style={{ marginBottom: '0.75rem' }}>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', margin: '0 0 12px' }}>過去のセッション</h2>
-              {sessionList.length === 0 ? (
-                <div className="ds-card" style={{ textAlign: 'center', padding: '3rem 1.25rem' }}>
-                  <p style={{ color: 'var(--txt3)', marginBottom: 16 }}>まだ分析したセッションはありません</p>
-                  <Link href="/analyze" className="btn-create">最初の分析を始める</Link>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  {sessionList.map(s => (
-                    <Link key={s.id} href={`/report/${s.id}`} style={{ textDecoration: 'none' }}>
-                      <div
-                        className="ds-card"
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', padding: '14px 16px', transition: 'box-shadow 0.15s' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.08)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLElement).style.boxShadow = 'none'}
-                      >
-                        <div>
-                          <div className="session-date">{formatDate(s.created_at)}</div>
-                          <div className="session-meta">
-                            <span>⏱ {formatDuration(s.duration_seconds)}</span>
-                            <span>💬 コーチ発話 {s.coach_ratio}%</span>
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
-                          <div>
-                            <div className="score-bar-wrap">
-                              <div className="score-bar" style={{ width: `${(s.avg_score / 5.0) * 100}%` }} />
-                            </div>
-                            <div className="score-sub">平均スコア / 5.0</div>
-                          </div>
-                          <div className="score-val">{s.avg_score.toFixed(1)}</div>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+            <SessionListSection sessionList={sessionList} />
+
+            {/* クレジット購入（残高が少ないときのみホームに表示。通常はプロフィール側アカウント設定） */}
+            {user && user.credits <= LOW_CREDIT_THRESHOLD ? (
+              <CreditPurchaseCard
+                onSelect={handleOpenPurchaseModal}
+                note={`残りクレジットが少なくなっています（現在 ${user.credits} クレジット）`}
+              />
+            ) : (
+              <p style={{ fontSize: 12, color: 'var(--txt3)', margin: '0 0 0.75rem' }}>
+                クレジットの購入・友達紹介は
+                <button onClick={() => switchTab('profile')} style={{ fontSize: 12, color: 'var(--purple)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, padding: '0 2px', textDecoration: 'underline' }}>
+                  プロフィールのアカウント設定
+                </button>
+                から
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── プロフィールタブ ──「自分を知る」: 集約された自己像と設定 ── */}
+        {activeTab === 'profile' && user && (
+          <div>
+            {/* 本人カード */}
+            <PersonCard
+              user={user}
+              insight={insight}
+              sessionCount={sessionList.length}
+              onUserUpdate={setUser}
+            />
+
+            {/* レーダーチャート + AIコメント（2カラム） */}
+            <div className="two-col" style={{ marginBottom: '0.75rem' }}>
+              <div className="ds-card" style={{ marginBottom: 0 }}>
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', margin: '0 0 8px' }}>コンピテンシーバランス</h2>
+                <p style={{ fontSize: 11, color: 'var(--txt3)', margin: '0 0 8px' }}>直近5回の分析の平均（5.0満点）</p>
+                <RadarChartSVG sessionList={sessionList} />
+              </div>
+              <div className="ds-card" style={{ marginBottom: 0 }}>
+                <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)', margin: '0 0 12px' }}>🤖 AIから見たあなた</h2>
+                <AiCommentCard insight={insight} />
+              </div>
             </div>
 
-            {/* Credit history */}
-            <div>
-              <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--txt)', margin: '0 0 12px' }}>クレジット履歴</h2>
-              {creditHistory.length === 0 ? (
-                <div className="ds-card" style={{ textAlign: 'center', padding: '2rem' }}>
-                  <p style={{ color: 'var(--txt3)' }}>クレジット履歴はありません</p>
-                </div>
-              ) : (
-                <div className="table-wrap">
-                  <table className="tbl">
-                    <thead>
-                      <tr>
-                        <th>日時</th>
-                        <th>理由</th>
-                        <th style={{ textAlign: 'right' }}>変動</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {creditHistory.map(c => (
-                        <tr key={c.id}>
-                          <td style={{ color: 'var(--txt3)', fontSize: 12 }}>{formatDate(c.created_at)}</td>
-                          <td>
-                            <span className={reasonBadgeClass(c.reason)}>
-                              {REASON_LABELS[c.reason] || c.reason}
-                            </span>
-                          </td>
-                          <td style={{ textAlign: 'right', fontWeight: 700, color: c.amount > 0 ? 'var(--teal)' : 'var(--coral)' }}>
-                            {c.amount > 0 ? `+${c.amount}` : c.amount}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+            {/* 半期成長レポート / 成長記録PDF（2カラム） */}
+            <GrowthReportsCard sessionCount={sessionList.length} />
+
+            {/* アカウント設定（折りたたみ） */}
+            <AccountSettingsAccordion
+              user={user}
+              couponList={couponList}
+              creditHistory={creditHistory}
+              onSelectPack={handleOpenPurchaseModal}
+            />
           </div>
         )}
       </main>

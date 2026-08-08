@@ -4,3 +4,4 @@ xhtml2pdf
 matplotlib
 click
 python-dotenv
+python-docx

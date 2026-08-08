@@ -34,6 +34,30 @@ ANALYSIS_TIERS = {
 # Background task
 # ---------------------------------------------------------------------------
 
+def _build_prev_summary(prev: models.Session) -> str:
+    """前回セッションのscores JSONから、差分コメント生成用のコンパクトな要約を組み立てる"""
+    scores = prev.scores or {}
+    lines = [
+        f"前回分析日: {prev.created_at.strftime('%Y-%m-%d')}",
+        f"平均スコア: {prev.avg_score:.1f} / 5.0",
+    ]
+    comps = scores.get("competencies") or []
+    if comps:
+        lines.append(
+            "コンピテンシー別スコア: "
+            + " / ".join(f"C{c.get('id')}:{c.get('score')}" for c in comps if c.get("id"))
+        )
+    si = scores.get("strengths_improvements") or {}
+    improvements = si.get("improvements") or []
+    if improvements:
+        lines.append("前回の改善指摘:")
+        lines.extend(f"- {imp}" for imp in improvements[:4])
+    prev_diff = (scores.get("diff_comment") or {}).get("text")
+    if prev_diff:
+        lines.append(f"前回の差分コメント: {prev_diff}")
+    return "\n".join(lines)
+
+
 def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, session_type: str, analysis_tier: str = "standard"):
     """バックグラウンドで分析パイプラインを実行する"""
     db = SessionLocal()
@@ -59,22 +83,45 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
         transcription = transcribe(mp3_path)
 
         # Analyze
-        from modules.analyzer import analyze_session
+        from modules.analyzer import (
+            analyze_session, ENGINE_VERSION, EVAL_MODE_ACC, EVAL_MODE_STANDARD,
+        )
+
+        # ユーザーの目標資格から評価モードを決定（現状はACCのみ専用軸。他は標準軸）
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        evaluation_mode = EVAL_MODE_ACC if user and user.icf_level == "acc" else EVAL_MODE_STANDARD
+
+        # 前回セッション（差分コメント生成用。初回分析ではNone）
+        prev = (
+            db.query(models.Session)
+            .filter(models.Session.user_id == user_id)
+            .order_by(models.Session.created_at.desc())
+            .first()
+        )
+        prev_summary = _build_prev_summary(prev) if prev else None
+
         is_follow_up = session_type == "follow_up"
         analysis = analyze_session(
             transcription["utterances"],
             is_follow_up=is_follow_up,
             model=tier["model"],
             deep=tier["deep"],
+            evaluation_mode=evaluation_mode,
+            prev_summary=prev_summary,
         )
 
         # Generate PDF
+        from modules.analyzer import EVAL_MODE_LABELS
+        engine_label = f"{EVAL_MODE_LABELS.get(evaluation_mode, evaluation_mode)} · v{ENGINE_VERSION}"
         with tempfile.TemporaryDirectory() as tmp_dir:
             from modules.reporter import generate_report
             pdf_path = generate_report(
                 analysis=analysis,
                 transcription=transcription,
                 output_dir=Path(tmp_dir),
+                engine_label=engine_label,
+                diff_comment=analysis.get("diff_comment"),
+                prev_date_label=f"{prev.created_at.month}/{prev.created_at.day}" if prev else None,
             )
             pdf_bytes = pdf_path.read_bytes()
 
@@ -99,10 +146,16 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
             "mcc_evaluation": analysis.get("mcc_evaluation"),
             "deep_dive": analysis.get("deep_dive"),
         }
+        # 前回からの差分コメント（初回分析ではキー自体なし）
+        if prev is not None and analysis.get("diff_comment"):
+            scores_json["diff_comment"] = {
+                "text": analysis["diff_comment"],
+                "prev_session_id": str(prev.id),
+                "prev_created_at": prev.created_at.isoformat(),
+            }
 
         # Save session
-        # （クレジットはアップロード受付時に減算済み）
-        user = db.query(models.User).filter(models.User.id == user_id).first()
+        # （クレジットはアップロード受付時に減算済み。userは評価モード決定時にロード済み）
         session = models.Session(
             user_id=user_id,
             duration_seconds=transcription["duration_seconds"],
@@ -110,6 +163,9 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
             avg_score=avg_score,
             scores=scores_json,
             pdf_data=pdf_bytes,
+            evaluation_mode=evaluation_mode,
+            engine_version=ENGINE_VERSION,
+            transcript_json=transcription["utterances"],
             expires_at=datetime.now(timezone.utc) + timedelta(days=180),
         )
         db.add(session)
@@ -143,6 +199,47 @@ def _run_analysis(job_id: UUID, user_id: UUID, input_path: Path, suffix: str, se
                     logger.info(f"[job {job_id}] 紹介者 {referrer.id} に+1クレジット付与")
         except Exception:
             logger.error(f"[job {job_id}] 紹介ボーナス付与に失敗（分析結果は保存済み）", exc_info=True)
+            db.rollback()
+
+        # プロフィールインサイト（AIから見たあなた・タイプ診断）を再生成
+        # 分析保存とは別トランザクション（失敗しても完了済み分析を巻き込まない）
+        # TODO: 再生成頻度は暫定「分析完了ごと」（引き継ぎ書§4）。コストが問題になれば間引く
+        try:
+            from modules.insights import generate_profile_insight
+            recent_sessions = (
+                db.query(models.Session)
+                .filter(models.Session.user_id == user_id)
+                .order_by(models.Session.created_at.desc())
+                .limit(10)
+                .all()
+            )
+            sessions_data = [
+                {
+                    "created_at": s.created_at.strftime("%Y-%m-%d"),
+                    "avg_score": s.avg_score,
+                    "scores": s.scores,
+                }
+                for s in recent_sessions
+            ]
+            payload = generate_profile_insight(sessions_data)
+            if payload:
+                insight_row = db.query(models.UserInsight).filter(
+                    models.UserInsight.user_id == user_id,
+                    models.UserInsight.kind == "profile",
+                ).first()
+                if insight_row:
+                    insight_row.payload = payload
+                    insight_row.engine_version = ENGINE_VERSION
+                    insight_row.updated_at = datetime.now(timezone.utc)
+                else:
+                    db.add(models.UserInsight(
+                        user_id=user_id, kind="profile",
+                        payload=payload, engine_version=ENGINE_VERSION,
+                    ))
+                db.commit()
+                logger.info(f"[job {job_id}] プロフィールインサイトを更新")
+        except Exception:
+            logger.error(f"[job {job_id}] インサイト生成に失敗（分析結果は保存済み）", exc_info=True)
             db.rollback()
 
     except Exception as e:

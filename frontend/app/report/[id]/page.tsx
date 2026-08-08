@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useParams } from 'next/navigation'
 import { sessions, credits, feedback, getToken, SessionSummary } from '@/lib/api'
+import { normalizeEngine } from '@/lib/format'
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr)
@@ -44,6 +45,24 @@ export default function ReportPage() {
   const [session, setSession] = useState<SessionSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [docxLoading, setDocxLoading] = useState(false)
+
+  const handleDownloadTranscript = async () => {
+    setDocxLoading(true)
+    try {
+      const blob = await sessions.downloadTranscript(id)
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `transcript_${id}.docx`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('逐語録のダウンロードに失敗しました')
+    } finally {
+      setDocxLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (!getToken()) {
@@ -91,6 +110,8 @@ if (loading) {
 
   const competencies = session.scores?.competencies || []
   const analysisTier = session.scores?.analysis_tier
+  const engineInfo = normalizeEngine(session)
+  const diffComment = session.scores?.diff_comment
   const overallSummary = session.scores?.overall_summary
   const qualificationComment = session.scores?.qualification_comment
   const strengthsImprovements = session.scores?.strengths_improvements
@@ -117,12 +138,29 @@ if (loading) {
                 通常分析
               </span>
             )}
+            {/* 評価モード・エンジンバージョン（旧分析は「標準 · v2.0」に正規化） */}
+            <span className="engine-badge" title="この分析に使われた評価モードとエンジンバージョン">
+              {engineInfo.label}
+            </span>
           </div>
           <div className="w-28" />
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+        {/* 前回からの差分コメント（2回目以降の分析のみ・レポート冒頭） */}
+        {diffComment?.text && (
+          <div className="card border-l-4 border-[var(--teal)]">
+            <h2 className="text-sm font-bold text-[var(--teal)] mb-2">
+              📈 前回からの変化
+              {diffComment.prev_created_at
+                ? `（${new Date(diffComment.prev_created_at).toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}の分析より）`
+                : ''}
+            </h2>
+            <p className="text-sm text-gray-700 leading-relaxed">{diffComment.text}</p>
+          </div>
+        )}
+
         {/* Session meta */}
         <div className="card">
           <h2 className="text-lg font-bold text-gray-900 mb-4">セッション情報</h2>
@@ -282,6 +320,22 @@ if (loading) {
           >
             {pdfLoading ? '生成中...' : 'PDFをダウンロード'}
           </button>
+
+          {/* 逐語録 Word ダウンロード（逐語録保存機能導入後の分析のみ） */}
+          {session.has_transcript && (
+            <div>
+              <button
+                onClick={handleDownloadTranscript}
+                disabled={docxLoading}
+                className="btn-secondary w-full py-3 flex items-center justify-center gap-2"
+              >
+                {docxLoading ? '生成中...' : '📄 逐語録をダウンロード（Word）'}
+              </button>
+              <p className="text-xs text-gray-500 mt-1">
+                AIによる自動文字起こしのため誤りを含む場合があります。ご自身で編集できる素材としてご活用ください。
+              </p>
+            </div>
+          )}
 
           {/* Mentor coaching CTA */}
           <div className="border border-[var(--teal-l)] rounded-lg p-4 bg-[var(--teal-l)]">

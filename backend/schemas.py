@@ -86,6 +86,10 @@ class SessionResponse(BaseModel):
     coach_ratio: float
     avg_score: float
     scores: Optional[Any]
+    # NULL = メタデータ導入前の旧分析（フロントで standard / v2.0 に正規化）
+    evaluation_mode: Optional[str] = None
+    engine_version: Optional[str] = None
+    has_transcript: bool = False  # 逐語録DL可否（本文は返さない）
     created_at: UTCDatetime
 
     class Config:

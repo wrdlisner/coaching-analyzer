@@ -449,3 +449,49 @@ html.dark .prose a { color: var(--purple); }
   border-radius: var(--rs); padding: 10px 16px;
   font-size: 13px; color: var(--teal); font-weight: 500; margin-bottom: 1rem;
 }
+
+/* ── 2-column responsive grid（プロフィールタブ等） ── */
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+/* ── Engine / goal / type badges（淡色背景+同系濃色文字） ── */
+.engine-badge {
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px;
+  background: var(--purple-l); color: var(--purple);
+  white-space: nowrap;
+}
+.goal-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+  background: var(--purple-l); color: var(--purple);
+  border: 0.5px solid transparent; cursor: pointer;
+  transition: border-color 0.15s;
+  white-space: nowrap;
+}
+.goal-badge:hover { border-color: var(--purple); }
+.type-badge {
+  display: inline-flex; align-items: center;
+  font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px;
+  background: var(--teal-l); color: var(--teal);
+  white-space: nowrap;
+}
+
+/* ── アカウント設定の折りたたみ ────────────────────── */
+.acct-accordion {
+  background: var(--surface); border: 0.5px solid var(--border);
+  border-radius: var(--r); padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.acct-accordion summary {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; flex-wrap: wrap;
+  cursor: pointer; list-style: none; user-select: none;
+}
+.acct-accordion summary::-webkit-details-marker { display: none; }
+.acct-accordion summary::after { content: '▾'; color: var(--txt3); font-size: 12px; }
+.acct-accordion[open] summary::after { content: '▴'; }
+.acct-accordion[open] summary { margin-bottom: 4px; }

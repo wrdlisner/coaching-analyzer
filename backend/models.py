@@ -50,11 +50,20 @@ class Session(Base):
     avg_score = Column(Float, nullable=False, default=0.0)
     scores = Column(JSON, nullable=True)
     pdf_data = Column(LargeBinary, nullable=True)
+    # 評価メタデータ（NULL = メタデータ導入前の旧分析。表示層で standard / v2.0 に正規化）
+    evaluation_mode = Column(String(16), nullable=True)   # 'standard' | 'acc'
+    engine_version = Column(String(16), nullable=True)    # '2.1' 等
+    # 逐語録（transcriberのutterancesそのまま）。行削除（180日）と共に消える
+    transcript_json = Column(JSON, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     expires_at = Column(DateTime, nullable=True)
 
     user = relationship("User", back_populates="sessions")
     feedbacks = relationship("Feedback", back_populates="session", cascade="all, delete-orphan")
+
+    @property
+    def has_transcript(self) -> bool:
+        return self.transcript_json is not None
 
 
 class Credit(Base):
@@ -158,6 +167,24 @@ class PasswordResetToken(Base):
     expires_at = Column(DateTime, nullable=False)
     used_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class UserInsight(Base):
+    """AI生成のユーザーインサイト。
+
+    kind='profile':    ユーザーにつき1行をUPSERT（「AIから見たあなた」+タイプ診断）
+    kind='semiannual': (user_id, period_label) につき1行、生成後は不変（半期成長レポート）
+    """
+    __tablename__ = "user_insights"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    kind = Column(String(20), nullable=False)           # 'profile' | 'semiannual'
+    period_label = Column(String(10), nullable=True)    # semiannualのみ '2026-H1' 等
+    payload = Column(JSON, nullable=False)
+    engine_version = Column(String(16), nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Mentor(Base):

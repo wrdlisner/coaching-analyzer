@@ -69,7 +69,7 @@ export default function DataPolicyPage() {
                 {
                   num: '05',
                   label: '完了・削除',
-                  desc: 'スコアをDBに保存。音声・文字起こしは即削除',
+                  desc: 'スコアと文字起こしテキストをDBに保存（180日で自動削除）。音声ファイルは即削除',
                   color: 'bg-green-100 text-green-700 border-green-200',
                   dot: 'bg-green-500',
                 },
@@ -96,10 +96,11 @@ export default function DataPolicyPage() {
           <div className="mt-8 bg-green-50 border border-green-200 rounded-xl px-5 py-4 flex items-start gap-3">
             <div className="text-green-600 text-xl mt-0.5">✓</div>
             <div>
-              <p className="font-semibold text-green-800 text-sm">分析完了後、音声・文字起こしデータは即時削除されます</p>
+              <p className="font-semibold text-green-800 text-sm">音声ファイルは分析完了後に即時削除されます</p>
               <p className="text-xs text-green-700 mt-1">
-                PDFレポートが生成された時点で、サーバー上の音声ファイルおよび文字起こしテキストは完全に削除されます。
-                クライアントの会話内容がサービス内に残ることはありません。
+                PDFレポートが生成された時点で、サーバー上の音声ファイルは完全に削除されます。
+                文字起こしテキストは、逐語録ダウンロード機能のために分析結果と共に保存され、
+                分析から180日後に分析結果と一緒に自動削除されます。
               </p>
             </div>
           </div>
@@ -115,10 +116,8 @@ export default function DataPolicyPage() {
             </div>
             <ul className="space-y-3">
               {[
-                { label: '音声ファイル', desc: 'アップロードされたmp3/mp4/m4aファイル' },
-                { label: '文字起こしテキスト', desc: 'セッションの会話内容すべて' },
-                { label: 'クライアントの発言', desc: 'AIに送った文字起こしデータ' },
-                { label: '個人を特定できる情報', desc: '名前・連絡先などの会話中の個人情報' },
+                { label: '音声ファイル', desc: 'アップロードされたmp3/mp4/m4aファイル（分析完了後に即削除）' },
+                { label: '会話中の個人情報の抽出・利用', desc: '会話中の名前・連絡先などを分析以外の目的で抽出・利用することはありません' },
               ].map((item) => (
                 <li key={item.label} className="flex items-start gap-2.5">
                   <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-red-100 text-red-500 flex items-center justify-center text-xs">✕</span>
@@ -142,6 +141,7 @@ export default function DataPolicyPage() {
                 { label: 'ICFコンピテンシースコア（数値）', desc: '8つのコンピテンシーの1〜5点のスコア' },
                 { label: 'セッション時間・発話比率', desc: 'コーチとクライアントの発話時間の割合' },
                 { label: '平均スコア', desc: '全コンピテンシーの平均値' },
+                { label: '文字起こしテキスト（最大180日）', desc: '逐語録ダウンロード機能のため分析結果と共に保存。180日後に自動削除' },
                 { label: 'アカウント情報', desc: '登録時に入力した名前・メールアドレス' },
               ].map((item) => (
                 <li key={item.label} className="flex items-start gap-2.5">
@@ -154,7 +154,8 @@ export default function DataPolicyPage() {
               ))}
             </ul>
             <p className="mt-4 text-xs text-gray-400 border-t border-gray-100 pt-3">
-              保存されたスコアデータはマイページの分析履歴で確認できます。会話の内容は一切含まれません。
+              保存されたスコアデータはマイページの分析履歴で確認できます。
+              文字起こしテキストの保存は逐語録ダウンロード機能の導入（2026年8月）以降の分析が対象で、それ以前の分析の会話内容は保存されていません。
             </p>
           </div>
         </div>
@@ -170,7 +171,11 @@ export default function DataPolicyPage() {
               },
               {
                 q: '音声ファイルはいつ削除されますか？',
-                a: 'PDFレポートの生成が完了した直後に、サーバー上の音声ファイルおよび文字起こしテキストを削除します。分析に失敗した場合も同様に即時削除します。',
+                a: 'PDFレポートの生成が完了した直後に、サーバー上の音声ファイルを削除します。分析に失敗した場合も同様に即時削除します。文字起こしテキストは逐語録ダウンロード機能のために分析結果と共に保存され、分析から180日後に自動削除されます。',
+              },
+              {
+                q: '文字起こしテキストはなぜ保存されるのですか？',
+                a: '分析済みセッションの逐語録をWord形式でダウンロードできる機能のためです。2026年8月の機能導入以降の分析が対象で、それ以前の分析の会話内容は保存されていません。保存された文字起こしは分析結果（180日で自動削除）と同じライフサイクルで削除されます。',
               },
               {
                 q: 'クライアントに録音の同意を得る必要がありますか？',
@@ -178,7 +183,7 @@ export default function DataPolicyPage() {
               },
               {
                 q: 'データはどのサーバーに保存されますか？',
-                a: 'バックエンドサーバーおよびデータベースはRailway（米国）上でホスティングされています。音声・文字起こしデータは処理後に即削除されるため、長期保存されることはありません。',
+                a: 'バックエンドサーバーおよびデータベースはRailway（米国）上でホスティングされています。音声ファイルは処理後に即削除され、文字起こしテキストと分析結果は最大180日で自動削除されます。',
               },
             ].map((faq, i) => (
               <div key={i} className={i > 0 ? 'pt-6 border-t border-gray-100' : ''}>

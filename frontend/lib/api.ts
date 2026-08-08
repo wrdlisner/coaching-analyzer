@@ -69,6 +69,39 @@ export async function apiRequest<T>(
   return res.json() as Promise<T>
 }
 
+// バイナリ（docx / PDF）ダウンロード用。エラーハンドリングは apiRequest と同方針
+export async function apiRequestBlob(path: string): Promise<Blob> {
+  const token = getToken()
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${path}`, { method: 'GET', headers })
+  } catch {
+    throw new Error('サーバーに接続できませんでした。時間をおいて再度お試しください。')
+  }
+
+  if (res.status === 401) {
+    removeToken()
+    window.location.href = '/login'
+    throw new Error('Unauthorized')
+  }
+
+  if (!res.ok) {
+    let errorDetail = `HTTP ${res.status}`
+    try {
+      const errJson = await res.json()
+      errorDetail = errJson.detail || errorDetail
+    } catch {
+      // ignore
+    }
+    throw new Error(errorDetail)
+  }
+
+  return res.blob()
+}
+
 // ---- Auth ----
 
 export interface UserInfo {
@@ -144,7 +177,16 @@ export interface SessionSummary {
       focus_theme?: { title?: string; detail?: string }
       practice_steps?: string[]
     } | null
+    diff_comment?: {
+      text: string | null
+      prev_session_id: string
+      prev_created_at: string
+    } | null
   } | null
+  // null = メタデータ導入前の旧分析（normalizeEngineで standard / v2.0 に正規化）
+  evaluation_mode: string | null
+  engine_version: string | null
+  has_transcript: boolean
   created_at: string
 }
 
@@ -155,6 +197,74 @@ export const sessions = {
 
   async get(id: string): Promise<SessionSummary> {
     return apiRequest('GET', `/api/sessions/${id}`)
+  },
+
+  async downloadTranscript(id: string): Promise<Blob> {
+    return apiRequestBlob(`/api/sessions/${id}/transcript.docx`)
+  },
+}
+
+// ---- Insights（AIコメント・タイプ診断・半期レポート） ----
+
+export interface ProfileInsightPayload {
+  strengths: string
+  improvement_theme: string
+  tagline: string
+  archetype: { id: string; label: string } | null
+  recurring: { theme: string; count: number } | null
+  source_session_count: number
+}
+
+export interface ProfileInsightResponse {
+  payload: ProfileInsightPayload | null
+  engine_version: string | null
+  updated_at: string | null
+}
+
+export interface SemiannualPayload {
+  highlights: string
+  improved_competencies: Array<{ id: number; name: string; comment: string }>
+  ongoing_challenges: string
+  next_focus: string[]
+  session_count: number
+  avg_score_start: number | null
+  avg_score_end: number | null
+}
+
+export interface SemiannualReport {
+  period_label: string
+  payload: SemiannualPayload
+  created_at: string
+}
+
+export interface SemiannualListResponse {
+  reports: SemiannualReport[]
+  generatable_period: string | null
+}
+
+export const insights = {
+  async getMe(): Promise<ProfileInsightResponse> {
+    return apiRequest('GET', '/api/insights/me')
+  },
+
+  async listSemiannual(): Promise<SemiannualListResponse> {
+    return apiRequest('GET', '/api/insights/semiannual')
+  },
+
+  async generateSemiannual(period: string): Promise<SemiannualReport> {
+    return apiRequest('POST', `/api/insights/semiannual/${period}/generate`)
+  },
+}
+
+export const meta = {
+  async getEngine(): Promise<{ engine_version: string; evaluation_modes: Record<string, string> }> {
+    return apiRequest('GET', '/api/meta/engine')
+  },
+}
+
+export const reports = {
+  async downloadGrowthPdf(): Promise<Blob> {
+    return apiRequestBlob('/api/reports/growth.pdf')
   },
 }
 

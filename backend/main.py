@@ -18,13 +18,13 @@ from sqlalchemy import text
 from database import engine, Base, SessionLocal
 import models  # noqa: F401 - ensure models are registered
 
-from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments, mentors
+from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments, mentors, insights
 
 # uvicorn起動前のimport時ログ（CORS設定等）も出力されるようにする
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="Coaching Analyzer API", version="1.1.0")
+app = FastAPI(title="Coaching Analyzer API", version="1.2.0")
 
 # CORS middleware
 # Note: allow_credentials=True requires explicit origins (not "*")
@@ -61,6 +61,7 @@ app.include_router(notices.router)
 app.include_router(manager.router)
 app.include_router(payments.router)
 app.include_router(mentors.router)
+app.include_router(insights.router)
 
 
 def delete_expired_sessions():
@@ -139,6 +140,9 @@ def _run_migrations():
         "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'referral'",
         "ALTER TYPE credit_reason_enum ADD VALUE IF NOT EXISTS 'purchase'",
         "ALTER TABLE coupons ADD COLUMN reserved_until TIMESTAMP",
+        "ALTER TABLE sessions ADD COLUMN evaluation_mode VARCHAR(16)",
+        "ALTER TABLE sessions ADD COLUMN engine_version VARCHAR(16)",
+        "ALTER TABLE sessions ADD COLUMN transcript_json JSON",
     ]
     with engine.connect() as conn:
         for sql in migrations:
