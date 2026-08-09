@@ -60,7 +60,7 @@ def _generate_radar_chart_png(competencies: list[dict]) -> bytes:
     ax.plot(angles, scores_plot, "o-", linewidth=2, color="#3b82f6")
     ax.fill(angles, scores_plot, alpha=0.25, color="#3b82f6")
 
-    ax.set_title("ICFコンピテンシー別スコア", fontsize=14, fontfamily=_MPL_FONT, pad=20)
+    ax.set_title("コンピテンシー別スコア", fontsize=14, fontfamily=_MPL_FONT, pad=20)
     plt.tight_layout()
 
     buf = io.BytesIO()
@@ -107,7 +107,9 @@ class CoachingReportPDF(FPDF):
         notice_lines = [
             "！ 注意事項",
             "本レポートはAI（Claude）によって自動的に評価・作成されています。",
-            "ICFコアコンピテンシーに基づいた参考情報としてご活用ください。",
+            "評価軸は、ICFコアコンピテンシー・PCCマーカー（© International",
+            "Coaching Federation）の考え方を参考に本ツールが独自に作成した",
+            "評価項目です。参考情報としてご活用ください。",
             "評価結果は絶対的なものではなく、メンターコーチや資格審査員による",
             "判断を代替するものではありません。",
         ]
@@ -212,7 +214,7 @@ class CoachingReportPDF(FPDF):
 
         self._set_font_bold(26)
         self.set_text_color(26, 54, 93)
-        self.cell(0, 14, "ICFコーチングセッション", align="C", new_x="LEFT", new_y="NEXT")
+        self.cell(0, 14, "コーチングセッション", align="C", new_x="LEFT", new_y="NEXT")
         self.cell(0, 14, "分析レポート", align="C", new_x="LEFT", new_y="NEXT")
 
         self.ln(20)
@@ -335,7 +337,7 @@ class CoachingReportPDF(FPDF):
 
     def radar_chart_section(self, chart_png: bytes):
         self.add_page()
-        self.section_title("2. ICFコンピテンシー別スコア")
+        self.section_title("2. コンピテンシー別スコア")
         self.ln(5)
 
         # 画像を中央に配置

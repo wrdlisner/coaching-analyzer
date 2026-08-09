@@ -82,7 +82,7 @@ export default function ManagerPage() {
             管理職1on1 分析ツール
           </h1>
           <p className="text-sm text-gray-500">
-            ICFコアコンピテンシー（2025年版）を管理職1on1に応用した評価軸
+            ICFコアコンピテンシー（2025年版）の考え方を管理職1on1向けに応用した独自の評価軸
           </p>
         </div>
 

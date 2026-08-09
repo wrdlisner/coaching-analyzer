@@ -9,7 +9,7 @@ type Step = 1 | 2 | 3
 type SessionType = 'initial' | 'follow_up'
 
 const TIER_INFO: Record<AnalysisTier, { label: string; credits: number; desc: string }> = {
-  standard: { label: '通常分析', credits: 1, desc: '標準AIモデルによるICF 8コンピテンシー分析' },
+  standard: { label: '通常分析', credits: 1, desc: '標準AIモデルによる8コンピテンシー分析' },
   deep: { label: 'ディープ分析', credits: 2, desc: '上位AIモデルによる深掘り分析。コメント・改善提案がより詳細になります' },
 }
 
@@ -21,7 +21,7 @@ interface PhaseInfo {
 const PHASES: PhaseInfo[] = [
   { label: '音声変換中（mp4→mp3）', range: [0, 10] },
   { label: '文字起こし中（AssemblyAI）', range: [10, 70] },
-  { label: 'ICF分析・レポート生成中', range: [70, 100] },
+  { label: 'AI分析・レポート生成中', range: [70, 100] },
 ]
 
 function formatRemaining(seconds: number): string {

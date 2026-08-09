@@ -62,7 +62,7 @@ export default function DataPolicyPage() {
                 {
                   num: '04',
                   label: 'AI分析',
-                  desc: 'Claude AIがICF 8コンピテンシーを評価',
+                  desc: 'Claude AIが8つのコンピテンシーを評価',
                   color: 'bg-[var(--amber-l)] text-[var(--amber)] border-[var(--amber-l)]',
                   dot: 'bg-[var(--amber)]',
                 },
@@ -138,7 +138,7 @@ export default function DataPolicyPage() {
             </div>
             <ul className="space-y-3">
               {[
-                { label: 'ICFコンピテンシースコア（数値）', desc: '8つのコンピテンシーの1〜5点のスコア' },
+                { label: 'コンピテンシースコア（数値）', desc: '8つのコンピテンシーの1〜5点のスコア' },
                 { label: 'セッション時間・発話比率', desc: 'コーチとクライアントの発話時間の割合' },
                 { label: '平均スコア', desc: '全コンピテンシーの平均値' },
                 { label: '文字起こしテキスト（最大180日）', desc: '逐語録ダウンロード機能のため分析結果と共に保存。180日後に自動削除' },

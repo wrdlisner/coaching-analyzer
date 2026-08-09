@@ -85,7 +85,7 @@ export default function LandingPage() {
       >
         <div className="max-w-6xl mx-auto px-4 py-24 text-center">
           <div className="inline-block bg-white border border-[var(--purple)] text-[var(--purple)] text-sm font-semibold px-4 py-1.5 rounded-full mb-8">
-            ICFコアコンピテンシー（2025年最新版）準拠
+            ICFコアコンピテンシー（2025年版）の考え方を取り入れた独自評価軸
           </div>
           <h1
             className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900 leading-snug md:leading-snug mb-8"
@@ -118,7 +118,7 @@ export default function LandingPage() {
             コーチとしての成長を、科学的に。
           </p>
           <p className="text-base text-gray-500 max-w-2xl mx-auto mb-10">
-            ICFコアコンピテンシー（2025年最新版）に基づく分析を重ねるたび、
+            ICFコアコンピテンシー（2025年版）を参考にした独自基準の分析を重ねるたび、
             <br className="hidden sm:block" />
             スコア推移・変化コメント・成長レポートが蓄積。分析を&quot;点&quot;で終わらせない。
           </p>
@@ -140,11 +140,11 @@ export default function LandingPage() {
           {[
             {
               title: '2025年最新版の評価基準',
-              desc: 'ICFコアコンピテンシー2025年9月改訂版に基づく最新の評価基準で、あなたのセッションを正確に評価します。',
+              desc: 'ICFコアコンピテンシー2025年9月改訂版の考え方をいち早く取り入れた独自の評価基準で、あなたのセッションを評価します。',
             },
             {
               title: '3層構造の改善提案',
-              desc: 'ICFメンターコーチングコンピテンシーを活用した「改善提案・具体的な言い換え例・次のアクション」の3層で提示。',
+              desc: 'ICFメンターコーチングコンピテンシーの考え方を参考に、「改善提案・具体的な言い換え例・次のアクション」の3層で提示。',
             },
             {
               title: '続けるほど深まる成長記録',
@@ -181,7 +181,7 @@ export default function LandingPage() {
               {
                 step: '03',
                 title: 'AI分析',
-                desc: 'Claude AIがICF PCC/MCC基準に基づき8つのコンピテンシーを評価。',
+                desc: 'Claude AIがICF PCC/MCC基準を参考にした独自評価軸で8つのコンピテンシーを評価。',
               },
               {
                 step: '04',
@@ -216,7 +216,7 @@ export default function LandingPage() {
           {/* ICF 8 competencies（STEP 03 の評価対象をコンパクトに提示） */}
           <div className="mt-12">
             <p className="text-sm font-semibold text-gray-500 mb-4">
-              STEP 03 のAI分析で評価する、ICF 8つのコアコンピテンシー
+              STEP 03 のAI分析で評価する8つの観点（ICFコアコンピテンシーを参考にした独自評価軸）
             </p>
             <div className="flex flex-wrap gap-2 max-w-4xl">
               {[
@@ -410,9 +410,9 @@ export default function LandingPage() {
                 <h3 className="font-bold text-gray-900" style={displayFont}>通常分析</h3>
                 <span className="text-xs font-medium bg-gray-100 text-gray-600 rounded-full px-3 py-1">1クレジット</span>
               </div>
-              <p className="text-sm text-gray-600 mb-4">標準AIモデルによるICF 8コンピテンシー分析。日々の振り返りに十分な詳しさです。</p>
+              <p className="text-sm text-gray-600 mb-4">標準AIモデルによる8コンピテンシー分析。日々の振り返りに十分な詳しさです。</p>
               <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex gap-2"><span className="text-gray-400">✓</span>PCCマーカー充足率に基づくスコア評価</li>
+                <li className="flex gap-2"><span className="text-gray-400">✓</span>PCC基準を参考にした評価項目の充足率に基づくスコア評価</li>
                 <li className="flex gap-2"><span className="text-gray-400">✓</span>コンピテンシーごとの評価コメントと改善提案2〜3点</li>
                 <li className="flex gap-2"><span className="text-gray-400">✓</span>レーダーチャート付きPDFレポート</li>
               </ul>
@@ -664,6 +664,9 @@ export default function LandingPage() {
       <footer className="border-t border-gray-200 bg-white">
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-sm text-gray-500">
           <p>本ツールはAI（Claude）による自動評価です。ICF資格審査の代替ではありません。</p>
+          <p className="mt-1">
+            評価軸はICFコアコンピテンシー・PCCマーカー（© International Coaching Federation）の考え方を参考に独自に作成したものです。当社はICFと提携・公認関係にありません。
+          </p>
           <p className="mt-3 flex items-center justify-center gap-4 flex-wrap">
             <Link href="/terms" className="underline hover:text-gray-700">
               利用規約
