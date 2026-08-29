@@ -76,10 +76,12 @@ def submit_feedback(
         models.Feedback.session_id.in_(user_session_ids)
     ).count()
 
-    # 未使用クーポンが上限に達していればクーポンは発行しない
+    # 未使用かつ期限内のクーポンが上限に達していればクーポンは発行しない
+    now = datetime.now(timezone.utc)
     unused_count = db.query(models.Coupon).filter(
         models.Coupon.user_id == current_user.id,
         models.Coupon.used_at == None,
+        models.Coupon.expires_at > now,
     ).count()
 
     coupon = None
@@ -90,7 +92,7 @@ def submit_feedback(
             user_id=current_user.id,
             code=code,
             discount_amount=discount,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=COUPON_EXPIRY_DAYS),
+            expires_at=now + timedelta(days=COUPON_EXPIRY_DAYS),
         )
         db.add(coupon)
 
