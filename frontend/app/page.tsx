@@ -496,6 +496,39 @@ export default function LandingPage() {
           />
 
           <div className="grid md:grid-cols-2 gap-6 max-w-5xl">
+            {/* Card: 小倉嘉夫さん（肩書きにスクール名・校名は記載不可＝本人NGのため、今後のコピー修正時も追加しないこと） */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200 flex flex-col">
+              <span className="self-start text-xs font-semibold bg-[var(--pine-l)] text-[var(--pine)] rounded-full px-3 py-1">
+                PCC取得コーチ / プロコーチ養成講師
+              </span>
+              <p className="text-lg font-bold text-gray-900 leading-relaxed mt-4" style={displayFont}>
+                「
+                <Marker color="var(--pine-m)">coachmarkのおかげでPCCが取れたと思っている。提出する音源を決めるとき、拠り所になったのがこのツールだった</Marker>
+                」
+              </p>
+              <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+                「メンターは受けるべき。でもそれで進んだかどうかのチェックを、自分で、安い額で気軽にできるのがすごいところ。資格のためだけでなく、定期的に自分のセッションを客観的に見てもらえるのは大事だと思う」
+              </p>
+              <p className="text-sm text-gray-500 mt-3 leading-relaxed bg-gray-50 rounded-lg p-3">
+                PCC申請の音源選定にcoachmarkを活用。「最低でも4.5は付かないと」と自ら基準を決め、基準を満たしたセッションを提出して合格。AIには懐疑的だったが、「ICFの資格を持つ人が監修して作っている」ことが安心感につながったという。
+              </p>
+              <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+                <div className="w-10 h-10 rounded-full bg-[var(--pine-l)] text-[var(--pine)] flex items-center justify-center font-bold shrink-0" style={displayFont}>
+                  小
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">小倉 嘉夫 さん</p>
+                  <p className="text-xs text-gray-500">ICF PCC / プロコーチ養成講師</p>
+                </div>
+                <span className="ml-auto text-xs font-semibold bg-[var(--pine-l)] text-[var(--pine)] rounded-full px-2.5 py-1 whitespace-nowrap">
+                  2026年8月 PCC取得
+                </span>
+              </div>
+              <p className="text-xs text-gray-400 mt-3">
+                ※個人の感想です。coachmarkは資格取得を保証するものではありません。
+              </p>
+            </div>
+
             {/* Card A: 佐伯祥子さん */}
             <div className="bg-white rounded-xl p-6 border border-gray-200 flex flex-col">
               <span className="self-start text-xs font-semibold bg-[var(--purple-l)] text-[var(--purple)] rounded-full px-3 py-1">

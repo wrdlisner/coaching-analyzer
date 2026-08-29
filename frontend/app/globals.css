@@ -73,6 +73,8 @@
   --txt3: #767468;
   --purple:   #534AB7; --purple-m: #7F77DD; --purple-l: #EEEDFE;
   --teal:     #1D9E75; --teal-m:   #5DCAA5; --teal-l:   #E1F5EE;
+  /* --pine: LP「ユーザーの声」第4アクセント。--teal（緑寄り・井上さんカード）とは別軸なので統合しない */
+  --pine:     #0F766E; --pine-m:   #C7ECE8; --pine-l:   #E0F2F1;
   --coral:    #D85A30; --coral-l:  #FAECE7;
   --amber:    #BA7517; --amber-l:  #FAEEDA;
   --blue:     #185FA5; --blue-l:   #E6F1FB;
@@ -95,6 +97,8 @@
     --txt3: #8f8d84;
     --purple-l: #26215C;
     --teal-l:   #04342C;
+    --pine-m:   #0B4A44;
+    --pine-l:   #06332F;
     --coral-l:  #4A1B0C;
     --amber-l:  #412402;
     --blue-l:   #042C53;
@@ -115,6 +119,8 @@ html.dark {
   --txt3: #8f8d84;
   --purple-l: #26215C;
   --teal-l:   #04342C;
+  --pine-m:   #0B4A44;
+  --pine-l:   #06332F;
   --coral-l:  #4A1B0C;
   --amber-l:  #412402;
   --blue-l:   #042C53;
@@ -134,6 +140,8 @@ html.light {
   --txt3: #767468;
   --purple-l: #EEEDFE;
   --teal-l:   #E1F5EE;
+  --pine-m:   #C7ECE8;
+  --pine-l:   #E0F2F1;
   --coral-l:  #FAECE7;
   --amber-l:  #FAEEDA;
   --blue-l:   #E6F1FB;
