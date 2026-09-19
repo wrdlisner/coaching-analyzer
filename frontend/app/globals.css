@@ -76,7 +76,8 @@
   /* --pine: LP「ユーザーの声」第4アクセント。--teal（緑寄り・井上さんカード）とは別軸なので統合しない */
   --pine:     #0F766E; --pine-m:   #C7ECE8; --pine-l:   #E0F2F1;
   --coral:    #D85A30; --coral-l:  #FAECE7;
-  --amber:    #BA7517; --amber-l:  #FAEEDA;
+  /* --amber-m: LP「ユーザーの声」匿名カード（voice-pcc-anon）のマーカーハイライト用 */
+  --amber:    #BA7517; --amber-m:  #F7DFB0; --amber-l:  #FAEEDA;
   --blue:     #185FA5; --blue-l:   #E6F1FB;
   --green:    #3B6D11; --green-l:  #EAF3DE;
   --r:  12px;
@@ -100,6 +101,7 @@
     --pine-m:   #0B4A44;
     --pine-l:   #06332F;
     --coral-l:  #4A1B0C;
+    --amber-m:  #5C3608;
     --amber-l:  #412402;
     --blue-l:   #042C53;
     --green-l:  #173404;
@@ -122,6 +124,7 @@ html.dark {
   --pine-m:   #0B4A44;
   --pine-l:   #06332F;
   --coral-l:  #4A1B0C;
+  --amber-m:  #5C3608;
   --amber-l:  #412402;
   --blue-l:   #042C53;
   --green-l:  #173404;
@@ -143,6 +146,7 @@ html.light {
   --pine-m:   #C7ECE8;
   --pine-l:   #E0F2F1;
   --coral-l:  #FAECE7;
+  --amber-m:  #F7DFB0;
   --amber-l:  #FAEEDA;
   --blue-l:   #E6F1FB;
   --green-l:  #EAF3DE;

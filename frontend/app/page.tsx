@@ -588,10 +588,41 @@ export default function LandingPage() {
                 </span>
               </div>
             </div>
+            {/* Card: voice-pcc-anon（匿名掲載が本人との合意条件。本人を特定できる呼称をコード・データ・コミットに残さないこと） */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200 flex flex-col">
+              <span className="self-start text-xs font-semibold bg-[var(--amber-l)] text-[var(--amber)] rounded-full px-3 py-1">
+                PCC取得コーチ
+              </span>
+              <p className="text-lg font-bold text-gray-900 leading-relaxed mt-4" style={displayFont}>
+                「
+                <Marker color="var(--amber-m)">セッションが終わった瞬間にポチッと出せる。振り返りのハードルをすごく下げてくれる</Marker>
+                」
+              </p>
+              <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+                「できていないところだけじゃなく、できたところもちゃんと言ってくれる。両方見せてくれるから受け取れる」
+              </p>
+              <p className="text-sm text-gray-500 mt-3 leading-relaxed bg-gray-50 rounded-lg p-3">
+                メンターコーチングと併用しながら、PCCマーカーの解釈をcoachmarkとすり合わせて練習。テーマ・合意の確認を重点的に磨き、PCC取得につなげた。
+              </p>
+              <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+                <div
+                  className="w-10 h-10 rounded-full bg-[var(--amber-l)] shrink-0"
+                  role="img"
+                  aria-label="ご利用者の声: PCC取得コーチ（匿名）"
+                />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">匿名のご利用者さま</p>
+                  <p className="text-xs text-gray-500">ICF PCC取得 / 現役プロコーチ</p>
+                </div>
+                <span className="ml-auto text-xs font-semibold bg-[var(--amber-l)] text-[var(--amber)] rounded-full px-2.5 py-1 whitespace-nowrap">
+                  PCCパフォーマンス評価に合格
+                </span>
+              </div>
+            </div>
           </div>
 
           <p className="text-xs text-gray-400 mt-8">
-            ※ 掲載はご本人の許諾を得ています。分析結果は合格を保証するものではありません。
+            ※ 掲載はご本人の許諾を得ています。いずれも個人の感想であり、分析結果は合格を保証するものではありません。
           </p>
         </div>
       </section>
