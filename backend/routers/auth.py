@@ -2,9 +2,7 @@
 
 import hashlib
 import os
-import random
 import secrets
-import string
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
@@ -15,6 +13,7 @@ import schemas
 import auth as auth_utils
 from database import get_db
 from email_utils import send_password_reset_email
+from user_service import create_user, find_user_by_email
 
 # カンマ区切りの場合は最初のURLを使用（main.pyと同様の環境変数）
 _raw_frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
@@ -28,15 +27,6 @@ def _hash_reset_token(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def _generate_referral_code(db: Session) -> str:
-    chars = string.ascii_uppercase + string.digits
-    for _ in range(10):
-        code = "".join(random.choices(chars, k=8))
-        if not db.query(models.User).filter(models.User.referral_code == code).first():
-            return code
-    raise RuntimeError("紹介コードの生成に失敗しました")
-
-
 @router.post("/register", response_model=schemas.TokenResponse)
 def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
     # reset-passwordと同じ基準をサーバー側でも強制する
@@ -46,44 +36,21 @@ def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
             detail="パスワードは8文字以上で設定してください",
         )
 
-    existing = db.query(models.User).filter(models.User.email == body.email).first()
-    if existing:
+    if find_user_by_email(db, body.email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="このメールアドレスはすでに登録されています",
         )
 
-    icf_level = body.icf_level.lower()
-    if icf_level not in ("acc", "pcc", "mcc", "none"):
-        icf_level = "none"
-
-    # 紹介者を検索
-    referrer = None
-    if body.referral_code:
-        referrer = db.query(models.User).filter(
-            models.User.referral_code == body.referral_code
-        ).first()
-
-    referral_code = _generate_referral_code(db)
-
-    user = models.User(
+    user = create_user(
+        db,
         name=body.name,
         email=body.email,
         password_hash=auth_utils.hash_password(body.password),
-        icf_level=icf_level,
-        credits=1,
-        referral_code=referral_code,
-        referred_by=referrer.id if referrer else None,
+        icf_level=body.icf_level,
+        referral_code=body.referral_code,
+        signup_method="password",
     )
-    db.add(user)
-    db.flush()
-
-    credit = models.Credit(
-        user_id=user.id,
-        amount=1,
-        reason="bonus",
-    )
-    db.add(credit)
     db.commit()
     db.refresh(user)
 
@@ -93,8 +60,13 @@ def register(body: schemas.RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(body: schemas.LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == body.email).first()
-    if not user or not auth_utils.verify_password(body.password, user.password_hash):
+    user = find_user_by_email(db, body.email)
+    # password_hash が NULL(Googleのみのユーザー)の場合も、存在を明かさず同じエラーにする
+    if (
+        not user
+        or not user.password_hash
+        or not auth_utils.verify_password(body.password, user.password_hash)
+    ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません",
@@ -115,7 +87,7 @@ def forgot_password(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.email == body.email).first()
+    user = find_user_by_email(db, body.email)
     # ユーザーが存在しなくても成功レスポンスを返す（メールアドレス列挙攻撃を防ぐ）
     if user:
         # 既存の未使用トークンを無効化
@@ -169,6 +141,9 @@ def reset_password(
         raise HTTPException(status_code=404, detail="ユーザーが見つかりません")
 
     user.password_hash = auth_utils.hash_password(body.new_password)
+    # リセットメールを受け取れた = メールの受信箱を持っていることの確認になる
+    if user.email_verified_at is None:
+        user.email_verified_at = now
     reset_token.used_at = now
     db.commit()
 

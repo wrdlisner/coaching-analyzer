@@ -19,7 +19,8 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
-    password_hash = Column(String(255), nullable=False)
+    # NULL = パスワード未設定(Googleログインのみのユーザー)
+    password_hash = Column(String(255), nullable=True)
     icf_level = Column(
         SAEnum("acc", "pcc", "mcc", "none", name="icf_level_enum"),
         nullable=False,
@@ -31,6 +32,10 @@ class User(Base):
     mentor_status = Column(String(20), nullable=False, default="none")
     referral_code = Column(String(20), unique=True, nullable=True, index=True)
     referred_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    # メールアドレスの受信箱を本人が持っていると確認できた時刻
+    # (パスワード再設定の完了、またはGoogleでの確認済みメール一致で記録する)
+    email_verified_at = Column(DateTime, nullable=True)
+    signup_method = Column(String(16), nullable=False, default="password")  # password / google
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     sessions = relationship("Session", back_populates="user")

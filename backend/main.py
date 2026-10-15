@@ -143,6 +143,12 @@ def _run_migrations():
         "ALTER TABLE sessions ADD COLUMN evaluation_mode VARCHAR(16)",
         "ALTER TABLE sessions ADD COLUMN engine_version VARCHAR(16)",
         "ALTER TABLE sessions ADD COLUMN transcript_json JSON",
+        # Googleログイン対応の下準備(設計書② P1)
+        "ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL",
+        "ALTER TABLE users ADD COLUMN email_verified_at TIMESTAMP",
+        "ALTER TABLE users ADD COLUMN signup_method VARCHAR(16) NOT NULL DEFAULT 'password'",
+        # メールアドレスは小文字で統一する(2026-10-16 本番で大文字小文字違いの重複0件を確認済み)
+        "UPDATE users SET email = lower(email) WHERE email <> lower(email)",
     ]
     with engine.connect() as conn:
         for sql in migrations:

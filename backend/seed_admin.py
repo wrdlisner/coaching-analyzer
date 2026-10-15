@@ -10,12 +10,13 @@ import sys
 from database import SessionLocal
 import models
 import auth as auth_utils
+from user_service import find_user_by_email, normalize_email
 
 db = SessionLocal()
 
 
 def promote_existing(email: str):
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = find_user_by_email(db, email)
     if not user:
         print(f"[ERROR] ユーザーが見つかりません: {email}")
         sys.exit(1)
@@ -25,7 +26,7 @@ def promote_existing(email: str):
 
 
 def create_admin(email: str, password: str, name: str = "管理者"):
-    existing = db.query(models.User).filter(models.User.email == email).first()
+    existing = find_user_by_email(db, email)
     if existing:
         if not existing.is_admin:
             existing.is_admin = True
@@ -37,7 +38,7 @@ def create_admin(email: str, password: str, name: str = "管理者"):
 
     user = models.User(
         name=name,
-        email=email,
+        email=normalize_email(email),
         password_hash=auth_utils.hash_password(password),
         icf_level="none",
         credits=0,
