@@ -1,6 +1,6 @@
 fastapi
 uvicorn[standard]
-sqlalchemy
+sqlalchemy>=2.0,<2.1  # 2.1 defaults postgresql:// to psycopg v3; this app uses psycopg2
 psycopg2-binary
 python-jose[cryptography]
 passlib[bcrypt]
