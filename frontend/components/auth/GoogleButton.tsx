@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { googleStartUrl } from '@/lib/api'
 
 // 「Google で続ける」ボタン。Google のブランドガイドラインに沿った白地のボタン。
-// G ロゴは Google 公式の素材(public/google-g-logo.svg)を使う。ファイルがなければロゴなしで表示する。
+// G ロゴは Google 公式の素材(signin-assets の Light / Show text=No)から切り出した public/google-g-logo.png を使う。
 export default function GoogleButton({ referralCode }: { referralCode?: string | null }) {
   const [logoOk, setLogoOk] = useState(true)
   return (
@@ -15,7 +15,7 @@ export default function GoogleButton({ referralCode }: { referralCode?: string |
     >
       {logoOk && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src="/google-g-logo.svg" alt="" width={18} height={18} onError={() => setLogoOk(false)} />
+        <img src="/google-g-logo.png" alt="" width={18} height={18} onError={() => setLogoOk(false)} />
       )}
       <span>Google で続ける</span>
     </a>
