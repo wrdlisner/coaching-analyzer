@@ -302,3 +302,33 @@ class AdminPurchaseResponse(BaseModel):
 
 class SuccessResponse(BaseModel):
     success: bool = True
+
+
+# ---- Googleログイン(設計書②) ----
+
+class GoogleTicketRequest(BaseModel):
+    ticket: str
+
+
+class GoogleTicketInfoRequest(BaseModel):
+    ticket: str
+    purpose: str  # 'signup' / 'link_confirm'
+
+
+class GoogleTicketInfoResponse(BaseModel):
+    email: str
+    name: Optional[str] = None
+    referral_code: Optional[str] = None
+
+
+class GoogleCompleteSignupRequest(BaseModel):
+    ticket: str
+    name: str
+    icf_level: str = "none"
+    agreed: bool = False
+    referral_code: Optional[str] = None
+
+
+class GoogleConfirmLinkRequest(BaseModel):
+    ticket: str
+    password: str

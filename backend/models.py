@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column, String, Integer, Float, Text, LargeBinary,
-    DateTime, ForeignKey, Enum as SAEnum, Boolean
+    DateTime, ForeignKey, Enum as SAEnum, Boolean, UniqueConstraint
 )
 from sqlalchemy.dialects.postgresql import UUID, JSON, ARRAY
 from sqlalchemy.orm import relationship
@@ -43,6 +43,7 @@ class User(Base):
     notice_reads = relationship("NoticeRead", back_populates="user")
     coupons = relationship("Coupon", back_populates="user")
     mentor_profile = relationship("Mentor", back_populates="user", uselist=False)
+    identities = relationship("UserIdentity", back_populates="user", cascade="all, delete-orphan")
 
 
 class Session(Base):
@@ -222,3 +223,36 @@ class Mentor(Base):
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = relationship("User", back_populates="mentor_profile")
+
+
+class UserIdentity(Base):
+    """外部ログイン(Googleなど)の連携。1ユーザーにつき1プロバイダー1件"""
+    __tablename__ = "user_identities"
+    __table_args__ = (
+        UniqueConstraint("provider", "provider_subject", name="uq_user_identities_provider_subject"),
+        UniqueConstraint("user_id", "provider", name="uq_user_identities_user_provider"),
+    )
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider = Column(String(16), nullable=False)            # 'google'(将来 'kakao', 'line')
+    provider_subject = Column(String(255), nullable=False)   # Googleの sub(不変ID)
+    email = Column(String(255), nullable=True)               # 連携時点のプロバイダー側メール(表示用)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_login_at = Column(DateTime, nullable=True)
+
+    user = relationship("User", back_populates="identities")
+
+
+class AuthTicket(Base):
+    """OAuthコールバック後にフロントへ渡す使い捨てチケット(PasswordResetTokenと同じ作り)"""
+    __tablename__ = "auth_tickets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    token_hash = Column(String(64), unique=True, nullable=False, index=True)  # sha256
+    purpose = Column(String(16), nullable=False)    # 'login' / 'signup' / 'link_confirm'
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    payload = Column(JSON, nullable=True)           # signup / link_confirm: sub, email, name, ref
+    expires_at = Column(DateTime, nullable=False)
+    used_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

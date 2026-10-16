@@ -155,6 +155,57 @@ export const auth = {
   },
 }
 
+// ---- Googleログイン(設計書②) ----
+
+// Google Cloud 側の設定と本番確認が済むまでボタンを出さないためのスイッチ
+export const GOOGLE_LOGIN_ENABLED = process.env.NEXT_PUBLIC_GOOGLE_LOGIN_ENABLED === 'true'
+
+export function googleStartUrl(referralCode?: string | null): string {
+  const query = referralCode ? `?ref=${encodeURIComponent(referralCode)}` : ''
+  return `${API_URL}/api/auth/google/start${query}`
+}
+
+// コールバック後のURLフラグメント(#ticket=...)からチケットを取り出し、履歴から消す
+export function takeTicketFromHash(): string | null {
+  if (typeof window === 'undefined') return null
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const ticket = params.get('ticket')
+  if (ticket) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search)
+  }
+  return ticket
+}
+
+export interface GoogleTicketInfo {
+  email: string
+  name: string | null
+  referral_code: string | null
+}
+
+export const googleAuth = {
+  async exchange(ticket: string): Promise<TokenResponse> {
+    return apiRequest('POST', '/api/auth/google/exchange', { ticket })
+  },
+
+  async ticketInfo(ticket: string, purpose: 'signup' | 'link_confirm'): Promise<GoogleTicketInfo> {
+    return apiRequest('POST', '/api/auth/google/ticket-info', { ticket, purpose })
+  },
+
+  async completeSignup(data: {
+    ticket: string
+    name: string
+    icf_level: string
+    agreed: boolean
+    referral_code?: string | null
+  }): Promise<TokenResponse> {
+    return apiRequest('POST', '/api/auth/google/complete-signup', data)
+  },
+
+  async confirmLink(ticket: string, password: string): Promise<TokenResponse> {
+    return apiRequest('POST', '/api/auth/google/confirm-link', { ticket, password })
+  },
+}
+
 // ---- Sessions ----
 
 export interface SessionSummary {

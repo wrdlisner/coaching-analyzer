@@ -3,7 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { auth, setToken } from '@/lib/api'
+import { auth, setToken, GOOGLE_LOGIN_ENABLED } from '@/lib/api'
+import GoogleButton, { OrDivider } from '@/components/auth/GoogleButton'
+import ConsentChecklist, { initialConsents } from '@/components/auth/ConsentChecklist'
 
 function RegisterForm() {
   const router = useRouter()
@@ -15,7 +17,7 @@ function RegisterForm() {
     icf_level: 'none',
   })
   const [referralCode, setReferralCode] = useState<string | null>(null)
-  const [consents, setConsents] = useState([false, false, false])
+  const [consents, setConsents] = useState(initialConsents())
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -46,12 +48,6 @@ function RegisterForm() {
     }
   }
 
-  const consentItems = [
-    '本ツールの評価はAIによる自動分析であり、ICF公式の評価ではありません',
-    '分析データはサービス改善のために利用される場合があります（データには個人が特定される情報は含まれません）',
-    '分析結果は参考情報であり、資格審査への保証はありません',
-  ]
-
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -78,6 +74,15 @@ function RegisterForm() {
         )}
 
         <div className="card">
+          {GOOGLE_LOGIN_ENABLED && (
+            <>
+              <GoogleButton referralCode={referralCode} />
+              <p className="text-xs text-gray-400 text-center mt-2">
+                Googleで登録すると、ICF資格レベルと同意事項だけ続けて伺います
+              </p>
+              <OrDivider />
+            </>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -147,29 +152,7 @@ function RegisterForm() {
               </select>
             </div>
 
-            <div className="space-y-3 pt-2">
-              <p className="text-sm font-medium text-gray-700">
-                <Link href="/terms" target="_blank" className="text-[var(--purple)] hover:underline">
-                  利用規約
-                </Link>
-                への同意
-              </p>
-              {consentItems.map((item, i) => (
-                <label key={i} className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5 w-4 h-4 accent-[var(--purple)] rounded border-gray-300"
-                    checked={consents[i]}
-                    onChange={(e) => {
-                      const next = [...consents]
-                      next[i] = e.target.checked
-                      setConsents(next)
-                    }}
-                  />
-                  <span className="text-sm text-gray-600">{item}</span>
-                </label>
-              ))}
-            </div>
+            <ConsentChecklist consents={consents} onChange={setConsents} />
 
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3">

@@ -1,15 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { auth, setToken } from '@/lib/api'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { auth, setToken, GOOGLE_LOGIN_ENABLED } from '@/lib/api'
+import GoogleButton, { OrDivider } from '@/components/auth/GoogleButton'
+import { GOOGLE_ERROR_MESSAGES, LoadingScreen } from '@/components/auth/AuthShell'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [form, setForm] = useState({ email: '', password: '' })
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => GOOGLE_ERROR_MESSAGES[searchParams.get('error') || ''] || '')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +49,12 @@ export default function LoginPage() {
         </div>
 
         <div className="card">
+          {GOOGLE_LOGIN_ENABLED && (
+            <>
+              <GoogleButton />
+              <OrDivider />
+            </>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -115,5 +124,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <LoginForm />
+    </Suspense>
   )
 }

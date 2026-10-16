@@ -18,3 +18,5 @@ stripe
 aiofiles
 resend
 python-docx
+google-auth>=2,<3
+requests>=2,<3

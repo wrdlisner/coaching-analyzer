@@ -18,7 +18,7 @@ from sqlalchemy import text
 from database import engine, Base, SessionLocal
 import models  # noqa: F401 - ensure models are registered
 
-from routers import auth, analyze, sessions, feedback, admin, notices, manager, payments, mentors, insights
+from routers import auth, auth_google, analyze, sessions, feedback, admin, notices, manager, payments, mentors, insights
 
 # uvicorn起動前のimport時ログ（CORS設定等）も出力されるようにする
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -53,6 +53,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router)
+app.include_router(auth_google.router)
 app.include_router(analyze.router)
 app.include_router(sessions.router)
 app.include_router(feedback.router)
@@ -91,6 +92,20 @@ def delete_expired_sessions():
             logger.info(f"期限切れセッション {len(expired_ids)} 件を削除しました")
     except Exception as e:
         logger.error(f"セッション自動削除エラー: {e}")
+        db.rollback()
+    finally:
+        db.close()
+
+
+def delete_stale_auth_tickets():
+    """期限切れ・使用済みのGoogleログイン用チケットを削除する（毎日深夜2時15分に実行）"""
+    db = SessionLocal()
+    try:
+        count = auth_google.delete_stale_auth_tickets(db)
+        if count:
+            logger.info(f"期限切れ・使用済みのログインチケット {count} 件を削除しました")
+    except Exception as e:
+        logger.error(f"ログインチケット削除エラー: {e}")
         db.rollback()
     finally:
         db.close()
@@ -191,6 +206,7 @@ def startup():
 
     scheduler = BackgroundScheduler()
     scheduler.add_job(delete_expired_sessions, "cron", hour=2, minute=0)
+    scheduler.add_job(delete_stale_auth_tickets, "cron", hour=2, minute=15)
     scheduler.start()
     logger.info("自動削除スケジューラを起動しました（毎日 02:00 UTC）")
 
