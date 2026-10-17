@@ -8,6 +8,15 @@ export interface ChangeEntry {
 
 export const changelog: ChangeEntry[] = [
   {
+    date: '2026-10-17',
+    changes: [
+      { type: 'new', text: 'Googleアカウントでのログイン・新規登録に対応（ログイン画面・新規登録画面の「Google で続ける」）' },
+      { type: 'new', text: 'アカウント設定に「ログイン方法」を追加（Googleアカウントの連携・解除、パスワードの設定）' },
+      { type: 'improve', text: '画面右上の項目を「☰ メニュー」にまとめ、スマートフォンでも見やすく改善。アカウント設定をメニューから開けるように変更' },
+      { type: 'improve', text: 'ログイン時にメールアドレスの大文字・小文字を区別しないように改善' },
+    ],
+  },
+  {
     date: '2026-06-12',
     changes: [
       { type: 'new', text: '分析プラン「ディープ分析」を追加（上位AIモデルによる深掘り分析・2クレジット）。レポート画面に分析プランのバッジを表示' },

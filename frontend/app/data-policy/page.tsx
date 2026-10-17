@@ -142,7 +142,7 @@ export default function DataPolicyPage() {
                 { label: 'セッション時間・発話比率', desc: 'コーチとクライアントの発話時間の割合' },
                 { label: '平均スコア', desc: '全コンピテンシーの平均値' },
                 { label: '文字起こしテキスト（最大180日）', desc: '逐語録ダウンロード機能のため分析結果と共に保存。180日後に自動削除' },
-                { label: 'アカウント情報', desc: '登録時に入力した名前・メールアドレス' },
+                { label: 'アカウント情報', desc: '登録時に入力した名前・メールアドレス（Googleでログインする場合は、Googleから受け取る名前・メールアドレスと、Googleアカウントの識別ID）' },
               ].map((item) => (
                 <li key={item.label} className="flex items-start gap-2.5">
                   <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[var(--purple-l)] text-[var(--purple)] flex items-center justify-center text-xs">✓</span>
@@ -180,6 +180,10 @@ export default function DataPolicyPage() {
               {
                 q: 'クライアントに録音の同意を得る必要がありますか？',
                 a: 'はい。本サービスの利用にあたり、クライアントへの録音・録画の告知と同意取得を必須条件としています。分析実行前の確認事項チェックリストでも確認していただいています。',
+              },
+              {
+                q: 'Googleでログインすると、どんな情報がCoachmarkに渡りますか？',
+                a: 'Googleアカウントの名前・メールアドレスと、アカウントを識別するためのID（Googleが発行する番号）のみです。Googleのパスワードや、Gmail・Googleドライブなどの中身にアクセスすることはありません。連携は「アカウント設定」→「ログイン方法」からいつでも解除できます（パスワードを設定している場合）。',
               },
               {
                 q: 'データはどのサーバーに保存されますか？',
