@@ -1,25 +1,42 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { UserInfo, CreditRecord, CouponInfo } from '@/lib/api'
 import { formatDate } from '@/lib/format'
 import { REASON_LABELS, reasonBadgeClass } from './constants'
 import CreditPurchaseCard from './CreditPurchaseCard'
 import ReferralCard from './ReferralCard'
+import LoginMethodsCard, { readLinkResultFromUrl } from './LoginMethodsCard'
 
-// アカウント設定（折りたたみ）: クレジット購入・保有クーポン・友達紹介・クレジット履歴
-export default function AccountSettingsAccordion({ user, couponList, creditHistory, onSelectPack }: {
+// アカウント設定（折りたたみ）: ログイン方法・クレジット購入・保有クーポン・友達紹介・クレジット履歴
+export default function AccountSettingsAccordion({ user, couponList, creditHistory, onSelectPack, onUserUpdate }: {
   user: UserInfo
   couponList: CouponInfo[]
   creditHistory: CreditRecord[]
   onSelectPack: (pack: '1' | '3' | '10') => void
+  onUserUpdate?: (user: UserInfo) => void
 }) {
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+  // 描画時点で判定する(子の LoginMethodsCard が effect で URL から ?google= を消すため)
+  const [returnedFromGoogle] = useState(() => !!readLinkResultFromUrl())
+
+  // Google連携から戻ってきたときは、結果が見えるように開いておく
+  useEffect(() => {
+    if (returnedFromGoogle && detailsRef.current) {
+      detailsRef.current.open = true
+      detailsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }, [returnedFromGoogle])
+
   return (
-    <details className="acct-accordion">
+    <details className="acct-accordion" ref={detailsRef}>
       <summary>
         <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--txt)' }}>⚙️ アカウント設定</span>
-        <span style={{ fontSize: 12, color: 'var(--txt3)' }}>クレジット購入・クーポン・友達紹介・履歴</span>
+        <span style={{ fontSize: 12, color: 'var(--txt3)' }}>ログイン方法・クレジット購入・クーポン・友達紹介・履歴</span>
       </summary>
       <div style={{ paddingTop: 12 }}>
+        <LoginMethodsCard user={user} onUserUpdate={onUserUpdate} />
+
         <CreditPurchaseCard onSelect={onSelectPack} />
 
         {couponList.length > 0 && (

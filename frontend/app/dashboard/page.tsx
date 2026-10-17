@@ -377,6 +377,7 @@ function DashboardContent() {
               couponList={couponList}
               creditHistory={creditHistory}
               onSelectPack={handleOpenPurchaseModal}
+              onUserUpdate={setUser}
             />
           </div>
         )}

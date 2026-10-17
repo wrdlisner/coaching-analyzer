@@ -49,6 +49,10 @@ class UserResponse(BaseModel):
     mentor_status: str = "none"
     referral_code: Optional[str]
     created_at: UTCDatetime
+    # ログイン方法(設計書② P3)
+    has_password: bool = True
+    login_methods: List[str] = []
+    google_email: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -332,3 +336,7 @@ class GoogleCompleteSignupRequest(BaseModel):
 class GoogleConfirmLinkRequest(BaseModel):
     ticket: str
     password: str
+
+
+class GoogleLinkIntentResponse(BaseModel):
+    intent: str

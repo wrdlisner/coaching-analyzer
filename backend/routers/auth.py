@@ -12,7 +12,7 @@ import models
 import schemas
 import auth as auth_utils
 from database import get_db
-from email_utils import send_password_reset_email
+from email_utils import send_password_reset_email, send_password_setup_email
 from user_service import create_user, find_user_by_email
 
 # カンマ区切りの場合は最初のURLを使用（main.pyと同様の環境変数）
@@ -107,7 +107,9 @@ def forgot_password(
         db.commit()
 
         reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
-        background_tasks.add_task(send_password_reset_email, user.email, reset_url)
+        # パスワード未設定(Googleのみ)のユーザーには「Googleでログインできます」を添えた設定メールを送る
+        send = send_password_reset_email if user.password_hash else send_password_setup_email
+        background_tasks.add_task(send, user.email, reset_url)
 
     return {"success": True}
 

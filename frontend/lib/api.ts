@@ -116,6 +116,10 @@ export interface UserInfo {
   referral_code: string | null
   created_at: string
   analysis_count: number
+  // ログイン方法(設計書② P3)
+  has_password?: boolean
+  login_methods?: string[]
+  google_email?: string | null
 }
 
 export interface TokenResponse {
@@ -165,6 +169,11 @@ export function googleStartUrl(referralCode?: string | null): string {
   return `${API_URL}/api/auth/google/start${query}`
 }
 
+// アカウント設定から連携を始めるURL(intent は link-intent で受け取る)
+export function googleLinkUrl(intent: string): string {
+  return `${API_URL}/api/auth/google/start?intent=${encodeURIComponent(intent)}`
+}
+
 // コールバック後のURLフラグメント(#ticket=...)からチケットを取り出し、履歴から消す
 export function takeTicketFromHash(): string | null {
   if (typeof window === 'undefined') return null
@@ -203,6 +212,14 @@ export const googleAuth = {
 
   async confirmLink(ticket: string, password: string): Promise<TokenResponse> {
     return apiRequest('POST', '/api/auth/google/confirm-link', { ticket, password })
+  },
+
+  async linkIntent(): Promise<{ intent: string }> {
+    return apiRequest('POST', '/api/auth/google/link-intent')
+  },
+
+  async unlink(): Promise<{ success: boolean }> {
+    return apiRequest('DELETE', '/api/auth/google/link')
   },
 }
 

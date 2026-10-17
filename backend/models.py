@@ -45,6 +45,23 @@ class User(Base):
     mentor_profile = relationship("Mentor", back_populates="user", uselist=False)
     identities = relationship("UserIdentity", back_populates="user", cascade="all, delete-orphan")
 
+    @property
+    def has_password(self) -> bool:
+        return bool(self.password_hash)
+
+    @property
+    def google_email(self):
+        for identity in self.identities:
+            if identity.provider == "google":
+                return identity.email
+        return None
+
+    @property
+    def login_methods(self) -> list:
+        methods = ["password"] if self.password_hash else []
+        methods += sorted({identity.provider for identity in self.identities})
+        return methods
+
 
 class Session(Base):
     __tablename__ = "sessions"

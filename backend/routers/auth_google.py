@@ -12,6 +12,7 @@ import logging
 import os
 import re
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from urllib.parse import urlencode
@@ -50,6 +51,8 @@ STATE_COOKIE = "oauth_google"
 STATE_COOKIE_PATH = "/api/auth/google"
 STATE_TTL_SECONDS = 600
 STATE_PURPOSE = "google_oauth_state"
+LINK_INTENT_PURPOSE = "google_link_intent"
+LINK_INTENT_TTL_SECONDS = 300
 
 TICKET_TTL = {
     "login": timedelta(minutes=2),
@@ -87,6 +90,11 @@ def _redirect_to_frontend(path: str, clear_state_cookie: bool = True) -> Redirec
 
 def _error_redirect(code: str) -> RedirectResponse:
     return _redirect_to_frontend(f"/login?error={code}")
+
+
+def _settings_redirect(result: str) -> RedirectResponse:
+    """アカウント設定(ダッシュボードのプロフィールタブ)へ連携の結果を返す"""
+    return _redirect_to_frontend(f"/dashboard?tab=profile&google={result}")
 
 
 def _issue_ticket(
@@ -161,11 +169,57 @@ def _fetch_google_identity(code: str, code_verifier: str) -> dict:
 # 認可リクエスト / コールバック
 # ---------------------------------------------------------------------------
 
+@router.post("/link-intent", response_model=schemas.GoogleLinkIntentResponse)
+def link_intent(current_user: models.User = Depends(auth_utils.get_current_user)):
+    """ログイン中ユーザーの連携開始用(§5.1)。
+
+    JWT は localStorage にありリダイレクトでは送れないため、5分有効の署名付き intent を渡し、
+    フロントは /start?intent=... へ遷移する。
+    """
+    intent = jwt.encode({
+        "purpose": LINK_INTENT_PURPOSE,
+        "sub": str(current_user.id),
+        "exp": _now() + timedelta(seconds=LINK_INTENT_TTL_SECONDS),
+    }, auth_utils.SECRET_KEY, algorithm=auth_utils.ALGORITHM)
+    return schemas.GoogleLinkIntentResponse(intent=intent)
+
+
+@router.delete("/link", response_model=schemas.SuccessResponse)
+def unlink(
+    current_user: models.User = Depends(auth_utils.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Google連携の解除。パスワード未設定なら、ログイン手段がなくなるため拒否する"""
+    if not current_user.password_hash:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ログインする手段がなくなるため解除できません。先にパスワードを設定してください。",
+        )
+    deleted = db.query(models.UserIdentity).filter(
+        models.UserIdentity.user_id == current_user.id,
+        models.UserIdentity.provider == PROVIDER,
+    ).delete(synchronize_session=False)
+    db.commit()
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Googleアカウントは連携されていません")
+    return {"success": True}
+
+
 @router.get("/start")
-def start(ref: Optional[str] = None):
+def start(ref: Optional[str] = None, intent: Optional[str] = None):
     if not _is_configured():
         logger.error("Googleログイン: GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET が未設定です")
-        return _error_redirect("google_unavailable")
+        return _settings_redirect("unavailable") if intent else _error_redirect("google_unavailable")
+
+    link_uid = None
+    if intent:
+        try:
+            claims = jwt.decode(intent, auth_utils.SECRET_KEY, algorithms=[auth_utils.ALGORITHM])
+        except JWTError:
+            return _settings_redirect("expired")
+        if claims.get("purpose") != LINK_INTENT_PURPOSE or not claims.get("sub"):
+            return _settings_redirect("expired")
+        link_uid = claims["sub"]
 
     state = secrets.token_urlsafe(32)
     nonce = secrets.token_urlsafe(32)
@@ -181,6 +235,7 @@ def start(ref: Optional[str] = None):
         "nonce": nonce,
         "cv": code_verifier,
         "ref": ref if ref and REFERRAL_CODE_RE.match(ref) else None,
+        "link_uid": link_uid,
         "exp": _now() + timedelta(seconds=STATE_TTL_SECONDS),
     }, auth_utils.SECRET_KEY, algorithm=auth_utils.ALGORITHM)
 
@@ -249,11 +304,16 @@ def callback(
     email = normalize_email(info["email"])
     name = (info.get("name") or "").strip()
 
-    # 3. ユーザーの判定(§4)
     identity = db.query(models.UserIdentity).filter(
         models.UserIdentity.provider == PROVIDER,
         models.UserIdentity.provider_subject == sub,
     ).first()
+
+    # 連携モード(アカウント設定から開始, §4.1)。Googleのメールと登録メールが違っていてもよい
+    if saved.get("link_uid"):
+        return _complete_link_from_settings(db, saved["link_uid"], identity, sub, email)
+
+    # 3. ユーザーの判定(§4)
 
     # 3-1. 連携済み → ログイン
     if identity:
@@ -295,6 +355,36 @@ def callback(
     })
     db.commit()
     return _redirect_to_frontend(f"/register/google#ticket={ticket}")
+
+
+def _complete_link_from_settings(
+    db: Session,
+    link_uid: str,
+    identity: Optional[models.UserIdentity],
+    sub: str,
+    email: str,
+) -> RedirectResponse:
+    try:
+        user = db.query(models.User).filter(models.User.id == uuid.UUID(str(link_uid))).first()
+    except ValueError:
+        user = None
+    if not user:
+        return _error_redirect("google_failed")
+
+    if identity:
+        if identity.user_id == user.id:
+            return _settings_redirect("linked")  # 連携済み(二重に押した場合など)
+        return _settings_redirect("already_linked")  # 別ユーザーに連携済みのGoogleアカウント
+
+    if db.query(models.UserIdentity).filter(
+        models.UserIdentity.user_id == user.id,
+        models.UserIdentity.provider == PROVIDER,
+    ).first():
+        return _settings_redirect("other_account")  # 別のGoogleアカウントを連携済み
+
+    _link_identity(db, user, sub, email)
+    db.commit()
+    return _settings_redirect("linked")
 
 
 # ---------------------------------------------------------------------------
