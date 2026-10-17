@@ -252,6 +252,48 @@ html.dark .prose a { color: var(--purple); }
   text-decoration: none; padding: 0; transition: color 0.15s;
 }
 .topbar-link:hover { color: var(--txt); }
+/* 項目が多いと文字が縦に折り返されるのを防ぐ */
+.topbar-logo, .topbar-right > * { white-space: nowrap; flex-shrink: 0; }
+.topbar-menu-btn { display: none; }
+.topbar-menu { display: none; }
+
+/* ── スマホ: 上部メニューをまとめる ─────────────────────── */
+@media (max-width: 640px) {
+  .topbar { padding: 0 1rem; gap: 8px; }
+  .topbar-right { gap: 8px; min-width: 0; overflow-x: auto; }
+  .topbar-desktop-only { display: none !important; }
+  .topbar-menu-btn {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 600; color: var(--txt2);
+    padding: 5px 10px; border-radius: 6px;
+    border: 0.5px solid var(--border2); background: var(--surface2);
+    cursor: pointer;
+  }
+  .topbar-menu.open {
+    display: flex; flex-direction: column;
+    position: sticky; top: 52px; z-index: 9;
+    background: var(--surface); border-bottom: 0.5px solid var(--border);
+    padding: 4px 1rem 8px;
+  }
+  .topbar-menu > * {
+    display: block; width: 100%; text-align: left;
+    font-size: 14px; color: var(--txt2); text-decoration: none;
+    background: none; border: none; cursor: pointer;
+    padding: 12px 4px; border-bottom: 0.5px solid var(--border);
+  }
+  .topbar-menu > *:last-child { border-bottom: none; }
+  .topbar-menu .topbar-menu-user { color: var(--txt3); font-size: 12px; cursor: default; }
+}
+
+/* ── Googleボタン(公式 Light テーマ。ダークモードでも白地のまま) ── */
+.google-btn {
+  background-color: #ffffff !important;
+  color: #1f1f1f !important;
+  border: 1px solid #747775 !important;
+  text-decoration: none;
+  transition: background-color 0.15s;
+}
+.google-btn:hover { background-color: #f8f9fa !important; }
 
 /* ── Tabs ───────────────────────────────────────────── */
 .tabs {

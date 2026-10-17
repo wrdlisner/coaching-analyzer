@@ -34,6 +34,7 @@ function DashboardContent() {
     searchParams.get('tab') === 'profile' ? 'profile' : 'home'
   )
   const [user, setUser] = useState<UserInfo | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sessionList, setSessionList] = useState<SessionSummary[]>([])
   const [creditHistory, setCreditHistory] = useState<CreditRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,22 +170,40 @@ function DashboardContent() {
           Coachmark
         </div>
         <div className="topbar-right">
-          <span className="topbar-user">{user?.name}</span>
+          <span className="topbar-user topbar-desktop-only">{user?.name}</span>
           <button className="credit-badge" onClick={() => setShowCreditGuide(true)}>
             ⬡ {user?.credits} クレジット
           </button>
-          {user?.is_admin && <a href="/admin" className="topbar-link">管理者ページ</a>}
-          {user?.role === 'mentor' && <a href="/mentors" className="topbar-link">メンター一覧</a>}
+          {user?.is_admin && <a href="/admin" className="topbar-link topbar-desktop-only">管理者ページ</a>}
+          {user?.role === 'mentor' && <a href="/mentors" className="topbar-link topbar-desktop-only">メンター一覧</a>}
           <button
             onClick={toggleTheme}
-            className="theme-toggle"
+            className="theme-toggle topbar-desktop-only"
             aria-label={isDark ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
           >
             {isDark ? '☀️ ライト' : '🌙 ダーク'}
           </button>
-          <button className="topbar-link" onClick={handleLogout}>ログアウト</button>
+          <button className="topbar-link topbar-desktop-only" onClick={handleLogout}>ログアウト</button>
+          {/* スマホでは上の項目をメニューにまとめる */}
+          <button
+            className="topbar-menu-btn"
+            onClick={() => setMobileMenuOpen(v => !v)}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="topbar-mobile-menu"
+          >
+            {mobileMenuOpen ? '✕ 閉じる' : '☰ メニュー'}
+          </button>
         </div>
       </nav>
+      <div id="topbar-mobile-menu" className={`topbar-menu${mobileMenuOpen ? ' open' : ''}`}>
+        <span className="topbar-menu-user">{user?.name} さん</span>
+        {user?.is_admin && <a href="/admin">管理者ページ</a>}
+        {user?.role === 'mentor' && <a href="/mentors">メンター一覧</a>}
+        <button onClick={() => { toggleTheme(); setMobileMenuOpen(false) }}>
+          {isDark ? '☀️ ライトモードにする' : '🌙 ダークモードにする'}
+        </button>
+        <button onClick={handleLogout}>ログアウト</button>
+      </div>
 
       {/* Tabs */}
       <div className="tabs">

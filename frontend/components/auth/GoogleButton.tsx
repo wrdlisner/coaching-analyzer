@@ -10,7 +10,9 @@ export default function GoogleButton({ referralCode }: { referralCode?: string |
   return (
     <a
       href={googleStartUrl(referralCode)}
-      className="w-full flex items-center justify-center gap-3 rounded-lg border border-[#747775] bg-white px-4 py-3 text-sm font-medium text-[#1f1f1f] transition-colors hover:bg-[#f8f9fa]"
+      className="google-btn w-full flex items-center justify-center gap-3 rounded-lg px-4 py-3 text-sm font-medium"
+      // ダークモードでも Google 公式の Light テーマ(白地・濃い文字)で表示する。
+      // globals.css の html.dark .bg-white 等の上書きを受けないよう、色は Tailwind のクラスではなく専用クラスで指定
       style={{ fontFamily: "'Roboto', 'Hiragino Sans', 'Noto Sans JP', sans-serif" }}
     >
       {logoOk && (
