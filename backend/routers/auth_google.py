@@ -94,7 +94,7 @@ def _error_redirect(code: str) -> RedirectResponse:
 
 def _settings_redirect(result: str) -> RedirectResponse:
     """アカウント設定(ダッシュボードのプロフィールタブ)へ連携の結果を返す"""
-    return _redirect_to_frontend(f"/dashboard?tab=profile&google={result}")
+    return _redirect_to_frontend(f"/dashboard?tab=settings&google={result}")
 
 
 def _issue_ticket(

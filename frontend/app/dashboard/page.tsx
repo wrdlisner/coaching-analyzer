@@ -15,14 +15,16 @@ import ScoreTrendChart from '@/components/dashboard/ScoreTrendChart'
 import SessionListSection from '@/components/dashboard/SessionListSection'
 import DiffCommentCard from '@/components/dashboard/DiffCommentCard'
 import CreditPurchaseCard from '@/components/dashboard/CreditPurchaseCard'
-import AccountSettingsAccordion from '@/components/dashboard/AccountSettingsAccordion'
+import AccountSettings from '@/components/dashboard/AccountSettings'
+import TopbarMenu from '@/components/dashboard/TopbarMenu'
 import PersonCard from '@/components/dashboard/PersonCard'
 import RadarChartSVG from '@/components/dashboard/RadarChartSVG'
 import AiCommentCard from '@/components/dashboard/AiCommentCard'
 import GrowthReportsCard from '@/components/dashboard/GrowthReportsCard'
 import { PACK_OPTIONS } from '@/components/dashboard/constants'
 
-type DashTab = 'home' | 'profile'
+// settings はタブには出さず、上部メニューの「アカウント設定」から開く
+type DashTab = 'home' | 'profile' | 'settings'
 
 function DashboardContent() {
   const router = useRouter()
@@ -30,11 +32,11 @@ function DashboardContent() {
   const paymentStatus = searchParams.get('payment')
   const mentorApplied = searchParams.get('mentor_applied')
 
-  const [activeTab, setActiveTab] = useState<DashTab>(
-    searchParams.get('tab') === 'profile' ? 'profile' : 'home'
-  )
+  const [activeTab, setActiveTab] = useState<DashTab>(() => {
+    const tab = searchParams.get('tab')
+    return tab === 'profile' || tab === 'settings' ? tab : 'home'
+  })
   const [user, setUser] = useState<UserInfo | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [sessionList, setSessionList] = useState<SessionSummary[]>([])
   const [creditHistory, setCreditHistory] = useState<CreditRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -170,40 +172,18 @@ function DashboardContent() {
           Coachmark
         </div>
         <div className="topbar-right">
-          <span className="topbar-user topbar-desktop-only">{user?.name}</span>
           <button className="credit-badge" onClick={() => setShowCreditGuide(true)}>
             ⬡ {user?.credits} クレジット
           </button>
-          {user?.is_admin && <a href="/admin" className="topbar-link topbar-desktop-only">管理者ページ</a>}
-          {user?.role === 'mentor' && <a href="/mentors" className="topbar-link topbar-desktop-only">メンター一覧</a>}
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle topbar-desktop-only"
-            aria-label={isDark ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
-          >
-            {isDark ? '☀️ ライト' : '🌙 ダーク'}
-          </button>
-          <button className="topbar-link topbar-desktop-only" onClick={handleLogout}>ログアウト</button>
-          {/* スマホでは上の項目をメニューにまとめる */}
-          <button
-            className="topbar-menu-btn"
-            onClick={() => setMobileMenuOpen(v => !v)}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="topbar-mobile-menu"
-          >
-            {mobileMenuOpen ? '✕ 閉じる' : '☰ メニュー'}
-          </button>
+          <TopbarMenu
+            user={user}
+            isDark={isDark}
+            onToggleTheme={toggleTheme}
+            onOpenSettings={() => { switchTab('settings'); window.scrollTo({ top: 0 }) }}
+            onLogout={handleLogout}
+          />
         </div>
       </nav>
-      <div id="topbar-mobile-menu" className={`topbar-menu${mobileMenuOpen ? ' open' : ''}`}>
-        <span className="topbar-menu-user">{user?.name} さん</span>
-        {user?.is_admin && <a href="/admin">管理者ページ</a>}
-        {user?.role === 'mentor' && <a href="/mentors">メンター一覧</a>}
-        <button onClick={() => { toggleTheme(); setMobileMenuOpen(false) }}>
-          {isDark ? '☀️ ライトモードにする' : '🌙 ダークモードにする'}
-        </button>
-        <button onClick={handleLogout}>ログアウト</button>
-      </div>
 
       {/* Tabs */}
       <div className="tabs">
@@ -389,16 +369,18 @@ function DashboardContent() {
 
             {/* 半期成長レポート / 成長記録PDF（2カラム） */}
             <GrowthReportsCard sessionCount={sessionList.length} />
-
-            {/* アカウント設定（折りたたみ） */}
-            <AccountSettingsAccordion
-              user={user}
-              couponList={couponList}
-              creditHistory={creditHistory}
-              onSelectPack={handleOpenPurchaseModal}
-              onUserUpdate={setUser}
-            />
           </div>
+        )}
+
+        {/* ── アカウント設定 ── 上部メニューから開く */}
+        {activeTab === 'settings' && user && (
+          <AccountSettings
+            user={user}
+            couponList={couponList}
+            creditHistory={creditHistory}
+            onSelectPack={handleOpenPurchaseModal}
+            onUserUpdate={setUser}
+          />
         )}
       </main>
 

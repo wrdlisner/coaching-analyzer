@@ -254,35 +254,50 @@ html.dark .prose a { color: var(--purple); }
 .topbar-link:hover { color: var(--txt); }
 /* 項目が多いと文字が縦に折り返されるのを防ぐ */
 .topbar-logo, .topbar-right > * { white-space: nowrap; flex-shrink: 0; }
-.topbar-menu-btn { display: none; }
-.topbar-menu { display: none; }
 
-/* ── スマホ: 上部メニューをまとめる ─────────────────────── */
+/* ── 上部メニュー(☰)。PCは右上の小窓、スマホは全幅 ─────────── */
+.topbar-menu-btn {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; font-weight: 600; color: var(--txt2);
+  padding: 5px 10px; border-radius: 6px;
+  border: 0.5px solid var(--border2); background: var(--surface2);
+  cursor: pointer; transition: all 0.15s;
+}
+.topbar-menu-btn:hover { background: var(--surface3); color: var(--txt); }
+.topbar-menu {
+  position: absolute; top: 52px; right: 1.5rem; z-index: 20;
+  width: 240px;
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 0.5px solid var(--border2);
+  border-radius: var(--rs); box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 4px 0;
+}
+.topbar-menu > * {
+  display: block; width: 100%; text-align: left;
+  font-size: 13px; color: var(--txt2); text-decoration: none;
+  background: none; border: none; cursor: pointer;
+  padding: 10px 16px; white-space: nowrap;
+}
+.topbar-menu > a:hover, .topbar-menu > button:hover { background: var(--surface2); color: var(--txt); }
+.topbar-menu .topbar-menu-user {
+  color: var(--txt3); font-size: 12px; cursor: default;
+  border-bottom: 0.5px solid var(--border); margin-bottom: 4px;
+}
+
 @media (max-width: 640px) {
   .topbar { padding: 0 1rem; gap: 8px; }
-  .topbar-right { gap: 8px; min-width: 0; overflow-x: auto; }
-  .topbar-desktop-only { display: none !important; }
-  .topbar-menu-btn {
-    display: flex; align-items: center; gap: 4px;
-    font-size: 12px; font-weight: 600; color: var(--txt2);
-    padding: 5px 10px; border-radius: 6px;
-    border: 0.5px solid var(--border2); background: var(--surface2);
-    cursor: pointer;
-  }
-  .topbar-menu.open {
-    display: flex; flex-direction: column;
-    position: sticky; top: 52px; z-index: 9;
-    background: var(--surface); border-bottom: 0.5px solid var(--border);
+  .topbar-right { gap: 8px; }
+  .topbar-menu {
+    left: 0; right: 0; width: auto;
+    border-radius: 0; border-width: 0 0 0.5px 0;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
     padding: 4px 1rem 8px;
   }
   .topbar-menu > * {
-    display: block; width: 100%; text-align: left;
-    font-size: 14px; color: var(--txt2); text-decoration: none;
-    background: none; border: none; cursor: pointer;
-    padding: 12px 4px; border-bottom: 0.5px solid var(--border);
+    font-size: 14px; padding: 12px 4px;
+    border-bottom: 0.5px solid var(--border);
   }
   .topbar-menu > *:last-child { border-bottom: none; }
-  .topbar-menu .topbar-menu-user { color: var(--txt3); font-size: 12px; cursor: default; }
 }
 
 /* ── Googleボタン(公式 Light テーマ。ダークモードでも白地のまま) ── */
@@ -534,18 +549,3 @@ html.dark .prose a { color: var(--purple); }
   white-space: nowrap;
 }
 
-/* ── アカウント設定の折りたたみ ────────────────────── */
-.acct-accordion {
-  background: var(--surface); border: 0.5px solid var(--border);
-  border-radius: var(--r); padding: 1rem 1.25rem;
-  margin-bottom: 0.75rem;
-}
-.acct-accordion summary {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; flex-wrap: wrap;
-  cursor: pointer; list-style: none; user-select: none;
-}
-.acct-accordion summary::-webkit-details-marker { display: none; }
-.acct-accordion summary::after { content: '▾'; color: var(--txt3); font-size: 12px; }
-.acct-accordion[open] summary::after { content: '▴'; }
-.acct-accordion[open] summary { margin-bottom: 4px; }

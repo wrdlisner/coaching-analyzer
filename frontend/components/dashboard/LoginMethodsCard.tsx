@@ -5,7 +5,7 @@ import { auth, googleAuth, googleLinkUrl, GOOGLE_LOGIN_ENABLED, UserInfo } from 
 
 // アカウント設定「ログイン方法」: Google連携の追加・解除と、パスワードの設定(設計書② P3)
 
-// /dashboard?tab=profile&google=... で返ってくる連携の結果(バックエンド auth_google.py と対応)
+// /dashboard?tab=settings&google=... で返ってくる連携の結果(バックエンド auth_google.py と対応)
 const LINK_RESULT_MESSAGES: Record<string, { text: string; ok: boolean }> = {
   linked: { text: 'Googleアカウントを連携しました。次回から「Google で続ける」でログインできます。', ok: true },
   already_linked: { text: 'このGoogleアカウントは、別のCoachmarkアカウントに連携されています。', ok: false },
