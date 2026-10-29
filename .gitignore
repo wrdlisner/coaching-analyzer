@@ -28,3 +28,4 @@ Thumbs.db
 
 # TypeScript build info
 frontend/tsconfig.tsbuildinfo
+.env.metrics
