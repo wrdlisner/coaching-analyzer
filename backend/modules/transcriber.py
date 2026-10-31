@@ -1,10 +1,25 @@
 """AssemblyAI 文字起こしモジュール"""
 
+import logging
 from pathlib import Path
 
 import assemblyai as aai
 
 from config import ASSEMBLYAI_API_KEY
+
+logger = logging.getLogger(__name__)
+
+
+def _delete_remote_transcript(transcript) -> None:
+    """AssemblyAI側に残る音声・文字起こしを削除する（失敗しても分析は止めない）"""
+    transcript_id = getattr(transcript, "id", None)
+    if not transcript_id:
+        return
+    try:
+        aai.Transcript.delete_by_id(transcript_id)
+        logger.info(f"[transcriber] AssemblyAI transcript deleted: {transcript_id}")
+    except Exception as e:
+        logger.warning(f"[transcriber] AssemblyAI transcript delete failed: {transcript_id} ({e})")
 
 
 def transcribe(audio_path: Path, coach_label: str = "A", client_label: str = "B") -> dict:
@@ -33,6 +48,14 @@ def transcribe(audio_path: Path, coach_label: str = "A", client_label: str = "B"
     transcriber = aai.Transcriber()
     transcript = transcriber.transcribe(str(audio_path), config=config)
 
+    try:
+        return _build_result(transcript, coach_label, client_label)
+    finally:
+        # 結果を手元に取り出した後、AssemblyAI側の音声・文字起こしを削除（失敗時も削除）
+        _delete_remote_transcript(transcript)
+
+
+def _build_result(transcript, coach_label: str, client_label: str) -> dict:
     if transcript.status == aai.TranscriptStatus.error:
         raise RuntimeError(f"文字起こしに失敗しました: {transcript.error}")
 
