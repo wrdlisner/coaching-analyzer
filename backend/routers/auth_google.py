@@ -304,6 +304,23 @@ def callback(
     email = normalize_email(info["email"])
     name = (info.get("name") or "").strip()
 
+    try:
+        return _route_verified_identity(db, saved, sub, email, name)
+    except Exception:  # noqa: BLE001
+        # DBの一時的な不調などで、ブラウザに素の「Internal Server Error」を見せない
+        logger.exception("Googleログイン: コールバックの処理に失敗")
+        db.rollback()
+        return _error_redirect("google_failed")
+
+
+def _route_verified_identity(
+    db: Session,
+    saved: dict,
+    sub: str,
+    email: str,
+    name: str,
+) -> RedirectResponse:
+    """Googleでの本人確認が済んだあとの振り分け(§4)"""
     identity = db.query(models.UserIdentity).filter(
         models.UserIdentity.provider == PROVIDER,
         models.UserIdentity.provider_subject == sub,
