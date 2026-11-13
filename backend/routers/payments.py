@@ -101,9 +101,12 @@ def create_checkout(
     stripe.api_key = STRIPE_SECRET_KEY
 
     try:
+        # payment_method_types は新しいStripe APIバージョンで廃止された。
+        # 後継の allowed_payment_method_types で、ダッシュボードで有効な決済手段のうち
+        # カードだけに絞り込む（銀行振込など入金が後から確定する手段を出さないため）。
         session = stripe.checkout.Session.create(
-            payment_method_types=["card"],
             mode="payment",
+            allowed_payment_method_types=["card"],
             line_items=[
                 {
                     "price_data": {
@@ -181,6 +184,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             db.add(models.StripeEvent(id=event_id))
 
         session_obj = event_dict["data"]["object"]
+
+        # コンビニ払いなどの後払い手段では、入金前に completed が届く（payment_status="unpaid"）。
+        # 未入金のままクレジットを付与しないよう、ここで処理を止める。
+        if session_obj.get("payment_status") == "unpaid":
+            logger.warning(f"未入金のCheckout完了イベントをスキップ: session={session_obj.get('id')}")
+            return {"status": "awaiting_payment"}
+
         metadata = session_obj.get("metadata", {})
         user_id = metadata.get("user_id")
         credits_to_add = metadata.get("credits_to_add")
